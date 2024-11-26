@@ -1,0 +1,50 @@
+{
+    "name": "brunocfalcao/mjolnir",
+    "description": "Nidavellir mjolnir",
+    "keywords": [
+        "php"
+    ],
+    "homepage": "https://github.com/brunocfalcao/mjolnir",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Bruno Falcão",
+            "email": "bruno.c.falcao@brunofalcao.me",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "angle/chrono": "^1.0",
+        "binance/binance-connector-php": "^1.6",
+        "brunocfalcao/laravel-helpers": "dev-master",
+        "laravel-notification-channels/pushover": "^4.0",
+        "illuminate/contracts": "^11.0",
+        "predis/predis": "^2.2",
+        "ratchet/pawl": "^0.4.1",
+        "sentry/sentry-laravel": "^4.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "Nidavellir\\Mjolnir\\": "src/"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Nidavellir\\Mjolnir\\MjolnirServiceProvider"
+            ]
+        }
+    },
+
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
