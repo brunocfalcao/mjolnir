@@ -1,6 +1,6 @@
 {
     "name": "brunocfalcao/mjolnir",
-    "description": "Nidavellir mjolnir",
+    "description": "Nidavellir Mjolnir",
     "keywords": [
         "php"
     ],
@@ -19,6 +19,7 @@
         "angle/chrono": "^1.0",
         "binance/binance-connector-php": "^1.6",
         "brunocfalcao/laravel-helpers": "dev-master",
+        "brunocfalcao/thor": "dev-master",
         "laravel-notification-channels/pushover": "^4.0",
         "illuminate/contracts": "^11.0",
         "predis/predis": "^2.2",
