@@ -3,25 +3,37 @@
 namespace Nidavellir\Mjolnir\Commands;
 
 use Illuminate\Console\Command;
-use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
 use Nidavellir\Thor\Models\Order;
 
 class OrderQueryCommand extends Command
 {
-    protected $signature = 'excalibur:order-query {exchangeOrderId}';
+    protected $signature = 'excalibur:order-query
+                        {--exchangeOrderId= : The exchange order ID to query}
+                        {--id= : The database ID of the order to query}';
 
-    protected $description = 'Queries an order by exchange order id';
+    protected $description = 'Queries an order by either exchange order id or database id';
 
     public function handle()
     {
-        $exchangeOrderId = $this->argument('exchangeOrderId');
+        $exchangeOrderId = $this->option('exchangeOrderId');
+        $id = $this->option('id');
 
-        $order = Order::firstWhere('exchange_order_id', $exchangeOrderId);
+        if ($exchangeOrderId) {
+            $order = Order::firstWhere('exchange_order_id', $exchangeOrderId);
+        } elseif ($id) {
+            $order = Order::find($id);
+        } else {
+            $this->error('You must provide either --exchangeOrderId or --id');
 
-        $dataMapper = new ApiDataMapperProxy($order->position->account->apiSystem->canonical);
+            return 1; // Exit with an error code
+        }
 
-        $response = $order->apiQuery();
+        if (! $order) {
+            $this->error('Order not found.');
 
-        dd($dataMapper->resolveQueryOrderData($response));
+            return 1; // Exit with an error code
+        }
+
+        dd($order->apiQuery());
     }
 }

@@ -2,8 +2,10 @@
 
 namespace Nidavellir\Mjolnir\Support\Proxies;
 
-use Nidavellir\Mjolnir\Support\ApiDataMappers\BinanceApiDataMapper;
-use Nidavellir\Mjolnir\Support\ApiDataMappers\TaapiApiDataMapper;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\BinanceApiDataMapper;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Bybit\BybitApiDataMapper;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Coinbase\CoinbaseApiDataMapper;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Taapi\TaapiApiDataMapper;
 
 class ApiDataMapperProxy
 {

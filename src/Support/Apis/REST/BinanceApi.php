@@ -201,7 +201,8 @@ class BinanceApi
     }
 
     // https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Query-Order
-    public function queryOrder(ApiProperties $properties)
+    // completed on 2.0
+    public function orderQuery(ApiProperties $properties)
     {
         $this->validate($properties, [
             'options.symbol' => 'required|string',

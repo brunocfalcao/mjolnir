@@ -8,7 +8,7 @@ use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
 use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\Order;
 
-class BinanceApiDataMapper
+class _BinanceApiDataMapper
 {
     /**
      * Used for the resolve() on the UpsertLeverageAndNotionalBracketsJob.
@@ -259,34 +259,41 @@ class BinanceApiDataMapper
 
     /**
      * Prepares data to call the query order.
+     * COMPLETED.
      */
-    public function prepareQueryOrderProperties(array $data): ApiProperties
+    public function prepareQueryOrderProperties(Order $order): ApiProperties
     {
         $properties = new ApiProperties;
-        $properties->set('options.symbol', $data['symbol']);
-        $properties->set('options.orderId', $data['order_id']);
+        $properties->set('options.symbol', $order->position->parsed_trading_pair);
+        $properties->set('options.orderId', (string) $order->exchange_order_id);
 
         return $properties;
     }
 
     /**
      * Resolves response data after a query order api call.
+     * RESOLVED
      */
     public function resolveQueryOrderData(Response $response): array
     {
         $result = json_decode($response->getBody(), true);
 
+        $price = $result['avgPrice'] != 0 ? $result['avgPrice'] : $result['price'];
+        $quantity = $result['executedQty'] != 0 ? $result['executedQty'] : $result['origQty'];
+
         return [
+            // Exchange order id.
             'order_id' => $result['orderId'],
+
+            // [0 => 'RENDER', 1 => 'USDT']
             'symbol' => $this->identifyBaseAndQuote($result['symbol']),
+
+            // NEW, FILLED, CANCELED, PARTIALY_FILLED
             'status' => $result['status'],
-            'price' => $result['price'],
-            'average_price' => $result['avgPrice'],
-            'original_quantity' => $result['origQty'],
-            'executed_quantity' => $result['executedQty'],
+            'price' => $price,
+            'quantity' => $quantity,
             'type' => $result['type'],
             'side' => $result['side'],
-            'original_type' => $result['origType'],
         ];
     }
 
