@@ -20,7 +20,10 @@ class ApiDataMapperProxy
                 $this->api = new TaapiApiDataMapper;
                 break;
             case 'coinmarketcap':
-                // TODO.
+                $this->api = new CoinbaseApiDataMapper;
+                break;
+            case 'bybit':
+                $this->api = new BybitApiDataMapper;
                 break;
             default:
                 throw new \Exception('Unsupported API Mapper: '.$apiCanonical);

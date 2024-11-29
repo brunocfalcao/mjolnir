@@ -2,7 +2,7 @@
 
 namespace Nidavellir\Mjolnir\Support\ApiDataMappers;
 
-class TaapiApiDataMapper
+class BybitApiDataMapper
 {
     /**
      * Returns the well formed base symbol with the quote on it.

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\ValueObjects;
+namespace Nidavellir\Mjolnir\ValueObjects;
 
 class ApiCredentials
 {
