@@ -3,9 +3,9 @@
 namespace Nidavellir\Mjolnir\Support\Apis\REST;
 
 use Nidavellir\Mjolnir\Support\ApiClients\REST\CoinmarketCapApiClient;
-use Nidavellir\Mjolnir\ValueObjects\ApiCredentials;
-use Nidavellir\Mjolnir\ValueObjects\ApiProperties;
-use Nidavellir\Mjolnir\ValueObjects\ApiRequest;
+use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
+use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
+use Nidavellir\Mjolnir\Support\ValueObjects\ApiRequest;
 use Illuminate\Support\Facades\Crypt;
 
 class CoinmarketCapApi

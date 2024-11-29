@@ -3,8 +3,8 @@
 namespace Nidavellir\Mjolnir\Abstracts;
 
 use Nidavellir\Thor\Models\ApiRequestLog;
-use Nidavellir\Mjolnir\ValueObjects\ApiCredentials;
-use Nidavellir\Mjolnir\ValueObjects\ApiRequest;
+use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
+use Nidavellir\Mjolnir\Support\ValueObjects\ApiRequest;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 

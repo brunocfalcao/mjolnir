@@ -3,8 +3,8 @@
 namespace Nidavellir\Mjolnir\Support\ApiClients\REST;
 
 use Nidavellir\Mjolnir\Abstracts\BaseApiClient;
-use Nidavellir\Mjolnir\ValueObjects\ApiCredentials;
-use Nidavellir\Mjolnir\ValueObjects\ApiRequest;
+use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
+use Nidavellir\Mjolnir\Support\ValueObjects\ApiRequest;
 
 class TaapiApiClient extends BaseApiClient
 {

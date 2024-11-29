@@ -6,7 +6,7 @@ use Nidavellir\Mjolnir\Support\Apis\REST\AlternativeMeApi;
 use Nidavellir\Mjolnir\Support\Apis\REST\BinanceApi;
 use Nidavellir\Mjolnir\Support\Apis\REST\CoinmarketCapApi;
 use Nidavellir\Mjolnir\Support\Apis\REST\TaapiApi;
-use Nidavellir\Mjolnir\ValueObjects\ApiCredentials;
+use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
 
 class ApiProxy
 {

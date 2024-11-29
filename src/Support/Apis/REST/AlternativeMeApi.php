@@ -3,7 +3,7 @@
 namespace Nidavellir\Mjolnir\Support\Apis\REST;
 
 use Nidavellir\Mjolnir\Support\ApiClients\REST\AlternativeMeApiClient;
-use Nidavellir\Mjolnir\ValueObjects\ApiRequest;
+use Nidavellir\Mjolnir\Support\ValueObjects\ApiRequest;
 
 class AlternativeMeApi
 {
