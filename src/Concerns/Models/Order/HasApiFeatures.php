@@ -10,9 +10,9 @@ trait HasApiFeatures
     {
         return
         $this->position
-             ->account
-             ->apiSystem
-             ->canonical;
+            ->account
+            ->apiSystem
+            ->canonical;
     }
 
     public function apiQuery()

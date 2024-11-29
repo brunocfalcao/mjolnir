@@ -2,11 +2,11 @@
 
 namespace Nidavellir\Mjolnir\Abstracts;
 
-use Nidavellir\Thor\Models\ApiRequestLog;
-use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
-use Nidavellir\Mjolnir\Support\ValueObjects\ApiRequest;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
+use Nidavellir\Mjolnir\Support\ValueObjects\ApiRequest;
+use Nidavellir\Thor\Models\ApiRequestLog;
 
 abstract class BaseApiClient
 {

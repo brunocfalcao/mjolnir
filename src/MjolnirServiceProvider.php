@@ -16,7 +16,7 @@ class MjolnirServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->commands([
-                OrderQueryCommand::class
+                OrderQueryCommand::class,
             ]);
         }
     }

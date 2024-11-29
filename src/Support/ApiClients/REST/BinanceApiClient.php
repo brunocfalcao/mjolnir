@@ -2,10 +2,10 @@
 
 namespace Nidavellir\Mjolnir\Support\ApiClients\REST;
 
+use Binance\Util\Url;
 use Nidavellir\Mjolnir\Abstracts\BaseApiClient;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiRequest;
-use Binance\Util\Url;
 
 class BinanceApiClient extends BaseApiClient
 {

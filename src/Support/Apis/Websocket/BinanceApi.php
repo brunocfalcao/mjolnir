@@ -2,9 +2,9 @@
 
 namespace Nidavellir\Mjolnir\Support\Apis\Websocket;
 
+use Illuminate\Support\Facades\Crypt;
 use Nidavellir\Mjolnir\Support\ApiClients\Websocket\BinanceApiClient;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
-use Illuminate\Support\Facades\Crypt;
 
 class BinanceApi
 {

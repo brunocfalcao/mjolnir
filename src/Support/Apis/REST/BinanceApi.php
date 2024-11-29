@@ -2,13 +2,13 @@
 
 namespace Nidavellir\Mjolnir\Support\Apis\REST;
 
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Validation\Rule;
 use Nidavellir\Mjolnir\Concerns\HasPropertiesValidation;
 use Nidavellir\Mjolnir\Support\ApiClients\REST\BinanceApiClient;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiRequest;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Validation\Rule;
 
 class BinanceApi
 {

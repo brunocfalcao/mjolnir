@@ -2,11 +2,11 @@
 
 namespace Nidavellir\Mjolnir\Concerns\Models\Account;
 
-use Nidavellir\Thor\Models\User;
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Mjolnir\Support\Proxies\ApiProxy;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\User;
 
 trait HasApiFeatures
 {

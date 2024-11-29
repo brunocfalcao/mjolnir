@@ -2,11 +2,11 @@
 
 namespace Nidavellir\Mjolnir\Support\Apis\REST;
 
+use Illuminate\Support\Facades\Crypt;
 use Nidavellir\Mjolnir\Support\ApiClients\REST\CoinmarketCapApiClient;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiRequest;
-use Illuminate\Support\Facades\Crypt;
 
 class CoinmarketCapApi
 {
