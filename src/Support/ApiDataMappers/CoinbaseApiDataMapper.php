@@ -2,7 +2,7 @@
 
 namespace Nidavellir\Mjolnir\Support\ApiDataMappers;
 
-class BybitApiDataMapper
+class CoinbaseApiDataMapper
 {
     /**
      * Returns the well formed base symbol with the quote on it.

@@ -3,6 +3,8 @@
 namespace Nidavellir\Mjolnir\Commands;
 
 use Illuminate\Console\Command;
+use Nidavellir\Thor\Models\Order;
+use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
 
 class OrderQueryCommand extends Command
 {
