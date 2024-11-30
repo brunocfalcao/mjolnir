@@ -18,9 +18,7 @@ trait HasApiFeatures
     public function apiQuery()
     {
         $dataMapper = new ApiDataMapperProxy($this->getApiCanonical());
-
         $properties = $dataMapper->prepareOrderQuery($this);
-
         $response = $this->position->account->withApi()->orderQuery($properties);
 
         return $dataMapper->resolveOrderQuery($response);
