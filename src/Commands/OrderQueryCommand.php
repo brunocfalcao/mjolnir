@@ -3,37 +3,56 @@
 namespace Nidavellir\Mjolnir\Commands;
 
 use Illuminate\Console\Command;
-use Nidavellir\Thor\Models\Order;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
+use Nidavellir\Mjolnir\Jobs\GetOpenOrdersJob;
+use Nidavellir\Mjolnir\Jobs\QueryOrderJob;
+use Nidavellir\Thor\Models\ApiJob;
 
 class OrderQueryCommand extends Command
 {
-    protected $signature = 'excalibur:order-query
-                        {--exchangeOrderId= : The exchange order ID to query}
-                        {--id= : The database ID of the order to query}';
+    protected $signature = 'excalibur:order-query';
 
     protected $description = 'Queries an order by either exchange order id or database id';
 
     public function handle()
     {
-        $exchangeOrderId = $this->option('exchangeOrderId');
-        $id = $this->option('id');
+        File::put(storage_path('logs/laravel.log'), '');
 
-        if ($exchangeOrderId) {
-            $order = Order::firstWhere('exchange_order_id', $exchangeOrderId);
-        } elseif ($id) {
-            $order = Order::find($id);
-        } else {
-            $this->error('You must provide either --exchangeOrderId or --id');
+        DB::table('api_jobs')->truncate();
 
-            return 1; // Exit with an error code
-        }
+        $blockUuid = Str::uuid()->toString(); // Auto-generate block UUID for this batch of jobs
 
-        if (! $order) {
-            $this->error('Order not found.');
+        // Add the GetOpenOrdersJob to queue1
+        $getOpenOrdersJob = ApiJob::addJob([
+            'class' => GetOpenOrdersJob::class,
+            'parameters' => [
+                'symbol' => 'BTCUSDT',
+            ],
+            'index' => 1,
+            'queue_name' => 'queue1', // Dispatch to queue1
+            'block_uuid' => $blockUuid, // Pass the generated blockUuid
+        ]);
 
-            return 1; // Exit with an error code
-        }
+        info('Added GetOpenOrdersJob with ID: '.$getOpenOrdersJob->id.' to queue1');
 
-        dd($order->apiQuery());
+        // Add the QueryOrderJob to queue2
+        $queryOrderJob = ApiJob::addJob([
+            'class' => QueryOrderJob::class,
+            'parameters' => [
+                'order_id' => '123', // Or whatever dynamic value is required
+            ],
+            'index' => 2,
+            'queue_name' => 'queue2', // Dispatch to queue2
+            'block_uuid' => $blockUuid, // Pass the same blockUuid to link them
+        ]);
+
+        info('Added QueryOrderJob with ID: '.$queryOrderJob->id.' to queue2');
+
+        // Dispatch all pending jobs
+        ApiJob::dispatch();
+
+        return 0;
     }
 }

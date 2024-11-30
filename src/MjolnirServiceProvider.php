@@ -3,6 +3,7 @@
 namespace Nidavellir\Mjolnir;
 
 use Illuminate\Support\ServiceProvider;
+use Nidavellir\Mjolnir\Commands\DispatchCommand;
 use Nidavellir\Mjolnir\Commands\OrderQueryCommand;
 
 class MjolnirServiceProvider extends ServiceProvider
@@ -17,6 +18,7 @@ class MjolnirServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 OrderQueryCommand::class,
+                DispatchCommand::class,
             ]);
         }
     }

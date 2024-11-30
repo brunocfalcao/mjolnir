@@ -14,140 +14,92 @@ abstract class ApiableJob implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $apiJob;
+    public $apiJob;
 
-    protected $workerHostname;
+    protected $response;
 
-    public function __construct($apiJobId)
+    protected $startTime;
+
+    protected $duration;
+
+    public function __construct(ApiJob $apiJob)
     {
-        $this->apiJobId = $apiJobId;
+        $this->apiJob = $apiJob;
     }
 
+    /**
+     * Middleware for the job.
+     *
+     * @return array
+     */
+    public function middleware()
+    {
+        return [new \Nidavellir\Mjolnir\Middleware\EnsureJobSequence];
+    }
+
+    /**
+     * The main job handler that executes the compute method and manages timing.
+     *
+     * @return void
+     */
     public function handle()
     {
-        $this->apiJob = ApiJob::find($this->apiJobId);
+        $this->apiJob->markAsRunning(gethostname());
+        info('Executing '.get_class($this));
 
-        if (! $this->apiJob || $this->apiJob->status !== 'pending') {
-            return;
-        }
-
-        if (method_exists($this, 'regenerateParameters')) {
-            $this->regenerateParameters();
-        }
-
-        if (! $this->checkAccountRateLimits()) {
-            return;
-        }
-
-        $this->workerHostname = $this->getAuthorizedWorkerHostname();
-
-        if (! $this->workerHostname) {
-            $this->release(10);
-
-            return;
-        }
+        // Start the timer to measure execution duration
+        $this->startTime = microtime(true);
 
         try {
-            $this->compute();
+            // Execute the specific job logic (to be defined in child classes)
+            $response = $this->compute();
 
-            $this->apiJob->update([
-                'status' => 'completed',
-                'worker_hostname' => $this->workerHostname,
-            ]);
-        } catch (\Exception $e) {
-            $this->handleException($e);
-        }
-    }
-
-    abstract public function compute();
-
-    private function checkAccountRateLimits()
-    {
-        $rateLimit = ApiAccountRateLimit::where('account_id', $this->apiJob->account_id)->first();
-
-        if (! $rateLimit) {
-            return true;
-        }
-
-        if ($rateLimit->is_rate_limited) {
-            if ($rateLimit->until && $rateLimit->until->isPast()) {
-                $rateLimit->delete();
-
-                return true;
+            if ($response) {
+                $this->response = $response;
             }
-            $this->release(30);
 
-            return false;
-        }
+            // After compute finishes, calculate the duration
+            $this->calculateDuration();
 
-        if ($rateLimit->is_forbidden) {
-            $this->release(10);
-
-            return false;
-        }
-
-        return true;
-    }
-
-    private function getAuthorizedWorkerHostname()
-    {
-        return ApiAccountRateLimit::where('account_id', $this->apiJob->account_id)
-            ->where('is_rate_limited', false)
-            ->where('is_forbidden', false)
-            ->value('hostname');
-    }
-
-    private function markRateLimited($hostname, $accountId, $backoffInSeconds)
-    {
-        ApiAccountRateLimit::updateOrCreate(
-            ['hostname' => $hostname, 'account_id' => $accountId],
-            [
-                'is_rate_limited' => true,
-                'until' => now()->addSeconds($backoffInSeconds),
-            ]
-        );
-    }
-
-    private function markWorkerForbidden($hostname, $accountId)
-    {
-        ApiAccountRateLimit::updateOrCreate(
-            ['hostname' => $hostname, 'account_id' => $accountId],
-            ['is_forbidden' => true]
-        );
-    }
-
-    private function handleException($exception)
-    {
-        $responseCode = $this->extractHttpStatusCode($exception);
-
-        switch ($responseCode) {
-            case 429:
-                $backoffInSeconds = $this->getRateLimitBackoff($exception);
-                $this->markRateLimited($this->workerHostname, $this->apiJob->account_id, $backoffInSeconds);
-                $this->release($backoffInSeconds);
-                break;
-
-            case 418:
-            case 403:
-                $this->markWorkerForbidden($this->workerHostname, $this->apiJob->account_id);
-                $this->release(10);
-                break;
-
-            default:
-                $this->apiJob->update(['status' => 'failed', 'error_message' => $exception->getMessage()]);
-                break;
+            // Mark the job as completed
+            $this->apiJob->markAsCompleted($this->response ?? null, $this->duration);
+            info(get_class($this).' completed');
+        } catch (\Exception $e) {
+            // Mark the job as failed in case of an exception
+            $this->apiJob->markAsFailed($e);
+            throw $e;
         }
     }
 
-    private function extractHttpStatusCode($exception)
+    /**
+     * Abstract method for the specific job logic.
+     * This must be implemented in each subclass.
+     *
+     * @return mixed
+     */
+    abstract protected function compute();
+
+    /**
+     * Calculate the duration of the job execution.
+     */
+    protected function calculateDuration()
     {
-        return method_exists($exception, 'getCode') ? $exception->getCode() : 0;
+        $this->duration = microtime(true) - $this->startTime;
     }
 
-    private function getRateLimitBackoff($exception)
+    /**
+     * Get the duration of the job execution.
+     */
+    public function getDuration()
     {
-        $retryAfter = $exception->getHeaders()['Retry-After'] ?? null;
+        return $this->duration;
+    }
 
-        return $retryAfter ? intval($retryAfter) : 30;
+    /**
+     * Get the response data. Defaults to null if not set.
+     */
+    public function getResponse()
+    {
+        return $this->response ?? null;
     }
 }

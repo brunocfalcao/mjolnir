@@ -23,4 +23,6 @@ trait HasApiFeatures
 
         return $dataMapper->resolveOrderQuery($response);
     }
+
+    public function ApiCall(callable $callable) {}
 }
