@@ -1,6 +1,6 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Support\ApiDataMappers;
+namespace Nidavellir\Mjolnir\Support\ApiDataMappers\Taapi;
 
 class TaapiApiDataMapper
 {

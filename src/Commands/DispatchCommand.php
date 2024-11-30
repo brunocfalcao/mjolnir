@@ -15,7 +15,7 @@ class DispatchCommand extends Command
     {
         ApiJob::dispatch();
 
-        $this->info('All pending API jobs have been dispatched.');
+        $this->info(now());
 
         return 0;
     }

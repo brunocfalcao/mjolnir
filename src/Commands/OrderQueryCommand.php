@@ -35,16 +35,90 @@ class OrderQueryCommand extends Command
             'block_uuid' => $blockUuid, // Pass the generated blockUuid
         ]);
 
-        info('Added GetOpenOrdersJob with ID: '.$getOpenOrdersJob->id.' to queue1');
+        // Add the QueryOrderJob to queue2
+        $queryOrderJob = ApiJob::addJob([
+            'class' => QueryOrderJob::class,
+            'parameters' => [
+                'order_id' => 'from index 2 (1)', // Or whatever dynamic value is required
+            ],
+            'index' => 2,
+            'queue_name' => 'queue2', // Dispatch to queue2
+            'block_uuid' => $blockUuid, // Pass the same blockUuid to link them
+        ]);
 
         // Add the QueryOrderJob to queue2
         $queryOrderJob = ApiJob::addJob([
             'class' => QueryOrderJob::class,
             'parameters' => [
-                'order_id' => '123', // Or whatever dynamic value is required
+                'order_id' => 'from index 2 (2)', // Or whatever dynamic value is required
             ],
             'index' => 2,
             'queue_name' => 'queue2', // Dispatch to queue2
+            'block_uuid' => $blockUuid, // Pass the same blockUuid to link them
+        ]);
+
+        // Add the QueryOrderJob to queue2
+        $queryOrderJob = ApiJob::addJob([
+            'class' => QueryOrderJob::class,
+            'parameters' => [
+                'order_id' => 'from index 2 (2)', // Or whatever dynamic value is required
+            ],
+            'index' => 2,
+            'queue_name' => 'queue2', // Dispatch to queue2
+            'block_uuid' => $blockUuid, // Pass the same blockUuid to link them
+        ]);
+
+        // Add the QueryOrderJob to queue2
+        $queryOrderJob = ApiJob::addJob([
+            'class' => QueryOrderJob::class,
+            'parameters' => [
+                'order_id' => 'from index 2 (2)', // Or whatever dynamic value is required
+            ],
+            'index' => 2,
+            'queue_name' => 'queue2', // Dispatch to queue2
+            'block_uuid' => $blockUuid, // Pass the same blockUuid to link them
+        ]);
+
+        // Add the QueryOrderJob to queue2
+        $queryOrderJob = ApiJob::addJob([
+            'class' => QueryOrderJob::class,
+            'parameters' => [
+                'order_id' => 'from index 2 (2)', // Or whatever dynamic value is required
+            ],
+            'index' => 2,
+            'queue_name' => 'queue2', // Dispatch to queue2
+            'block_uuid' => $blockUuid, // Pass the same blockUuid to link them
+        ]);
+
+        // Add the QueryOrderJob to queue2
+        $queryOrderJob = ApiJob::addJob([
+            'class' => QueryOrderJob::class,
+            'parameters' => [
+                'order_id' => 'from index 2 (2)', // Or whatever dynamic value is required
+            ],
+            'index' => 2,
+            'queue_name' => 'queue2', // Dispatch to queue2
+            'block_uuid' => $blockUuid, // Pass the same blockUuid to link them
+        ]);
+
+        // Add the QueryOrderJob to queue2
+        $queryOrderJob = ApiJob::addJob([
+            'class' => QueryOrderJob::class,
+            'parameters' => [
+                'order_id' => 'from index 3', // Or whatever dynamic value is required
+            ],
+            'index' => 3,
+            'queue_name' => 'queue2', // Dispatch to queue2
+            'block_uuid' => $blockUuid, // Pass the same blockUuid to link them
+        ]);
+
+        // Add the QueryOrderJob to queue2
+        ApiJob::addJob([
+            'class' => QueryOrderJob::class,
+            'parameters' => [
+                'order_id' => 'from index 3', // Or whatever dynamic value is required
+            ],
+            'queue_name' => 'queue1', // Dispatch to queue2
             'block_uuid' => $blockUuid, // Pass the same blockUuid to link them
         ]);
 

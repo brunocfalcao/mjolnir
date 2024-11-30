@@ -45,7 +45,6 @@ abstract class ApiableJob implements ShouldQueue
     public function handle()
     {
         $this->apiJob->markAsRunning(gethostname());
-        info('Executing '.get_class($this));
 
         // Start the timer to measure execution duration
         $this->startTime = microtime(true);
@@ -63,7 +62,6 @@ abstract class ApiableJob implements ShouldQueue
 
             // Mark the job as completed
             $this->apiJob->markAsCompleted($this->response ?? null, $this->duration);
-            info(get_class($this).' completed');
         } catch (\Exception $e) {
             // Mark the job as failed in case of an exception
             $this->apiJob->markAsFailed($e);
@@ -93,13 +91,5 @@ abstract class ApiableJob implements ShouldQueue
     public function getDuration()
     {
         return $this->duration;
-    }
-
-    /**
-     * Get the response data. Defaults to null if not set.
-     */
-    public function getResponse()
-    {
-        return $this->response ?? null;
     }
 }

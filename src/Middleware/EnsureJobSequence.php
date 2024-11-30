@@ -15,15 +15,18 @@ class EnsureJobSequence
 
         $apiJob = $job->apiJob;
 
-        // Retrieve all previous jobs in the sequence
-        $previousJobs = $apiJob->getPreviousJobs();
+        // Api Job have an index?
+        if (!is_null($apiJob->index)) {
+            // Retrieve all previous jobs in the sequence
+            $previousJobs = $apiJob->getPreviousJobs();
 
-        // Check if all previous jobs are completed
-        if ($previousJobs->isNotEmpty() && $previousJobs->where('status', '!=', 'completed')->isNotEmpty()) {
-            // If any previous job is not completed, reset this job to pending
-            $apiJob->resetToPending();
+            // Check if all previous jobs are completed
+            if ($previousJobs->isNotEmpty() && $previousJobs->where('status', '!=', 'completed')->isNotEmpty()) {
+                // If any previous job is not completed, reset this job to pending
+                $apiJob->resetToPending();
 
-            return;
+                return;
+            }
         }
 
         // Proceed to execute the job

@@ -16,13 +16,8 @@ class QueryOrderJob extends ApiableJob
         ];
 
         // Simulate some processing time (e.g., API call)
-        sleep(2); // Simulated delay
+        sleep(rand(1, 5)); // Simulated delay
 
         return $response;
-    }
-
-    protected function getResponse()
-    {
-        return $this->response;
     }
 }
