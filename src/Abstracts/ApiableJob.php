@@ -62,6 +62,9 @@ abstract class ApiableJob implements ShouldQueue
 
             // Mark the job as completed
             $this->apiJob->markAsCompleted($this->response ?? null, $this->duration);
+
+            // Dispatch the next jobs.
+            ApiJob::dispatch();
         } catch (\Exception $e) {
             // Mark the job as failed in case of an exception
             $this->apiJob->markAsFailed($e);
