@@ -5,11 +5,10 @@ namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Nidavellir\Thor\Models\JobQueue;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\ApiJobQueue;
-use Nidavellir\Mjolnir\Jobs\QueryOrderJob;
 use Nidavellir\Mjolnir\Jobs\Apiable\Order\QueryAllOrdersJob;
+use Nidavellir\Mjolnir\Jobs\QueryOrderJob;
+use Nidavellir\Thor\Models\ApiJobQueue;
+use Nidavellir\Thor\Models\JobQueue;
 
 class QueryAllOrdersCommand extends Command
 {
@@ -39,7 +38,7 @@ class QueryAllOrdersCommand extends Command
             'parameters' => [
                 'symbol' => 'FTMUSDT',
                 'order_id' => 24199778294,
-                'job_queue_id' => $jobQueue->id
+                'job_queue_id' => $jobQueue->id,
             ],
             'indexed' => true,
         ]);
@@ -49,7 +48,7 @@ class QueryAllOrdersCommand extends Command
             'parameters' => [
                 'symbol' => 'ATOMUSDT',
                 'order_id' => 20691287235,
-                'job_queue_id' => $jobQueue->id
+                'job_queue_id' => $jobQueue->id,
             ],
             'indexed' => true,
         ]);
@@ -59,7 +58,7 @@ class QueryAllOrdersCommand extends Command
             'parameters' => [
                 'symbol' => 'GALAUSDT',
                 'order_id' => 17599952639,
-                'job_queue_id' => $jobQueue->id
+                'job_queue_id' => $jobQueue->id,
             ],
             'indexed' => true,
         ]);
