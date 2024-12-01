@@ -2,14 +2,13 @@
 
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
-use Illuminate\Support\Str;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Nidavellir\Thor\Models\ApiJob;
 use Illuminate\Support\Facades\File;
-use Nidavellir\Thor\Models\JobQueue;
-use Nidavellir\Thor\Models\ApiSystem;
+use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Jobs\Cronjobs\UpsertRecvWindowsJob;
+use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\JobQueue;
 
 class UpsertRecvWindowsCommand extends Command
 {

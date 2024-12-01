@@ -2,9 +2,6 @@
 
 namespace Nidavellir\Mjolnir\Abstracts;
 
-use Illuminate\Support\Facades\DB;
-use Nidavellir\Thor\Models\JobQueue;
-
 abstract class GateKeeperJob extends BaseJobQueuable
 {
     protected function perform()

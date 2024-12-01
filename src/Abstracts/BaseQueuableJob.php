@@ -2,14 +2,7 @@
 
 namespace Nidavellir\Mjolnir\Abstracts;
 
-use Illuminate\Bus\Batchable;
-use Illuminate\Bus\Queueable;
 use Nidavellir\Thor\Models\JobQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
-use Nidavellir\Mjolnir\Abstracts\BaseJob;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
 
 abstract class BaseQueableJob extends BaseJob
 {
@@ -31,81 +24,6 @@ abstract class BaseQueableJob extends BaseJob
             $this->updateToFailed($e);
             throw $e;
         }
-    }
-
-    protected function isLast()
-    {
-        return $this->jobQueue->index == JobQueue::where('block_uuid', $this->jobQueue->block_uuid)->max('index') ||
-               $this->jobQueue->index == null;
-    }
-
-    protected function isFirst()
-    {
-        return $this->jobQueue->index == 1 ||
-               $this->jobQueue->index == null;
-    }
-
-    protected function updateToRunning()
-    {
-        $this->updateJobQueue([
-            'status' => 'running',
-            'hostname' => gethostname()
-        ]);
-
-        $this->startDuration();
-    }
-
-    protected function updateToCompleted()
-    {
-        $this->updateJobQueue([
-            'status' => 'completed'
-        ]);
-
-        $this->finalizeDuration();
-    }
-
-    private function startDuration()
-    {
-        $this->startedAt = microtime(true);
-        $this->jobQueue->update(['started_at' => now()]);
-    }
-
-    protected function finalizeDuration()
-    {
-        $duration = intval((microtime(true) - $this->startedAt) * 1000);
-        $this->jobQueue->update([
-            'duration' => $duration,
-        ]);
-    }
-
-    protected function updateJobQueue($updateData)
-    {
-        $this->jobQueue->update($updateData);
-    }
-
-    protected function updateToReseted()
-    {
-        $this->updateJobQueue([
-            'status' => 'pending',
-            'error_message' => null,
-            'error_stack_trace' => null,
-            'duration' => null,
-            'started_at' => null,
-            'completed_at' => null,
-            'sequencial_id' => null,
-            'hostname' => null,
-        ]);
-    }
-
-    public function updateToFailed(\Throwable $e)
-    {
-        $this->updateJobQueue([
-            'status' => 'failed',
-            'error_message' => $e->getMessage().' (line '.$e->getLine().')',
-            'error_stack_trace' => $e->getTraceAsString(),
-        ]);
-
-        $this->finalizeDuration();
     }
 
     protected function checkPreviousJobCompletion(): bool

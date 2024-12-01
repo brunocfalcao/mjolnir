@@ -2,14 +2,7 @@
 
 namespace Nidavellir\Mjolnir\Abstracts;
 
-use Illuminate\Bus\Batchable;
-use Illuminate\Bus\Queueable;
 use Nidavellir\Thor\Models\JobQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
-use Nidavellir\Mjolnir\Abstracts\BaseJob;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
 
 abstract class _BaseQueableJob extends BaseJob
 {
