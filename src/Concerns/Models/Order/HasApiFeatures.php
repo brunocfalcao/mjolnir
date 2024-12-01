@@ -15,25 +15,17 @@ trait HasApiFeatures
 
     public Response $apiResponse;
 
-    public function getApiCanonical(): string
+    public function apiAccount(): string
     {
-        return
-            $this->position
-                ->account
-                ->apiSystem
-                ->canonical;
+        return $this->position->account;
     }
 
-    public function apiQuery2()
+    public function apiQuery(): array
     {
-        /*
-        $dataMapper = new ApiDataMapperProxy($this->getApiCanonical());
-        $properties = $dataMapper->prepareOrderQuery($this);
-        $response = $this->position->account->withApi()->orderQuery($properties);
-        */
+        $dataMapper = new ApiDataMapperProxy($this->apiAccount()->apiSystem->canonical);
+        $properties = $dataMapper->prepareOrderQueryProperties($this);
+        $response = $this->apiAccount()->withApi()->orderQuery($properties);
 
-        return $dataMapper->resolveOrderQuery($response);
+        return $dataMapper->resolveOrderQueryResponse($response);
     }
-
-    public function ApiCall(callable $callable) {}
 }
