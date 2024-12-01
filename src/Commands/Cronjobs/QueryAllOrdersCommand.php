@@ -39,9 +39,9 @@ class QueryAllOrdersCommand extends Command
             'parameters' => [
                 'symbol' => 'FTMUSDT',
                 'order_id' => 24199778294,
-                'job_queue_id' => $jobQueue->id,
             ],
             'indexed' => true,
+            'job_queue_id' => $jobQueue->id,
         ]);
 
         $apiJob = ApiJobQueue::addJob([
@@ -49,9 +49,9 @@ class QueryAllOrdersCommand extends Command
             'parameters' => [
                 'symbol' => 'ATOMUSDT',
                 'order_id' => 20691287235,
-                'job_queue_id' => $jobQueue->id,
             ],
             'indexed' => true,
+            'job_queue_id' => $jobQueue->id,
         ]);
 
         $apiJob = ApiJobQueue::addJob([
@@ -59,9 +59,9 @@ class QueryAllOrdersCommand extends Command
             'parameters' => [
                 'symbol' => 'GALAUSDT',
                 'order_id' => 17599952639,
-                'job_queue_id' => $jobQueue->id,
             ],
             'indexed' => true,
+            'job_queue_id' => $jobQueue->id,
         ]);
 
         //JobQueue::dispatch();
