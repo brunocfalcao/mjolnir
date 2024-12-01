@@ -2,10 +2,9 @@
 
 namespace Nidavellir\Mjolnir\Jobs;
 
-use Nidavellir\Mjolnir\Abstracts\ApiableJob;
 use Nidavellir\Thor\Models\Order;
 
-class QueryOrderJob extends ApiableJob
+class QueryOrderJob extends BaseApiableJob
 {
     protected function compute()
     {

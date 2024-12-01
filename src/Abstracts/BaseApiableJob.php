@@ -10,7 +10,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Nidavellir\Thor\Models\ApiJob;
 
-abstract class ApiableJob implements ShouldQueue
+abstract class BaseApiableJob implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 

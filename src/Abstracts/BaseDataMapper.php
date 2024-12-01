@@ -3,11 +3,11 @@
 namespace Nidavellir\Mjolnir\Abstracts;
 
 use GuzzleHttp\Psr7\Response;
-use Nidavellir\Mjolnir\Support\ApiDataMappers\DataMapperValidator;
+use Nidavellir\Mjolnir\Concerns\ValidatesAttributes;
 
 abstract class BaseDataMapper
 {
-    use DataMapperValidator;
+    use ValidatesAttributes;
 
     /*
     array:7 [

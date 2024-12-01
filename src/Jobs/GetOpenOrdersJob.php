@@ -2,10 +2,9 @@
 
 namespace Nidavellir\Mjolnir\Jobs;
 
-use Nidavellir\Mjolnir\Abstracts\ApiableJob;
 use Nidavellir\Thor\Models\ApiJob;
 
-class GetOpenOrdersJob extends ApiableJob
+class GetOpenOrdersJob extends BaseApiableJob
 {
     public function compute()
     {

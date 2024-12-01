@@ -1,27 +1,29 @@
 <?php
 
-namespace App\Concerns;
+namespace Nidavellir\Mjolnir\Concerns;
 
 use Illuminate\Support\Facades\Validator;
-use InvalidArgumentException;
 
 trait ValidatesAttributes
 {
-    /**
-     * Validate the given attributes and throw an InvalidArgumentException
-     * if validation fails.
-     *
-     * @return void
-     *
-     * @throws InvalidArgumentException
-     */
-    public function validate(array $attributes, array $rules)
+    public function validate($data, $rules)
     {
-        $validator = Validator::make($attributes, $rules);
+        $validator = Validator::make($data, $rules);
 
         if ($validator->fails()) {
-            // Throw exception with the first validation error message
-            throw new InvalidArgumentException($validator->errors()->first());
+            $errors = $validator->errors();
+            $failedRules = $validator->failed();
+            $message = 'Arguments validation failed.';
+
+            foreach ($failedRules as $field => $failures) {
+                foreach ($failures as $rule => $details) {
+                    $value = $data[$field] ?? 'undefined';
+                    $ruleDetails = is_array($details) ? json_encode($details) : $details;
+                    $message .= "\nField: {$field}, Value: {$value}, Failed Rule: {$rule}, Rule Details: {$ruleDetails}";
+                }
+            }
+
+            throw new \InvalidArgumentException($message);
         }
     }
 }
