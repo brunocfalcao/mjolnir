@@ -22,12 +22,13 @@ class QueryAllOrdersCommand extends Command
         DB::table('job_api_queue')->truncate();
         DB::table('job_block_queue')->truncate();
 
-        $jobQueue = JobQueue::add(
+        $jobQueue = new JobQueue;
+
+        $jobQueue->add(
             jobClass: QueryAllOrdersJob::class,
             arguments: [
                 'parameters' => [
-                    'api_system_id' => $exchange->id,
-                    'job_queue_id' => $jobQueue->id,
+                    'api_system_id' => 1,
                 ],
             ],
             queueName: 'cronjobs'
