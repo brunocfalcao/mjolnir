@@ -2,15 +2,12 @@
 
 namespace Nidavellir\Mjolnir\Support\ApiDataMappers\Binance;
 
-use GuzzleHttp\Psr7\Response;
-use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\Requests\OrderQuery;
-use Nidavellir\Mjolnir\Support\ApiDataMappers\DataMapperValidator;
-use Nidavellir\Thor\Models\Order;
+use Nidavellir\Mjolnir\Abstracts\BaseDataMapper;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsOrderQuery;
 
-class BinanceApiDataMapper
+class BinanceApiDataMapper extends BaseDataMapper
 {
-    use DataMapperValidator;
-    use OrderQuery;
+    use MapsOrderQuery;
 
     /**
      * Returns the well formed base symbol with the quote on it.
@@ -45,36 +42,5 @@ class BinanceApiDataMapper
         }
 
         throw new \InvalidArgumentException("Invalid token format: {$token}");
-    }
-
-    /**
-     * Resolves response data after a query order api call.
-     * RESOLVED
-     */
-    public function resolveQueryOrderData(Response $response): array
-    {
-        $result = json_decode($response->getBody(), true);
-
-        $price = $result['avgPrice'] != 0 ? $result['avgPrice'] : $result['price'];
-        $quantity = $result['executedQty'] != 0 ? $result['executedQty'] : $result['origQty'];
-
-        $data = [
-            // Exchange order id.
-            'order_id' => $result['orderId'],
-
-            // [0 => 'RENDER', 1 => 'USDT']
-            'symbol' => $this->identifyBaseAndQuote($result['symbol']),
-
-            // NEW, FILLED, CANCELED, PARTIALLY_FILLED
-            'status' => $result['status'],
-            'price' => $price,
-            'quantity' => $quantity,
-            'type' => $result['type'],
-            'side' => $result['side'],
-        ];
-
-        $this->validateOrderQuery($data);
-
-        return $data;
     }
 }

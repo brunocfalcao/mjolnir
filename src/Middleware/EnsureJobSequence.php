@@ -9,14 +9,14 @@ class EnsureJobSequence
 {
     public function handle($job, Closure $next)
     {
-        if (!property_exists($job, 'apiJob') || ! $job->apiJob instanceof ApiJob) {
+        if (! property_exists($job, 'apiJob') || ! $job->apiJob instanceof ApiJob) {
             return $next($job); // Skip if the job does not use the ApiJob model
         }
 
         $apiJob = $job->apiJob;
 
         // Api Job has an index?
-        if (!is_null($apiJob->index)) {
+        if (! is_null($apiJob->index)) {
             // Retrieve all previous jobs in the sequence
             $previousJobs = $apiJob->getPreviousJobs();
 

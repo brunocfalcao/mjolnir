@@ -6,6 +6,7 @@ use Binance\Util\Url;
 use Nidavellir\Mjolnir\Abstracts\BaseApiClient;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiRequest;
+use Nidavellir\Thor\Models\ApiSystem;
 
 class BinanceApiClient extends BaseApiClient
 {
@@ -37,6 +38,12 @@ class BinanceApiClient extends BaseApiClient
         $apiRequest->properties->set(
             'options.timestamp',
             round(microtime(true) * 1000)
+        );
+
+        // Set the recvwindow
+        $apiRequest->properties->set(
+            'options.recvWindow',
+            ApiSystem::firstWhere('canonical', 'binance')->recvwindow_margin
         );
 
         $query = Url::buildQuery($apiRequest->properties->getOr('options', []));

@@ -31,7 +31,18 @@ class BinanceApi
         ]);
     }
 
-    //https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Notional-and-Leverage-Brackets
+    // https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data/rest-api/Check-Server-Time
+    public function serverTime()
+    {
+        $apiRequest = ApiRequest::make(
+            'GET',
+            '/fapi/v1/time'
+        );
+
+        return $this->client->publicRequest($apiRequest);
+    }
+
+    // https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Notional-and-Leverage-Brackets
     public function getLeverageBrackets(ApiProperties $properties)
     {
         $apiRequest = ApiRequest::make(
