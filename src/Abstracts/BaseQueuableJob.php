@@ -26,6 +26,7 @@ abstract class BaseQueableJob extends BaseJob
         }
     }
 
+    /*
     protected function checkPreviousJobCompletion(): bool
     {
         if ($this->jobQueue->index == null) {
@@ -50,22 +51,7 @@ abstract class BaseQueableJob extends BaseJob
 
         return true;
     }
+    */
 
-    protected function assignSequentialId()
-    {
-        if ($this->jobQueue->sequencial_id == null) {
-            DB::transaction(function () {
-                // Lock the JobQueue table to prevent race conditions
-                $maxSequentialId = JobQueue::where('hostname', gethostname())->lockForUpdate()->max('sequencial_id');
-
-                $sequentialId = ($maxSequentialId ?? 0) + 1;
-
-                // Update the jobQueue entry with the new sequential ID
-                $this->jobQueue->update(['sequencial_id' => $sequentialId]);
-            });
-        }
-    }
-
-    // Called at the GateKeeperJob child class (e.g., ApiCallJob).
     abstract protected function compute();
 }

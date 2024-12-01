@@ -2,21 +2,27 @@
 
 namespace Nidavellir\Mjolnir\Abstracts;
 
+use GuzzleHttp\Psr7\Response;
 use Nidavellir\Thor\Models\ApiJob;
+use Nidavellir\Thor\Models\JobQueue;
 
 abstract class BaseApiableJob extends BaseJob
 {
-    public $apiJob;
+    //public ApiJob $apiJob;
 
-    protected $response;
+    //public ?JobQueue $jobQueue;
+
+    protected Response $response;
 
     protected $startTime;
 
     protected $duration;
 
-    public function __construct(ApiJob $apiJob)
+    public function __construct($parameters)
     {
-        $this->apiJob = $apiJob;
+        dd($parameters);
+        //$this->apiJob = $apiJob;
+        //$this->jobQueue = $jobQueue;
     }
 
     /**
