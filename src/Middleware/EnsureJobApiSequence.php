@@ -5,7 +5,7 @@ namespace Nidavellir\Mjolnir\Middleware;
 use Closure;
 use Nidavellir\Thor\Models\ApiJob;
 
-class EnsureJobSequence
+class EnsureJobApiSequence
 {
     public function handle($job, Closure $next)
     {

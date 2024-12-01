@@ -4,16 +4,15 @@ namespace Nidavellir\Mjolnir\Abstracts;
 
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
+use Nidavellir\Thor\Models\JobQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Nidavellir\Mjolnir\Abstracts\BaseJob;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Nidavellir\Thor\Models\JobQueue;
 
-abstract class BaseJobQueuable implements ShouldQueue
+abstract class _BaseQueableJob extends BaseJob
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
     public $tries = 1;
 
     protected $startedAt;

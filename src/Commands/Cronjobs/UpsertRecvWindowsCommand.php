@@ -2,12 +2,14 @@
 
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
-use Illuminate\Console\Command;
 use Illuminate\Support\Str;
-use Nidavellir\Mjolnir\Jobs\Cronjobs\UpsertRecvWindowsJob;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Nidavellir\Thor\Models\ApiJob;
-use Nidavellir\Thor\Models\ApiSystem;
+use Illuminate\Support\Facades\File;
 use Nidavellir\Thor\Models\JobQueue;
+use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Mjolnir\Jobs\Cronjobs\UpsertRecvWindowsJob;
 
 class UpsertRecvWindowsCommand extends Command
 {
@@ -32,21 +34,10 @@ class UpsertRecvWindowsCommand extends Command
                         'job_queue_block_uuid' => $blockUuid,
                     ],
                 ],
-                block: $block,
+                block: $blockUuid,
                 queueName: 'cronjobs'
             );
         });
-        /*
-        foreach (ApiSystem::allExchanges() as $exchange) {
-            $getOpenOrdersJob = ApiJob::addJob([
-                'class' => UpsertRecvWindowsJob::class,
-                'parameters' => [
-                    'api_system_id' => $exchange->id,
-                ],
-                'queue_name' => 'cronjobs',
-            ]);
-        }
-        */
 
         return 0;
     }

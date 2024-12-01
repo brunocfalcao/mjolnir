@@ -4,16 +4,16 @@ namespace Nidavellir\Mjolnir\Abstracts;
 
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
+use Nidavellir\Thor\Models\ApiJob;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Nidavellir\Mjolnir\Abstracts\BaseJob;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Nidavellir\Thor\Models\ApiJob;
+use Nidavellir\Mjolnir\Middleware\EnsureJobApiSequence;
 
-abstract class BaseApiableJob implements ShouldQueue
+abstract class BaseApiableJob extends BaseJob
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
     public $apiJob;
 
     protected $response;
@@ -34,7 +34,7 @@ abstract class BaseApiableJob implements ShouldQueue
      */
     public function middleware()
     {
-        return [new \Nidavellir\Mjolnir\Middleware\EnsureJobSequence];
+        return [new \Nidavellir\Mjolnir\Middleware\EnsureJobApiSequence];
     }
 
     /**
