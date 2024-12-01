@@ -2,20 +2,11 @@
 
 namespace Nidavellir\Mjolnir\Concerns\Models\Order;
 
-use GuzzleHttp\Psr7\Response;
-use Nidavellir\Mjolnir\Concerns\Models\Order\ApiRequests\OrderQuery;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
-use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
 
 trait HasApiFeatures
 {
-    use OrderQuery;
-
-    public ApiProperties $apiProperties;
-
-    public Response $apiResponse;
-
-    public function apiAccount(): string
+    public function apiAccount()
     {
         return $this->position->account;
     }
