@@ -4,6 +4,7 @@ namespace Nidavellir\Mjolnir\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Jobs\TestJob;
 use Nidavellir\Thor\Models\CoreJobQueue;
@@ -16,6 +17,7 @@ class TestCommand extends Command
 
     public function handle()
     {
+        File::put(storage_path('logs/laravel.log'), '');
         DB::table('core_job_queue')->truncate();
         DB::table('api_job_queue')->truncate();
 
@@ -40,7 +42,7 @@ class TestCommand extends Command
             CoreJobQueue::create([
                 'class' => TestJob::class,
                 'arguments' => [
-                    'orderId' => 1,
+                    'orderId' => 2,
                     'positionId' => 2,
                 ],
                 'block_uuid' => $blockUuid,
@@ -53,7 +55,7 @@ class TestCommand extends Command
                 'class' => TestJob::class,
                 'arguments' => [
                     'positionId' => 3,
-                    'orderId' => 1,
+                    'orderId' => 3,
                 ],
                 'block_uuid' => $blockUuid,
                 'index' => 2,
@@ -65,7 +67,7 @@ class TestCommand extends Command
                 'class' => TestJob::class,
                 'arguments' => [
                     'positionId' => 4,
-                    'orderId' => 1,
+                    'orderId' => 4,
                 ],
                 'block_uuid' => $blockUuid,
                 'index' => 3,
@@ -77,7 +79,7 @@ class TestCommand extends Command
                 'class' => TestJob::class,
                 'arguments' => [
                     'positionId' => 5,
-                    'orderId' => 1,
+                    'orderId' => 5,
                 ],
                 'block_uuid' => $blockUuid,
                 'queue' => 'cronjobs',

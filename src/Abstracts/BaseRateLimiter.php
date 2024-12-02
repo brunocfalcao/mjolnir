@@ -2,11 +2,11 @@
 
 namespace Nidavellir\Mjolnir\Abstracts;
 
-use App\Models\Account;
-use App\Models\RateLimit;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Carbon;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\RateLimit;
 
 abstract class BaseRateLimiter
 {

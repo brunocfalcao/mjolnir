@@ -31,7 +31,7 @@ trait HasApiFeatures
         return $this->apiMapper()->resolveOrderQueryResponse($this->apiResponse);
     }
 
-    // Places the order given the order model attributes.
+    // Places an order (given its own attributes)
     public function apiPlace(): array
     {
         $this->apiProperties = $this->apiMapper()->prepareOrderPlaceProperties($this);

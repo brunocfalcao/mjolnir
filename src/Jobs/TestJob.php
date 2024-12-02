@@ -3,6 +3,8 @@
 namespace Nidavellir\Mjolnir\Jobs;
 
 use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
+use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
+use Nidavellir\Thor\Models\Order;
 
 class TestJob extends BaseQueuableJob
 {
@@ -18,13 +20,8 @@ class TestJob extends BaseQueuableJob
 
     protected function compute()
     {
+        $dataMapper = new ApiDataMapperProxy('binance');
 
-        if (rand(1, 100) > 50) {
-            throw new \Exception('Raised exception on position id '.$this->positionId);
-        }
-
-        // Simulate some processing time (e.g., API call)
-        sleep(rand(1, 3)); // Simulated delay
-        info('Job processed');
+        return Order::find(1)->apiQuery(); // Right one: 29917820287
     }
 }
