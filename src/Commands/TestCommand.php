@@ -28,8 +28,8 @@ class TestCommand extends Command
             CoreJobQueue::create([
                 'class' => TestJob::class,
                 'arguments' => [
-                    'positionId' => 1,
                     'orderId' => 1,
+                    'positionId' => 1,
                 ],
                 'block_uuid' => $blockUuid,
                 'index' => 1,
@@ -40,8 +40,8 @@ class TestCommand extends Command
             CoreJobQueue::create([
                 'class' => TestJob::class,
                 'arguments' => [
-                    'positionId' => 2,
                     'orderId' => 1,
+                    'positionId' => 2,
                 ],
                 'block_uuid' => $blockUuid,
                 'index' => 2,
