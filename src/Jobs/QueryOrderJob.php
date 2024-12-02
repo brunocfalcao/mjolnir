@@ -3,9 +3,15 @@
 namespace Nidavellir\Mjolnir\Jobs;
 
 use Nidavellir\Thor\Models\Order;
+use Nidavellir\Thor\Models\Position;
 
 class QueryOrderJob extends BaseApiableJob
 {
+    public function __construct(Order $order, Position $position)
+    {
+        info('all good!');
+    }
+
     protected function compute()
     {
         // Simulate querying an API using parameters

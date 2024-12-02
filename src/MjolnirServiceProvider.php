@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Nidavellir\Mjolnir\Commands\Cronjobs\QueryAllOrdersCommand;
 use Nidavellir\Mjolnir\Commands\DispatchCommand;
 use Nidavellir\Mjolnir\Commands\OrderQueryCommand;
+use Nidavellir\Mjolnir\Commands\TestCommand;
 
 class MjolnirServiceProvider extends ServiceProvider
 {
@@ -21,6 +22,7 @@ class MjolnirServiceProvider extends ServiceProvider
                 OrderQueryCommand::class,
                 DispatchCommand::class,
                 QueryAllOrdersCommand::class,
+                TestCommand::class,
             ]);
         }
     }

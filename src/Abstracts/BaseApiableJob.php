@@ -18,13 +18,6 @@ abstract class BaseApiableJob extends BaseJob
 
     protected $duration;
 
-    public function __construct($parameters)
-    {
-        dd($parameters);
-        //$this->apiJob = $apiJob;
-        //$this->jobQueue = $jobQueue;
-    }
-
     /**
      * Middleware for the job.
      *

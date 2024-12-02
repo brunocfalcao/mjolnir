@@ -5,10 +5,12 @@ namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Nidavellir\Mjolnir\Jobs\Apiable\Order\QueryAllOrdersJob;
 use Nidavellir\Mjolnir\Jobs\QueryOrderJob;
 use Nidavellir\Thor\Models\ApiJobQueue;
+use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\JobQueue;
+use Nidavellir\Thor\Models\Order;
+use Nidavellir\Thor\Models\Position;
 
 class QueryAllOrdersCommand extends Command
 {
@@ -19,12 +21,23 @@ class QueryAllOrdersCommand extends Command
     public function handle()
     {
         File::put(storage_path('logs/laravel.log'), '');
-        DB::table('job_api_queue')->truncate();
-        DB::table('job_block_queue')->truncate();
+        DB::table('api_job_queue')->truncate();
+        DB::table('core_job_queue')->truncate();
 
-        $jobQueue = new JobQueue;
+        $coreJob = new CoreJobQueue;
+        $coreJob->generateBlockUuid();
 
-        $jobQueue->add(
+        $coreJob->create([
+            'class' => QueryOrderJob::class,
+            'arguments' => [
+                'position' => Position::find(1),
+                'order' => Order::find(1),
+            ],
+            'queue' => 'cronjobs',
+        ]);
+
+        /*
+        add(
             jobClass: QueryAllOrdersJob::class,
             arguments: [
                 'parameters' => [
@@ -33,7 +46,9 @@ class QueryAllOrdersCommand extends Command
             ],
             queueName: 'cronjobs'
         );
+        */
 
+        /*
         $apiJob = ApiJobQueue::addJob([
             'class' => QueryOrderJob::class,
             'parameters' => [
@@ -66,6 +81,7 @@ class QueryAllOrdersCommand extends Command
 
         //JobQueue::dispatch();
         //ApiJobQueue::dispatch();
+        */
 
         return 0;
     }
