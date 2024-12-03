@@ -6,6 +6,7 @@ use GuzzleHttp\Psr7\Response;
 use Nidavellir\Thor\Models\RateLimit;
 use Psr\Http\Message\ResponseInterface;
 use Nidavellir\Thor\Models\CoreJobQueue;
+use GuzzleHttp\Exception\RequestException;
 
 abstract class BaseQueuableJob extends BaseJob
 {
@@ -62,7 +63,7 @@ abstract class BaseQueuableJob extends BaseJob
 
             $this->coreJobQueue->updateToCompleted();
             $this->coreJobQueue->finalizeDuration();
-        } catch (\Throwable $e) {
+        } catch (RequestException $e) {
 
             /**
              * As soon as there is an exception, we need to identify what type
@@ -73,13 +74,62 @@ abstract class BaseQueuableJob extends BaseJob
              *
              * If not, we then run the default exception workflow.
              */
+            if ($e instanceof RequestException) {
+                $wasRateLimitedSomehow = $this->handleRateLimitedBaseException();
+                if ($wasRateLimitedSomehow) {
+                    // Get the job back on the queue for other worker server.
+                    // All reset logic was treated inside the previous method.
+                    return;
+                }
 
+                // Do we have a local ignoreRequestException method?
+                $ignoreException = method_exists($this, 'ignoreRequestException') && $this->ignoreRequestException($e);
 
+                // Do we have an exception handler ignoreRequestException?
+                if (! $ignoreException && isset($this->exceptionHandler)) {
+                    $ignoreException = $this->exceptionHandler->ignoreRequestException($e);
+                }
 
+                if (! $ignoreException) {
+                    // Do we have a local resolveRequestException?
+                    if (method_exists($this, 'resolveRequestException')) {
+                        $this->resolveRequestException($e);
+                    }
 
+                    if (isset($this->exceptionHandler)) {
+                        // If we do have on in exception handler, then it will also run.
+                        $this->exceptionHandler->resolveRequestException($e);
+                    }
 
-            $this->coreJobQueue->updateToFailed($e);
+                    // We are not ignoring the exception, so the job is marked as failed.
+                    $this->updateToFailed($e);
+                    throw $e;
+                }
+
+                // We decided to ignore the exception, all good. Job is closed.
+                $this->coreJobQueue->finalizeDuration();
+            }
+
+            $this->coreJobQueue->updateToCompleted();
             $this->coreJobQueue->finalizeDuration();
+        } catch (\Throwable $e) {
+            // Not a RequestException at all.
+
+            // Same logic applies but now for a resolveException fallback.
+            if (method_exists($this, 'resolveException')) {
+                $this->resolveException($e);
+            }
+
+            // Same for the exception handler resolveException.
+            if (isset($this->exceptionHandler)) {
+                $this->exceptionHandler->resolveException($e);
+            }
+
+            // Update CoreJobQueue.
+            $this->updateToFailed($e);
+            $this->coreJobQueue->finalizeDuration();
+
+            // Finally, we throw the error for the parent class, if needed.
             throw $e;
         }
     }
@@ -165,6 +215,30 @@ abstract class BaseQueuableJob extends BaseJob
             ->first();
 
         return $forbidden != null;
+    }
+
+    public function handleRateLimitedBaseException(RequestException $exception)
+    {
+        $isNowPollingLimited = false;
+
+        if ($this->rateLimiter->isNowRateLimited($exception)) {
+            $this->rateLimiter->throttle();
+            $isNowPollingLimited = true;
+        }
+
+        if ($this->rateLimiter->isNowForbidden($exception)) {
+            $this->rateLimiter->forbid();
+            $isNowPollingLimited = true;
+        }
+
+            // Polling limited? Re-dispatch.
+        if ($isNowPollingLimited) {
+            $this->updateToReseted();
+
+            return true;
+        }
+
+        return false;
     }
 
     abstract protected function compute();

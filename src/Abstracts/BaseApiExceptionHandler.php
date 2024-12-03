@@ -35,4 +35,10 @@ abstract class BaseApiExceptionHandler
     {
         return false;
     }
+
+    // Fallback for non RequestException errors.
+    public function resolveException(\Throwable $e)
+    {
+        return null;
+    }
 }
