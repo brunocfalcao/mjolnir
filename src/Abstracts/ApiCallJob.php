@@ -1,6 +1,6 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Abstracts;
+namespace App\Jobs\GateKeepers;
 
 use App\Abstracts\BaseApiExceptionHandler;
 use App\Abstracts\BaseRateLimiter;
