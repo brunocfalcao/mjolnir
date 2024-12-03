@@ -3,9 +3,9 @@
 namespace Nidavellir\Mjolnir\Abstracts;
 
 use GuzzleHttp\Psr7\Response;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\RateLimit;
 use Psr\Http\Message\ResponseInterface;
+use Nidavellir\Thor\Models\CoreJobQueue;
 
 abstract class BaseQueuableJob extends BaseJob
 {
@@ -28,7 +28,6 @@ abstract class BaseQueuableJob extends BaseJob
             if ($this->isPollingLimited()) {
                 // Put the job back to be processed again.
                 $this->updateToReseted();
-
                 return;
             }
         }
@@ -74,6 +73,11 @@ abstract class BaseQueuableJob extends BaseJob
              *
              * If not, we then run the default exception workflow.
              */
+
+
+
+
+
             $this->coreJobQueue->updateToFailed($e);
             $this->coreJobQueue->finalizeDuration();
             throw $e;
@@ -135,12 +139,12 @@ abstract class BaseQueuableJob extends BaseJob
 
     public function checkApiRequiredClasses()
     {
-        if (! isset($this->rateLimiter)) {
-            throw new \Exception('Rate Limiter class not instanciated on '.static::class);
+        if (!isset($this->rateLimiter)) {
+            throw new \Exception('Rate Limiter class not instanciated on ' . static::class);
         }
 
-        if (! isset($this->exceptionHandler)) {
-            throw new \Exception('Rate Limiter class not instanciated on '.static::class);
+        if (!isset($this->exceptionHandler)) {
+            throw new \Exception('Rate Limiter class not instanciated on ' . static::class);
         }
     }
 
