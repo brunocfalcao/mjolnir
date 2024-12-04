@@ -2,9 +2,10 @@
 
 namespace Nidavellir\Mjolnir\Exceptions\Stubs;
 
-use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Exception\RequestException;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionStub;
 
 class BinanceExceptionStub extends BaseExceptionStub
 {
@@ -74,7 +75,7 @@ class BinanceExceptionStub extends BaseExceptionStub
     {
         $response = new Response(400, [], json_encode([
             'code' => -1000,
-            'msg' => 'Unknown error occurred while processing the request.',
+            'msg' => '[Stub] Unknown error occurred while processing the request.',
         ]));
 
         return RequestException::create(
@@ -90,7 +91,7 @@ class BinanceExceptionStub extends BaseExceptionStub
     {
         $response = new Response(400, [], json_encode([
             'code' => -1001,
-            'msg' => 'Internal error; unable to process your request. Please try again.',
+            'msg' => '[Stub] Internal error; unable to process your request. Please try again.',
         ]));
 
         return RequestException::create(
@@ -106,7 +107,7 @@ class BinanceExceptionStub extends BaseExceptionStub
     {
         $response = new Response(400, [], json_encode([
             'code' => -1002,
-            'msg' => 'You are not authorized to execute this request.',
+            'msg' => '[Stub] You are not authorized to execute this request.',
         ]));
 
         return RequestException::create(

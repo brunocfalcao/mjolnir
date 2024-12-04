@@ -2,9 +2,10 @@
 
 namespace Nidavellir\Mjolnir\Exceptions\Stubs;
 
-use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Exception\RequestException;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionStub;
 
 class KrakenExceptionStub extends BaseExceptionStub
 {

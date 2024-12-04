@@ -2,11 +2,13 @@
 
 namespace Nidavellir\Mjolnir\Jobs;
 
+use Nidavellir\Thor\Models\Order;
+use Nidavellir\Thor\Models\Account;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
+use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Mjolnir\Abstracts\BaseApiExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
 use Nidavellir\Mjolnir\Support\Proxies\ExceptionStubProxy;
-use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
-use Nidavellir\Thor\Models\Order;
 
 class TestJob extends BaseApiableJob
 {
@@ -19,7 +21,8 @@ class TestJob extends BaseApiableJob
         $this->orderId = $orderId;
         $this->positionId = $positionId;
 
-        $this->rateLimiter = RateLimitProxy::make('binance');
+        $this->rateLimiter = RateLimitProxy::make('binance')->withAccount(Account::find(1));
+
         $this->exceptionHandler = BaseApiExceptionHandler::make('binance');
     }
 
@@ -27,9 +30,9 @@ class TestJob extends BaseApiableJob
     {
         $dataMapper = new ApiDataMapperProxy('binance');
 
-        if ($this->coreJobQueue->id == rand(1, 10)) {
+        if ($this->coreJobQueue->id == 3) {
             $binanceStub = ExceptionStubProxy::create('binance');
-            throw $binanceStub->simulateUnauthorizedError();
+            throw $binanceStub->simulateRateLimitExceeded();
         }
 
         return Order::find(1)->apiQuery(); // Right one: 29917820287

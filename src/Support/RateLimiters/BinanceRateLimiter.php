@@ -1,6 +1,6 @@
 <?php
 
-namespace Nidavellir\Mijolnir\Support\RateLimiters;
+namespace Nidavellir\Mjolnir\Support\RateLimiters;
 
 use Nidavellir\Mjolnir\Abstracts\BaseRateLimiter;
 

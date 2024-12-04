@@ -9,9 +9,9 @@ use Nidavellir\Thor\Models\RateLimit;
 
 abstract class BaseApiableJob extends BaseQueuableJob
 {
-    public BaseRateLimiter $rateLimiter;
+    public ?BaseRateLimiter $rateLimiter;
 
-    public BaseApiExceptionHandler $exceptionHandler;
+    public ?BaseApiExceptionHandler $exceptionHandler;
 
     protected function compute()
     {
@@ -26,7 +26,12 @@ abstract class BaseApiableJob extends BaseQueuableJob
         }
 
         try {
-            $this->computeApiable();
+            // Verify if there is a return result, if so, assign it to $result.
+            $aux = $this->computeApiable();
+            if ($aux) {
+                $this->result = $aux;
+            }
+            unset($aux);
 
             // Result is a Guzzle Response.
             if ($this->result && $this->result instanceof Response) {
@@ -51,7 +56,7 @@ abstract class BaseApiableJob extends BaseQueuableJob
              */
             if ($e instanceof RequestException) {
                 // Is the Request Exception, a rate limit/forbidden exception?
-                $isNowRateLimitedOrForbidden = $this->handleRateLimitedBaseException();
+                $isNowRateLimitedOrForbidden = $this->handleRateLimitedBaseException($e);
                 if ($isNowRateLimitedOrForbidden) {
                     // Get the job back on the queue for other worker server.
                     // All reset logic was treated inside the previous method.
