@@ -2,11 +2,10 @@
 
 namespace Nidavellir\Mjolnir\Abstracts;
 
-use GuzzleHttp\Psr7\Response;
-use Nidavellir\Thor\Models\RateLimit;
-use Psr\Http\Message\ResponseInterface;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7\Response;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Psr\Http\Message\ResponseInterface;
 
 abstract class BaseQueuableJob extends BaseJob
 {
@@ -14,25 +13,8 @@ abstract class BaseQueuableJob extends BaseJob
 
     public CoreJobQueue $coreJobQueue;
 
-    public BaseRateLimiter $rateLimiter;
-
-    public BaseApiExceptionHandler $exceptionHandler;
-
     public function handle()
     {
-        // Check if we have a $this->type = 'api'. If so, then we are api-based.
-        if (property_exists($this, 'type') && $this->type == 'api') {
-            // Requirements check first.
-            $this->checkApiRequiredClasses();
-
-            // Are we already polling limited?
-            if ($this->isPollingLimited()) {
-                // Put the job back to be processed again.
-                $this->updateToReseted();
-                return;
-            }
-        }
-
         /**
          * The refresh method will be triggered if a job is being retried.
          * This allows us, for instance, to re-run a specific computation
@@ -50,66 +32,6 @@ abstract class BaseQueuableJob extends BaseJob
 
             $this->computeAndStoreResult();
 
-            // Result is a Guzzle Response.
-            if ($this->result && $this->result instanceof Response) {
-                $this->rateLimiter->isNowRateLimited($this->result)
-                     && $this->rateLimiter->throttle();
-
-                $this->rateLimiter->isNowForbidden($this->result)
-                    && $this->rateLimiter->forbid();
-
-                return $this->result;
-            }
-
-            $this->coreJobQueue->updateToCompleted();
-            $this->coreJobQueue->finalizeDuration();
-        } catch (RequestException $e) {
-
-            /**
-             * As soon as there is an exception, we need to identify what type
-             * of exception are we having. If it's a RequestException then it
-             * might be related with Rate Limit or Forbidden causes. If that's
-             * the case, we can release base the job into the CoreJobQueue for
-             * re-executing by another worker server.
-             *
-             * If not, we then run the default exception workflow.
-             */
-            if ($e instanceof RequestException) {
-                $wasRateLimitedSomehow = $this->handleRateLimitedBaseException();
-                if ($wasRateLimitedSomehow) {
-                    // Get the job back on the queue for other worker server.
-                    // All reset logic was treated inside the previous method.
-                    return;
-                }
-
-                // Do we have a local ignoreRequestException method?
-                $ignoreException = method_exists($this, 'ignoreRequestException') && $this->ignoreRequestException($e);
-
-                // Do we have an exception handler ignoreRequestException?
-                if (! $ignoreException && isset($this->exceptionHandler)) {
-                    $ignoreException = $this->exceptionHandler->ignoreRequestException($e);
-                }
-
-                if (! $ignoreException) {
-                    // Do we have a local resolveRequestException?
-                    if (method_exists($this, 'resolveRequestException')) {
-                        $this->resolveRequestException($e);
-                    }
-
-                    if (isset($this->exceptionHandler)) {
-                        // If we do have on in exception handler, then it will also run.
-                        $this->exceptionHandler->resolveRequestException($e);
-                    }
-
-                    // We are not ignoring the exception, so the job is marked as failed.
-                    $this->updateToFailed($e);
-                    throw $e;
-                }
-
-                // We decided to ignore the exception, all good. Job is closed.
-                $this->coreJobQueue->finalizeDuration();
-            }
-
             $this->coreJobQueue->updateToCompleted();
             $this->coreJobQueue->finalizeDuration();
         } catch (\Throwable $e) {
@@ -125,12 +47,21 @@ abstract class BaseQueuableJob extends BaseJob
                 $this->exceptionHandler->resolveException($e);
             }
 
-            // Update CoreJobQueue.
-            $this->updateToFailed($e);
+            // Do we have a rollback option?
+            if (method_exists($this, 'rollback')) {
+                $this->rollback();
+                $this->coreJobQueue->updateToRollbacked();
+            } else {
+                // No rollback? Then update to failed and it's done.
+                $this->coreJobQueue->updateToFailed($e);
+            }
+
             $this->coreJobQueue->finalizeDuration();
 
-            // Finally, we throw the error for the parent class, if needed.
-            throw $e;
+            /**
+             * No need to cascade the exception since it was fully managed by
+             * any child BaseQueuableJob class, or by this class.
+             */
         }
     }
 
@@ -185,60 +116,6 @@ abstract class BaseQueuableJob extends BaseJob
 
         // Attempt to decode JSON body or fallback to raw string
         return json_decode($body, true) ?? (string) $body;
-    }
-
-    public function checkApiRequiredClasses()
-    {
-        if (!isset($this->rateLimiter)) {
-            throw new \Exception('Rate Limiter class not instanciated on ' . static::class);
-        }
-
-        if (!isset($this->exceptionHandler)) {
-            throw new \Exception('Rate Limiter class not instanciated on ' . static::class);
-        }
-    }
-
-    public function isPollingLimited(): bool
-    {
-        $rateLimit = RateLimit::where('account_id', $this->rateLimiter->account->id)
-            ->where('api_system_id', $this->rateLimiter->account->api_system_id)
-            ->where('hostname', gethostname())
-            ->first();
-
-        if ($rateLimit && $rateLimit->retry_after?->isFuture()) {
-            return true;
-        }
-
-        $forbidden = RateLimit::where('api_system_id', $this->rateLimiter->account->api_system_id)
-            ->where('hostname', gethostname())
-            ->where('retry_after', null)
-            ->first();
-
-        return $forbidden != null;
-    }
-
-    public function handleRateLimitedBaseException(RequestException $exception)
-    {
-        $isNowPollingLimited = false;
-
-        if ($this->rateLimiter->isNowRateLimited($exception)) {
-            $this->rateLimiter->throttle();
-            $isNowPollingLimited = true;
-        }
-
-        if ($this->rateLimiter->isNowForbidden($exception)) {
-            $this->rateLimiter->forbid();
-            $isNowPollingLimited = true;
-        }
-
-            // Polling limited? Re-dispatch.
-        if ($isNowPollingLimited) {
-            $this->updateToReseted();
-
-            return true;
-        }
-
-        return false;
     }
 
     abstract protected function compute();

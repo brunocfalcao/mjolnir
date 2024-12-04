@@ -19,7 +19,6 @@ class TestCommand extends Command
     {
         File::put(storage_path('logs/laravel.log'), '');
         DB::table('core_job_queue')->truncate();
-        DB::table('api_job_queue')->truncate();
 
         $i = 0;
 

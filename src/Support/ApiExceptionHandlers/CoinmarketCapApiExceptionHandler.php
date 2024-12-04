@@ -2,8 +2,8 @@
 
 namespace Nidavellir\Mjolnir\Support\ApiExceptionHandlers;
 
-use App\Abstracts\BaseApiExceptionHandler;
 use GuzzleHttp\Exception\RequestException;
+use Nidavellir\Mjolnir\Abstracts\BaseApiExceptionHandler;
 
 class CoinmarketCapApiExceptionHandler extends BaseApiExceptionHandler
 {
