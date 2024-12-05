@@ -32,7 +32,7 @@ class EnsureJobQueueSequence
 
         if ($incompleteOrErroredJobs) {
             // Reset the current job to "pending" and exit
-            $this->jobQueue->updateToRetry();
+            $this->jobQueue->updateToPending();
 
             return;
         }

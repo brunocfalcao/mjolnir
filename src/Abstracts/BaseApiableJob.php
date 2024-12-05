@@ -34,7 +34,7 @@ abstract class BaseApiableJob extends BaseQueuableJob
             if ($this->result && $this->result instanceof Response) {
                 if ($this->rateLimiter->isNowRateLimited($this->result)) {
                     $seconds = $this->rateLimiter->throttle();
-                    $this->coreJobQueue->updateToRetry(now()->addSeconds($seconds));
+                    $this->coreJobQueue->updateToPending(now()->addSeconds($seconds));
                 }
 
                 $this->rateLimiter->isNowForbidden($this->result)
@@ -96,7 +96,7 @@ abstract class BaseApiableJob extends BaseQueuableJob
     {
         $retryAfter = $this->rateLimiter->isRateLimited();
         if ($retryAfter) {
-            $this->coreJobQueue->updateToRetry($retryAfter);
+            $this->coreJobQueue->updateToPending($retryAfter);
 
             return true;
         }
@@ -116,7 +116,7 @@ abstract class BaseApiableJob extends BaseQueuableJob
 
         if ($this->rateLimiter->isNowRateLimited($exception)) {
             $retryAfter = $this->rateLimiter->throttle();
-            $this->coreJobQueue->updateToRetry($retryAfter);
+            $this->coreJobQueue->updateToPending($retryAfter);
             $isNowPollingLimited = true;
         }
 

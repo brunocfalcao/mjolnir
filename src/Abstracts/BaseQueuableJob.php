@@ -55,7 +55,7 @@ abstract class BaseQueuableJob extends BaseJob
             // Do we have a rollback option?
             if (method_exists($this, 'rollback')) {
                 $this->rollback();
-                $this->coreJobQueue->updateToRollbacked();
+                $this->coreJobQueue->updateToRollback();
             } else {
                 // No rollback? Then update to failed and it's done.
                 $this->coreJobQueue->updateToFailed($e);
