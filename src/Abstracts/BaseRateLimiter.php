@@ -45,9 +45,12 @@ abstract class BaseRateLimiter
         $this->applyPollingLimit();
     }
 
-    public function throttle(): void
+    // Returns the datetime that the rate limit is lifted.
+    public function throttle(): Carbon
     {
         $this->applyPollingLimit(now()->addSeconds($this->backoff));
+
+        return now()->addSeconds($this->backoff);
     }
 
     protected function applyPollingLimit(?Carbon $retryAfter = null): void
@@ -81,4 +84,21 @@ abstract class BaseRateLimiter
 
         return null; // No status code available.
     }
+
+    public function isRateLimited()
+    {
+        $rateLimit = RateLimit::where('account_id', $this->account->id)
+            ->where('api_system_id', $this->account->api_system_id)
+            ->where('hostname', gethostname())
+            ->first();
+
+        // Is the rate limit a future timestamp?
+        if ($rateLimit && $rateLimit->retry_after?->isFuture()) {
+            return $rateLimit->retry_after;
+        }
+
+        return null;
+    }
+
+    public function isForbidden() {}
 }

@@ -22,7 +22,7 @@ abstract class BaseQueuableJob extends BaseJob
          *
          * This method is only called after a first execution of the job.
          */
-        if (method_exists($this, 'refresh') && $this->coreJobQueue->canBeRefreshed()) {
+        if (method_exists($this, 'refresh') && $this->coreJobQueue->shouldBeRefreshed()) {
             $this->refresh();
         }
 
@@ -32,8 +32,13 @@ abstract class BaseQueuableJob extends BaseJob
 
             $this->computeAndStoreResult();
 
-            $this->coreJobQueue->updateToCompleted();
-            $this->coreJobQueue->finalizeDuration();
+            // Did the child job touched the status or the duration? -- Yes, skip.
+            if (! $this->coreJobQueue->wasChanged('status')) {
+                $this->coreJobQueue->updateToCompleted();
+            }
+            if (! $this->coreJobQueue->wasChanged('duration')) {
+                $this->coreJobQueue->finalizeDuration();
+            }
         } catch (\Throwable $e) {
             // Not a RequestException at all.
 

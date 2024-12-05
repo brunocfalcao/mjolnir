@@ -10,5 +10,5 @@ class BinanceRateLimiter extends BaseRateLimiter
 
     public array $rateLimitHttpCodes = [429];
 
-    public int $backoff = 120;
+    public int $backoff = 20;
 }

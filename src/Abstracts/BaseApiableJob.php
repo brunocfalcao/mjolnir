@@ -19,9 +19,6 @@ abstract class BaseApiableJob extends BaseQueuableJob
 
         // Are we already polling limited?
         if ($this->isPollingLimited()) {
-            // Put the job back to be processed again.
-            $this->updateToReseted();
-
             return;
         }
 
@@ -35,8 +32,10 @@ abstract class BaseApiableJob extends BaseQueuableJob
 
             // Result is a Guzzle Response.
             if ($this->result && $this->result instanceof Response) {
-                $this->rateLimiter->isNowRateLimited($this->result)
-                     && $this->rateLimiter->throttle();
+                if ($this->rateLimiter->isNowRateLimited($this->result)) {
+                    $seconds = $this->rateLimiter->throttle();
+                    $this->coreJobQueue->updateToRetry(now()->addSeconds($seconds));
+                }
 
                 $this->rateLimiter->isNowForbidden($this->result)
                     && $this->rateLimiter->forbid();
@@ -55,13 +54,11 @@ abstract class BaseApiableJob extends BaseQueuableJob
              * If not, we then run the default exception workflow.
              */
             if ($e instanceof RequestException) {
+                info('Started running RequestException ['.$this->coreJobQueue->id.']');
+
                 // Is the Request Exception, a rate limit/forbidden exception?
                 $isNowRateLimitedOrForbidden = $this->handleRateLimitedBaseException($e);
                 if ($isNowRateLimitedOrForbidden) {
-                    // Get the job back on the queue for other worker server.
-                    // All reset logic was treated inside the previous method.
-                    $this->coreJobQueue->updateToReseted();
-
                     return;
                 }
 
@@ -97,15 +94,14 @@ abstract class BaseApiableJob extends BaseQueuableJob
 
     public function isPollingLimited(): bool
     {
-        $rateLimit = RateLimit::where('account_id', $this->rateLimiter->account->id)
-            ->where('api_system_id', $this->rateLimiter->account->api_system_id)
-            ->where('hostname', gethostname())
-            ->first();
+        $retryAfter = $this->rateLimiter->isRateLimited();
+        if ($retryAfter) {
+            $this->coreJobQueue->updateToRetry($retryAfter);
 
-        if ($rateLimit && $rateLimit->retry_after?->isFuture()) {
             return true;
         }
 
+        // Is the worker server forbidden on this account?
         $forbidden = RateLimit::where('api_system_id', $this->rateLimiter->account->api_system_id)
             ->where('hostname', gethostname())
             ->where('retry_after', null)
@@ -119,7 +115,8 @@ abstract class BaseApiableJob extends BaseQueuableJob
         $isNowPollingLimited = false;
 
         if ($this->rateLimiter->isNowRateLimited($exception)) {
-            $this->rateLimiter->throttle();
+            $retryAfter = $this->rateLimiter->throttle();
+            $this->coreJobQueue->updateToRetry($retryAfter);
             $isNowPollingLimited = true;
         }
 

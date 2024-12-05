@@ -2,9 +2,9 @@
 
 namespace Nidavellir\Mjolnir\Exceptions\Stubs;
 
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Exception\RequestException;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionStub;
 
 class BinanceExceptionStub extends BaseExceptionStub
@@ -29,14 +29,17 @@ class BinanceExceptionStub extends BaseExceptionStub
      */
     public function simulateRateLimitExceeded(): \Exception
     {
+        // Create a mocked response for the Rate Limit Exceeded case
         $response = new Response(429, [
             'X-MBX-USED-WEIGHT-1m' => $this->exceptionDetails['headers']['X-MBX-USED-WEIGHT-1m'] ?? '1200',
             'Retry-After' => '60', // Suggest a retry time of 60 seconds
         ], 'Rate limit exceeded.');
 
-        return RequestException::create(
-            new Request('GET', $this->exceptionDetails['endpoint'] ?? '/fapi/v1/exchangeInfo'),
-            $response
+        // Create and return a Guzzle RequestException without making an actual HTTP request
+        return new RequestException(
+            'Rate limit exceeded.', // Message
+            new Request('GET', $this->exceptionDetails['endpoint'] ?? '/fapi/v1/exchangeInfo'), // Mocked request
+            $response // Mocked response
         );
     }
 
