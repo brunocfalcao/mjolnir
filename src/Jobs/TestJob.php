@@ -41,7 +41,7 @@ class TestJob extends BaseApiableJob
         if ($this->coreJobQueue->id == 3) {
             info('Triggering Exception on id = 3');
             $binanceStub = ExceptionStubProxy::create('binance');
-            throw $binanceStub->simulateRateLimitExceeded();
+            throw $binanceStub->simulateIpBan();
         }
 
         return Order::find(1)->apiQuery(); // Right one: 29917820287

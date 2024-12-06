@@ -10,5 +10,5 @@ class TaapiRateLimiter extends BaseRateLimiter
 
     public array $rateLimitHttpCodes = [429];
 
-    public int $backoff = 5;
+    public int $rateLimitbackoff = 5;
 }

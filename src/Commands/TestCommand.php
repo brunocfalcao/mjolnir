@@ -36,6 +36,7 @@ class TestCommand extends Command
                 'block_uuid' => $blockUuid,
                 'index' => 1,
                 'queue' => 'cronjobs',
+                'dispatch_after' => now()->addSeconds(3),
             ]);
 
             // 2.
@@ -87,6 +88,33 @@ class TestCommand extends Command
 
             $i++;
         }
+
+        $blockUuid = (string) Str::uuid();
+
+        // 1.
+        CoreJobQueue::create([
+            'class' => TestJob::class,
+            'arguments' => [
+                'orderId' => 1,
+                'positionId' => 1,
+            ],
+            'block_uuid' => $blockUuid,
+            'index' => 1,
+            'queue' => 'cronjobs',
+            'dispatch_after' => now()->addSeconds(15),
+        ]);
+
+        // 2.
+        CoreJobQueue::create([
+            'class' => TestJob::class,
+            'arguments' => [
+                'orderId' => 2,
+                'positionId' => 2,
+            ],
+            'block_uuid' => $blockUuid,
+            'index' => 2,
+            'queue' => 'cronjobs',
+        ]);
 
         return 0;
     }

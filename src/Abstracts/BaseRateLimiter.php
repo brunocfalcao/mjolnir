@@ -14,7 +14,14 @@ abstract class BaseRateLimiter
 
     public array $rateLimitHttpCodes;
 
-    public int $backoff;
+    // This is the default worker server backoff seconds recorded on the rate_limits.
+    public int $rateLimitbackoffSeconds = 5;
+
+    /**
+     * This is the backoff seconds on the CoreJobQueue entry to allow
+     * a order worker server to pick the job.
+     */
+    public int $workerServerBackoffSeconds = 5;
 
     // The account used for the rate limit / forbid logic.
     public Account $account;
@@ -24,6 +31,11 @@ abstract class BaseRateLimiter
         $this->account = $account;
 
         return $this;
+    }
+
+    public function workerServerBackoffSeconds()
+    {
+        return now()->addSeconds($this->workerServerBackoffSeconds);
     }
 
     public function isNowRateLimited(RequestException|Response $input): bool
@@ -48,9 +60,9 @@ abstract class BaseRateLimiter
     // Returns the datetime that the rate limit is lifted.
     public function throttle(): Carbon
     {
-        $this->applyPollingLimit(now()->addSeconds($this->backoff));
+        $this->applyPollingLimit(now()->addSeconds($this->rateLimitbackoffSeconds));
 
-        return now()->addSeconds($this->backoff);
+        return now()->addSeconds($this->rateLimitbackoffSeconds);
     }
 
     protected function applyPollingLimit(?Carbon $retryAfter = null): void
@@ -97,8 +109,32 @@ abstract class BaseRateLimiter
             return $rateLimit->retry_after;
         }
 
+        // Delete entry if it exists and is on the past.
+        if ($rateLimit) {
+            $rateLimit->delete();
+        }
+
         return null;
     }
 
-    public function isForbidden() {}
+    public function isForbidden()
+    {
+        // Is the worker server forbidden on this account?
+        return RateLimit::where('api_system_id', $this->account->api_system_id)
+            ->where('hostname', gethostname())
+            ->where('retry_after', null)
+            ->first();
+    }
+
+    // Assesses if with the response, we will now need to forbid or rate limit.
+    public function assessPollingLimit(Response $response)
+    {
+        if ($this->isNowRateLimited($response)) {
+            $this->throttle();
+        }
+
+        if ($this->isNowForbidden($response)) {
+            $this->forbid();
+        }
+    }
 }

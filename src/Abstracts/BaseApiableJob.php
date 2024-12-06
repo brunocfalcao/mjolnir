@@ -5,7 +5,6 @@ namespace Nidavellir\Mjolnir\Abstracts;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Response;
 use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Thor\Models\RateLimit;
 
 abstract class BaseApiableJob extends BaseQueuableJob
 {
@@ -13,12 +12,22 @@ abstract class BaseApiableJob extends BaseQueuableJob
 
     public ?BaseApiExceptionHandler $exceptionHandler;
 
+    // Max retries for a "always pending" job. Then updates to "failed".
+    public int $retries = 3;
+
     protected function compute()
     {
         $this->checkApiRequiredClasses();
 
+        // Max retries reached?
+        if ($this->coreJobQueue->retries == $this->retries + 1) {
+            throw new \Exception('CoreJobQueue max retries reached');
+        }
+
         // Are we already polling limited?
         if ($this->isPollingLimited()) {
+            info('Polling limited for id '.$this->coreJobQueue->id);
+
             return;
         }
 
@@ -32,13 +41,17 @@ abstract class BaseApiableJob extends BaseQueuableJob
 
             // Result is a Guzzle Response.
             if ($this->result && $this->result instanceof Response) {
+                $this->rateLimiter->assessPollingLimit($this->result);
+
                 if ($this->rateLimiter->isNowRateLimited($this->result)) {
-                    $seconds = $this->rateLimiter->throttle();
-                    $this->coreJobQueue->updateToPending(now()->addSeconds($seconds));
+                    $this->rateLimiter->throttle();
                 }
 
-                $this->rateLimiter->isNowForbidden($this->result)
-                    && $this->rateLimiter->forbid();
+                if ($this->rateLimiter->isNowForbidden($this->result)) {
+                    $this->rateLimiter->forbid();
+                }
+
+                $this->coreJobQueue->updateToPending($this->rateLimiter->workerServerBackoffSeconds());
 
                 return $this->result;
             }
@@ -94,20 +107,17 @@ abstract class BaseApiableJob extends BaseQueuableJob
 
     public function isPollingLimited(): bool
     {
-        $retryAfter = $this->rateLimiter->isRateLimited();
-        if ($retryAfter) {
-            $this->coreJobQueue->updateToPending($retryAfter);
-
-            return true;
+        info('Checking CoreJobQueue ID '.$this->coreJobQueue->id.' is RATE LIMITED');
+        if ($this->rateLimiter->isRateLimited()) {
+            info('CoreJobQueue ID '.$this->coreJobQueue->id.' is RATE LIMITED');
         }
 
-        // Is the worker server forbidden on this account?
-        $forbidden = RateLimit::where('api_system_id', $this->rateLimiter->account->api_system_id)
-            ->where('hostname', gethostname())
-            ->where('retry_after', null)
-            ->first();
+        info('Checking CoreJobQueue ID '.$this->coreJobQueue->id.' is FORBIDDEN');
+        if ($this->rateLimiter->isForbidden()) {
+            info('CoreJobQueue ID '.$this->coreJobQueue->id.' is FORBIDDEN');
+        }
 
-        return $forbidden != null;
+        return $this->rateLimiter->isRateLimited() || $this->rateLimiter->isForbidden();
     }
 
     public function handleRateLimitedBaseException(RequestException $exception)
@@ -116,7 +126,6 @@ abstract class BaseApiableJob extends BaseQueuableJob
 
         if ($this->rateLimiter->isNowRateLimited($exception)) {
             $retryAfter = $this->rateLimiter->throttle();
-            $this->coreJobQueue->updateToPending($retryAfter);
             $isNowPollingLimited = true;
         }
 
@@ -125,7 +134,13 @@ abstract class BaseApiableJob extends BaseQueuableJob
             $isNowPollingLimited = true;
         }
 
-        return $isNowPollingLimited || false;
+        if ($isNowPollingLimited) {
+            $this->coreJobQueue->updateToPending($this->rateLimiter->workerServerBackoffSeconds());
+
+            return true;
+        }
+
+        return false;
     }
 
     abstract public function computeApiable();

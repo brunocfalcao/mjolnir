@@ -2,7 +2,6 @@
 
 namespace Nidavellir\Mjolnir\Abstracts;
 
-use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Response;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Psr\Http\Message\ResponseInterface;
@@ -40,8 +39,6 @@ abstract class BaseQueuableJob extends BaseJob
                 $this->coreJobQueue->finalizeDuration();
             }
         } catch (\Throwable $e) {
-            // Not a RequestException at all.
-
             // Same logic applies but now for a resolveException fallback.
             if (method_exists($this, 'resolveException')) {
                 $this->resolveException($e);
@@ -55,18 +52,11 @@ abstract class BaseQueuableJob extends BaseJob
             // Do we have a rollback option?
             if (method_exists($this, 'rollback')) {
                 $this->rollback();
-                $this->coreJobQueue->updateToRollback();
-            } else {
-                // No rollback? Then update to failed and it's done.
-                $this->coreJobQueue->updateToFailed($e);
             }
 
+            // Update to failed, and it's done.
+            $this->coreJobQueue->updateToFailed($e);
             $this->coreJobQueue->finalizeDuration();
-
-            /**
-             * No need to cascade the exception since it was fully managed by
-             * any child BaseQueuableJob class, or by this class.
-             */
         }
     }
 

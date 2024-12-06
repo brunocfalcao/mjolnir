@@ -10,5 +10,5 @@ class AlternativeMeRateLimiter extends BaseRateLimiter
 
     public array $rateLimitHttpCodes = [];
 
-    public int $backoff = 0;
+    public int $rateLimitbackoff = 0;
 }
