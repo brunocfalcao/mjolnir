@@ -67,10 +67,13 @@ abstract class BaseApiClient
 
             $this->logApiRequest($logData);
 
+            // Cascade exception so the e.g.: Core Job Queue can catch it.
             throw $e;
         } catch (\Throwable $e) {
-            // Log and re-throw general exceptions
+            // Log the error log.
             $this->logApiRequest(['error_message' => $e->getMessage().' (line '.$e->getLine().')']);
+
+            // Cascade exception so the e.g.: Core Job Queue can catch it.
             throw $e;
         }
     }

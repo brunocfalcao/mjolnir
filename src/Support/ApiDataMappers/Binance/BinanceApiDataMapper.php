@@ -4,10 +4,12 @@ namespace Nidavellir\Mjolnir\Support\ApiDataMappers\Binance;
 
 use Nidavellir\Mjolnir\Abstracts\BaseDataMapper;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsOrderQuery;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsExchangeInformationQuery;
 
 class BinanceApiDataMapper extends BaseDataMapper
 {
     use MapsOrderQuery;
+    use MapsExchangeInformationQuery;
 
     /**
      * Returns the well formed base symbol with the quote on it.

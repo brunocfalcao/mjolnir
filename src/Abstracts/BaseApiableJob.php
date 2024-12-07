@@ -33,25 +33,23 @@ abstract class BaseApiableJob extends BaseQueuableJob
 
         try {
             // Verify if there is a return result, if so, assign it to $result.
-            $aux = $this->computeApiable();
-            if ($aux) {
-                $this->result = $aux;
-            }
-            unset($aux);
+            $this->result = $this->computeApiable();
 
             // Result is a Guzzle Response.
-            if ($this->result && $this->result instanceof Response) {
-                $this->rateLimiter->assessPollingLimit($this->result);
+            if ($this->result) {
+                if ($this->result instanceof Response) {
+                    $result = $this->rateLimiter->assessPollingLimit($this->result);
 
-                if ($this->rateLimiter->isNowRateLimited($this->result)) {
-                    $this->rateLimiter->throttle();
+                    if ($this->rateLimiter->isNowRateLimited($this->result)) {
+                        $this->rateLimiter->throttle();
+                    }
+
+                    if ($this->rateLimiter->isNowForbidden($this->result)) {
+                        $this->rateLimiter->forbid();
+                    }
+
+                    $this->coreJobQueue->updateToPending($this->rateLimiter->workerServerBackoffSeconds());
                 }
-
-                if ($this->rateLimiter->isNowForbidden($this->result)) {
-                    $this->rateLimiter->forbid();
-                }
-
-                $this->coreJobQueue->updateToPending($this->rateLimiter->workerServerBackoffSeconds());
 
                 return $this->result;
             }
@@ -107,16 +105,6 @@ abstract class BaseApiableJob extends BaseQueuableJob
 
     public function isPollingLimited(): bool
     {
-        info('Checking CoreJobQueue ID '.$this->coreJobQueue->id.' is RATE LIMITED');
-        if ($this->rateLimiter->isRateLimited()) {
-            info('CoreJobQueue ID '.$this->coreJobQueue->id.' is RATE LIMITED');
-        }
-
-        info('Checking CoreJobQueue ID '.$this->coreJobQueue->id.' is FORBIDDEN');
-        if ($this->rateLimiter->isForbidden()) {
-            info('CoreJobQueue ID '.$this->coreJobQueue->id.' is FORBIDDEN');
-        }
-
         return $this->rateLimiter->isRateLimited() || $this->rateLimiter->isForbidden();
     }
 

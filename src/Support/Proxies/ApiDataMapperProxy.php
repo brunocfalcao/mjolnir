@@ -4,7 +4,6 @@ namespace Nidavellir\Mjolnir\Support\Proxies;
 
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\BinanceApiDataMapper;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Bybit\BybitApiDataMapper;
-use Nidavellir\Mjolnir\Support\ApiDataMappers\Coinbase\CoinbaseApiDataMapper;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Taapi\TaapiApiDataMapper;
 
 class ApiDataMapperProxy
@@ -22,7 +21,7 @@ class ApiDataMapperProxy
                 $this->api = new TaapiApiDataMapper;
                 break;
             case 'coinmarketcap':
-                $this->api = new CoinbaseApiDataMapper;
+                $this->api = new CoinmarketCapApiDataMapper;
                 break;
             case 'bybit':
                 $this->api = new BybitApiDataMapper;

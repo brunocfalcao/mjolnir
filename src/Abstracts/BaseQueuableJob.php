@@ -51,7 +51,7 @@ abstract class BaseQueuableJob extends BaseJob
 
             // Do we have a rollback option?
             if (method_exists($this, 'rollback')) {
-                $this->rollback();
+                $this->rollback($e);
             }
 
             // Update to failed, and it's done.

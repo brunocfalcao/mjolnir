@@ -119,6 +119,14 @@ abstract class BaseRateLimiter
 
     public function isForbidden()
     {
+        // Do we have an entry, at least?
+        $instance = RateLimit::where('api_system_id', $this->account->api_system_id)
+            ->where('hostname', gethostname());
+
+        if (! $instance) {
+            return false;
+        }
+
         // Is the worker server forbidden on this account?
         return RateLimit::where('api_system_id', $this->account->api_system_id)
             ->where('hostname', gethostname())
