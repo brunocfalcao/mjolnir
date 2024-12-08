@@ -10,6 +10,7 @@ use Nidavellir\Mjolnir\Jobs\Processes\Hourly\QueryExchangeMarketDataJob;
 use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertSymbolJob;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\Symbol;
 use Nidavellir\Thor\Models\TradingPair;
 
 class HourlyCommand extends Command
@@ -26,22 +27,6 @@ class HourlyCommand extends Command
 
         $blockUuid = (string) Str::uuid();
 
-        /*
-        foreach (ApiSystem::allExchanges() as $exchange) {
-            // Just obtain all market data for later usage.
-            CoreJobQueue::create([
-                'class' => QueryExchangeMarketDataJob::class,
-                'queue' => 'cronjobs',
-                'arguments' => [
-                    'apiSystemId' => $exchange->id,
-                ],
-                'canonical' => 'market-data:' . $exchange->canonical,
-                'index' => 1,
-                'block_uuid' => $blockUuid,
-            ]);
-        }
-        */
-
         foreach (TradingPair::all() as $tradingPair) {
             CoreJobQueue::create([
                 'class' => UpsertSymbolJob::class,
@@ -55,7 +40,32 @@ class HourlyCommand extends Command
             ]);
         }
 
-        CoreJobQueue::dispatch();
+        foreach (ApiSystem::allExchanges() as $exchange) {
+            // Just obtain all market data for later usage.
+            CoreJobQueue::create([
+                'class' => QueryExchangeMarketDataJob::class,
+                'queue' => 'cronjobs',
+                'arguments' => [
+                    'apiSystemId' => $exchange->id,
+                ],
+                'canonical' => 'market-data:'.$exchange->canonical,
+                'index' => 2,
+                'block_uuid' => $blockUuid,
+            ]);
+        }
+
+        foreach (Symbol::all() as $symbol) {
+            CoreJobQueue::create([
+                'class' => UpsertSymbolJob::class,
+                'queue' => 'cronjobs',
+
+                'arguments' => [
+                    'cmcId' => $tradingPair->cmc_id,
+                ],
+                'index' => 1,
+                'block_uuid' => $blockUuid,
+            ]);
+        }
 
         return 0;
     }

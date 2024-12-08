@@ -10,21 +10,14 @@ trait MapsSyncMarketData
 {
     public function prepareSyncMarketDataProperties(Symbol $symbol): ApiProperties
     {
-        dd('inside');
-
         $properties = new ApiProperties;
-
-        $properties->set('options.id', $this->cmc_id);
+        $properties->set('options.id', $symbol->cmc_id);
 
         return $properties;
     }
 
-    public function resolveSyncMarketDataProperties(Response $response): array
+    public function resolveSyncMarketDataResponse(Response $response): array
     {
-        $result = json_decode($response->getBody(), true);
-
-        $this->validateUpsertMetadata($data);
-
-        return $data;
+        return json_decode($response->getBody(), true);
     }
 }

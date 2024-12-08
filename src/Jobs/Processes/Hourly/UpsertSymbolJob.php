@@ -32,11 +32,7 @@ class UpsertSymbolJob extends BaseApiableJob
 
         $symbol->apiAccount = Account::admin('coinmarketcap');
 
-        // Query coinmarketcap for remaining information.
-        $symbol->apiSyncMarketData();
-
-        //$apiResponse = $this->apiSystem->apiQueryMarketData();
-        //$this->coreJobQueue->update(['response' => $apiResponse->result]);
-        //return $apiResponse->response;
+        // Sync symbol with coinmarketcap data.
+        $apiResponse = $symbol->apiSyncMarketData();
     }
 }
