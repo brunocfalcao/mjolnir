@@ -137,12 +137,17 @@ abstract class BaseRateLimiter
     // Assesses if with the response, we will now need to forbid or rate limit.
     public function assessPollingLimit(Response $response)
     {
+        $wasPolledLimited = false;
         if ($this->isNowRateLimited($response)) {
+            $wasPolledLimited = true;
             $this->throttle();
         }
 
         if ($this->isNowForbidden($response)) {
+            $wasPolledLimited = true;
             $this->forbid();
         }
+
+        return $wasPolledLimited;
     }
 }

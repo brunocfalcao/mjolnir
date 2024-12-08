@@ -36,7 +36,7 @@ abstract class BaseApiableJob extends BaseQueuableJob
             // Result is a Guzzle Response.
             if ($this->result) {
                 if ($this->result instanceof Response) {
-                    $result = $this->rateLimiter->assessPollingLimit($this->result);
+                    $wasPolledLimited = $this->rateLimiter->assessPollingLimit($this->result);
 
                     if ($this->rateLimiter->isNowRateLimited($this->result)) {
                         $this->rateLimiter->throttle();
@@ -46,7 +46,9 @@ abstract class BaseApiableJob extends BaseQueuableJob
                         $this->rateLimiter->forbid();
                     }
 
-                    $this->coreJobQueue->updateToPending($this->rateLimiter->workerServerBackoffSeconds());
+                    if ($wasPolledLimited) {
+                        $this->coreJobQueue->updateToPending($this->rateLimiter->workerServerBackoffSeconds());
+                    }
                 }
 
                 return $this->result;

@@ -18,18 +18,11 @@ class TestCommand extends Command
     public function handle()
     {
         File::put(storage_path('logs/laravel.log'), '');
-        DB::table('core_job_queue')->truncate();
-        DB::table('rate_limits')->truncate();
+        //DB::table('core_job_queue')->truncate();
+        //DB::table('rate_limits')->truncate();
 
-        $blockUuid = (string) Str::uuid();
+        CoreJobQueue::find(4)->updateToPending();
 
-        CoreJobQueue::create([
-            'class' => QueryOrderJob::class,
-            'arguments' => [
-                'id' => 1,
-            ],
-            'queue' => 'cronjobs',
-        ]);
 
         return 0;
     }
