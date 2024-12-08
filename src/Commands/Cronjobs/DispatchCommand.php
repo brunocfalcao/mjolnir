@@ -1,6 +1,6 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Commands;
+namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
 use Illuminate\Console\Command;
 use Nidavellir\Thor\Models\CoreJobQueue;

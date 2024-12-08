@@ -4,7 +4,7 @@ namespace Nidavellir\Mjolnir;
 
 use Illuminate\Support\ServiceProvider;
 use Nidavellir\Mjolnir\Commands\Cronjobs\HourlyCommand;
-use Nidavellir\Mjolnir\Commands\DispatchCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchCommand;
 use Nidavellir\Mjolnir\Commands\TestCommand;
 
 class MjolnirServiceProvider extends ServiceProvider
