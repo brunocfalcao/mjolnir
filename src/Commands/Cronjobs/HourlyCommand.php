@@ -54,18 +54,20 @@ class HourlyCommand extends Command
             ]);
         }
 
+        /*
         foreach (Symbol::all() as $symbol) {
             CoreJobQueue::create([
-                'class' => UpsertSymbolJob::class,
+                'class' => UpsertExchangeSymbol::class,
                 'queue' => 'cronjobs',
 
                 'arguments' => [
                     'cmcId' => $tradingPair->cmc_id,
                 ],
-                'index' => 1,
+                'index' => 3,
                 'block_uuid' => $blockUuid,
             ]);
         }
+        */
 
         return 0;
     }
