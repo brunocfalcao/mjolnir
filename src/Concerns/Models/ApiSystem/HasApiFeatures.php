@@ -31,4 +31,15 @@ trait HasApiFeatures
             result: $this->apiMapper()->resolveQueryMarketDataResponse($this->apiResponse)
         );
     }
+
+    public function apiQueryLeverageBracketsData(): ApiResponse
+    {
+        $this->apiProperties = $this->apiMapper()->prepareQueryLeverageBracketsDataProperties();
+        $this->apiResponse = $this->apiAccount->withApi()->getLeverageBrackets($this->apiProperties);
+
+        return new ApiResponse(
+            response: $this->apiResponse,
+            result: $this->apiMapper()->resolveLeverageBracketsDataResponse($this->apiResponse)
+        );
+    }
 }

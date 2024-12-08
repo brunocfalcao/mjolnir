@@ -8,7 +8,7 @@ use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 
-class QueryExchangeMarketDataJob extends BaseApiableJob
+class QueryExchangeLeverageBracketsJob extends BaseApiableJob
 {
     public int $apiSystemId;
 
@@ -29,9 +29,9 @@ class QueryExchangeMarketDataJob extends BaseApiableJob
     {
         $this->apiSystem->apiAccount = Account::admin($this->apiSystem->canonical);
 
-        $apiResponse = $this->apiSystem->apiQueryMarketData();
-        $this->coreJobQueue->update(['response' => $apiResponse->result]);
+        $apiResponse = $this->apiSystem->apiQueryLeverageBracketsData();
 
+        $this->coreJobQueue->update(['response' => $apiResponse->result]);
         return $apiResponse->response;
     }
 }

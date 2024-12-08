@@ -2,16 +2,17 @@
 
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
+use Illuminate\Support\Str;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
-use Nidavellir\Mjolnir\Jobs\Processes\Hourly\QueryExchangeMarketDataJob;
-use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertSymbolJob;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Symbol;
+use Illuminate\Support\Facades\File;
+use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\TradingPair;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertSymbolJob;
+use Nidavellir\Mjolnir\Jobs\Processes\Hourly\QueryExchangeMarketDataJob;
+use Nidavellir\Mjolnir\Jobs\Processes\Hourly\QueryExchangeLeverageBracketsJob;
 
 class HourlyCommand extends Command
 {
@@ -49,7 +50,21 @@ class HourlyCommand extends Command
                     'apiSystemId' => $exchange->id,
                 ],
                 'canonical' => 'market-data:'.$exchange->canonical,
-                'index' => 2,
+                'index' => 1,
+                'block_uuid' => $blockUuid,
+            ]);
+        }
+
+        foreach (ApiSystem::allExchanges() as $exchange) {
+            // Just obtain all market data for later usage.
+            CoreJobQueue::create([
+                'class' => QueryExchangeLeverageBracketsJob::class,
+                'queue' => 'cronjobs',
+                'arguments' => [
+                    'apiSystemId' => $exchange->id,
+                ],
+                'canonical' => 'leverage-brackets:'.$exchange->canonical,
+                'index' => 1,
                 'block_uuid' => $blockUuid,
             ]);
         }
