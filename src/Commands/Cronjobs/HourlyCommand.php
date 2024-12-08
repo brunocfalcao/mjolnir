@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Jobs\Processes\Hourly\QueryExchangeMarketDataJob;
+use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertSymbolJob;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\TradingPair;
@@ -25,6 +26,7 @@ class HourlyCommand extends Command
 
         $blockUuid = (string) Str::uuid();
 
+        /*
         foreach (ApiSystem::allExchanges() as $exchange) {
             // Just obtain all market data for later usage.
             CoreJobQueue::create([
@@ -33,16 +35,22 @@ class HourlyCommand extends Command
                 'arguments' => [
                     'apiSystemId' => $exchange->id,
                 ],
+                'canonical' => 'market-data:' . $exchange->canonical,
                 'index' => 1,
                 'block_uuid' => $blockUuid,
             ]);
         }
+        */
 
         foreach (TradingPair::all() as $tradingPair) {
             CoreJobQueue::create([
                 'class' => UpsertSymbolJob::class,
                 'queue' => 'cronjobs',
-                'index' => 2,
+
+                'arguments' => [
+                    'cmcId' => $tradingPair->cmc_id,
+                ],
+                'index' => 1,
                 'block_uuid' => $blockUuid,
             ]);
         }

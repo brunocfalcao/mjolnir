@@ -7,15 +7,25 @@ use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
 
 trait MapsExchangeInformationQuery
 {
-    public function prepareOrderQueryProperties(): ApiProperties
+    public function prepareQueryMarketDataProperties(): ApiProperties
     {
         return new ApiProperties;
     }
 
-    public function resolveOrderQueryResponse(Response $response): array
+    public function resolveQueryMarketDataResponse(Response $response): array
     {
-        $result = json_decode($response->getBody(), true);
+        $data = json_decode($response->getBody(), true);
 
-        dd('ok');
+        return collect($data['symbols'] ?? [])->map(function ($symbolData) {
+            $filters = collect($symbolData['filters'] ?? []);
+
+            return [
+                'symbol' => $symbolData['symbol'],
+                'pricePrecision' => $symbolData['pricePrecision'],
+                'quantityPrecision' => $symbolData['quantityPrecision'],
+                'tickSize' => (float) $filters->firstWhere('filterType', 'PRICE_FILTER')['tickSize'] ?? null,
+                'minNotional' => (float) $filters->firstWhere('filterType', 'MIN_NOTIONAL')['notional'] ?? null,
+            ];
+        })->toArray();
     }
 }

@@ -8,12 +8,11 @@ class ApiResponse
 {
     public Response $response;
 
-    public array $resolvedResult;
+    public array $result;
 
-    public function __construct(Response $response, array $resolvedResult)
+    public function __construct(?Response $response = null, ?array $result = [])
     {
-        $this->$response = $response;
-
-        $this->resolvedResult = $resolvedResult;
+        $this->response = $response;
+        $this->result = $result;
     }
 }

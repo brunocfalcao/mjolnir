@@ -27,6 +27,11 @@ class QueryExchangeMarketDataJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        $result = $this->apiSystem->apiQueryMarketData();
+        $this->apiSystem->account = Account::admin($this->apiSystem->canonical);
+
+        $apiResponse = $this->apiSystem->apiQueryMarketData();
+        $this->coreJobQueue->update(['response' => $apiResponse->result]);
+
+        return $apiResponse->response;
     }
 }

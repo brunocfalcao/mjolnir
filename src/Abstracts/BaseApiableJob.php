@@ -26,8 +26,6 @@ abstract class BaseApiableJob extends BaseQueuableJob
 
         // Are we already polling limited?
         if ($this->isPollingLimited()) {
-            info('Polling limited for id '.$this->coreJobQueue->id);
-
             return;
         }
 
@@ -65,8 +63,6 @@ abstract class BaseApiableJob extends BaseQueuableJob
              * If not, we then run the default exception workflow.
              */
             if ($e instanceof RequestException) {
-                info('Started running RequestException ['.$this->coreJobQueue->id.']');
-
                 // Is the Request Exception, a rate limit/forbidden exception?
                 $isNowRateLimitedOrForbidden = $this->handleRateLimitedBaseException($e);
                 if ($isNowRateLimitedOrForbidden) {

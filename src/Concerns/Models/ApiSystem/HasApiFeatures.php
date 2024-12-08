@@ -14,24 +14,21 @@ trait HasApiFeatures
 
     public Response $apiResponse;
 
-    public function apiAccount(Account $account)
-    {
-        return $account;
-    }
+    public Account $apiAccount;
 
     public function apiMapper()
     {
         return new ApiDataMapperProxy($this->canonical);
     }
 
-    // Queries an order.
     public function apiQueryMarketData(): ApiResponse
     {
         $this->apiProperties = $this->apiMapper()->prepareQueryMarketDataProperties($this);
-        $this->apiResponse = $this->apiAccount()->withApi()->getExchangeInformation($this->apiProperties);
+        $this->apiResponse = $this->apiAccount->withApi()->getExchangeInformation($this->apiProperties);
 
-        dd('here');
-
-        return $this->apiMapper()->resolveOrderQueryResponse($this->apiResponse);
+        return new ApiResponse(
+            response: $this->apiResponse,
+            result: $this->apiMapper()->resolveQueryMarketDataResponse($this->apiResponse)
+        );
     }
 }
