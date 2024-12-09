@@ -36,6 +36,9 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
          * 3. We will create the symbol on each quote (even if we don't use them).
          * 4. We will upsert data from the market and from the leverage.
          */
+
+        foreach (Symbol::all() as $symbol) {
+        }
     }
 
     public function parseLeverageData()

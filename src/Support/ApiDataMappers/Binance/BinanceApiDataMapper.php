@@ -3,15 +3,15 @@
 namespace Nidavellir\Mjolnir\Support\ApiDataMappers\Binance;
 
 use Nidavellir\Mjolnir\Abstracts\BaseDataMapper;
-use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsOrderQuery;
-use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsLeverageBracketsQuery;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsExchangeInformationQuery;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsLeverageBracketsQuery;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsOrderQuery;
 
 class BinanceApiDataMapper extends BaseDataMapper
 {
     use MapsExchangeInformationQuery;
-    use MapsOrderQuery;
     use MapsLeverageBracketsQuery;
+    use MapsOrderQuery;
 
     /**
      * Returns the well formed base symbol with the quote on it.

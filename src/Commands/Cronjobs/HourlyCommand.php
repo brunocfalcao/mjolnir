@@ -2,18 +2,17 @@
 
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
-use Illuminate\Support\Str;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Nidavellir\Thor\Models\Symbol;
 use Illuminate\Support\Facades\File;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\TradingPair;
-use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertSymbolJob;
-use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertExchangeSymbolsJob;
-use Nidavellir\Mjolnir\Jobs\Processes\Hourly\QueryExchangeMarketDataJob;
+use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Jobs\Processes\Hourly\QueryExchangeLeverageBracketsJob;
+use Nidavellir\Mjolnir\Jobs\Processes\Hourly\QueryExchangeMarketDataJob;
+use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertExchangeSymbolsJob;
+use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertSymbolJob;
+use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\TradingPair;
 
 class HourlyCommand extends Command
 {
@@ -77,7 +76,7 @@ class HourlyCommand extends Command
                 'class' => UpsertExchangeSymbolsJob::class,
                 'queue' => 'cronjobs',
                 'arguments' => [
-                    'apiSystemId' => $exchange->id
+                    'apiSystemId' => $exchange->id,
                 ],
                 'index' => 2,
                 'block_uuid' => $blockUuid,

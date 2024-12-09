@@ -4,7 +4,6 @@ namespace Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests;
 
 use GuzzleHttp\Psr7\Response;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
-use Nidavellir\Thor\Models\Order;
 
 trait MapsLeverageBracketsQuery
 {
