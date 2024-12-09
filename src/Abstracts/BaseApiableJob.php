@@ -31,6 +31,7 @@ abstract class BaseApiableJob extends BaseQueuableJob
 
         try {
             // Verify if there is a return result, if so, assign it to $result.
+
             $this->result = $this->computeApiable();
 
             // Result is a Guzzle Response.

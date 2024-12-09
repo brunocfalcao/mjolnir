@@ -2,15 +2,10 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\Hourly;
 
-use Nidavellir\Thor\Models\Symbol;
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\TradingPair;
-use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
-use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
-use Nidavellir\Mjolnir\Abstracts\BaseApiExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
+use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\Symbol;
 
 class UpsertExchangeSymbolsJob extends BaseQueuableJob
 {
@@ -31,19 +26,47 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
 
     public function compute()
     {
-        $marketDataCoreJobQueue = $this->coreJobQueue->getByCanonical('market-data:' . $this->apiSystem->canonical)->first();
+        $parsedMarketData = $this->parseMarketData();
+        $parsedLeverageData = $this->parseLeverageData();
+
+        /**
+         * Time to upsert symbol to be created as an exchange symbol.
+         * 1. We will iterate each symbol.
+         * 2. We will find that symbol in the market data.
+         * 3. We will create the symbol on each quote (even if we don't use them).
+         * 4. We will upsert data from the market and from the leverage.
+         */
+    }
+
+    public function parseLeverageData()
+    {
+        $marketDataCoreJobQueue = $this->coreJobQueue->getByCanonical('leverage-brackets:'.$this->apiSystem->canonical)->first();
+
+        $exchangeInformation = $marketDataCoreJobQueue->response;
+
+        $parsedLeverageData = collect(json_decode($exchangeInformation, true)['body']);
+
+        return $parsedLeverageData->mapWithKeys(function ($data) {
+            return [
+                $data['symbol'] => collect($data['brackets'])->map(function ($bracket) {
+                    return [
+                        'max' => $bracket['notionalCap'],
+                        'min' => $bracket['notionalFloor'],
+                        'leverage' => $bracket['initialLeverage'],
+                    ];
+                })->toArray(),
+            ];
+        })->toArray();
+    }
+
+    public function parseMarketData()
+    {
+        $marketDataCoreJobQueue = $this->coreJobQueue->getByCanonical('market-data:'.$this->apiSystem->canonical)->first();
 
         $exchangeInformation = $marketDataCoreJobQueue->response;
 
         $marketData = json_decode($exchangeInformation, true)['body'];
 
-        $parsedData = $this->parseMarketData($marketData);
-
-        dd($parsedData);
-    }
-
-    public function parseMarketData(array $marketData)
-    {
         // Transform the array into a Laravel collection for easier manipulation
         $marketDataCollection = collect($marketData['symbols']);
 
@@ -56,17 +79,14 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
 
             return [
                 'symbol' => $symbolData['symbol'],
-                'price_precision' => $symbolData['pricePrecision'],
-                'quantity_precision' => $symbolData['quantityPrecision'],
-                'min_notional' => $minNotional,
-                'tick_size' => $tickSize,
-                'token_information' => $symbolData, // Include all inner data of the symbol
+                'pricePrecision' => $symbolData['pricePrecision'],
+                'quantityPrecision' => $symbolData['quantityPrecision'],
+                'tickSize' => $tickSize,
+                'minNotional' => $minNotional,
             ];
         });
 
-        // Convert the collection back to an array
-        $finalArray = $transformedData->toArray();
-
-        return $finalArray;
+        // Convert the collection back to a JSON string
+        return $transformedData->toJson();
     }
 }
