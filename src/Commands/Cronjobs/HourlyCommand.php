@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Jobs\Processes\Hourly\QueryExchangeLeverageBracketsJob;
 use Nidavellir\Mjolnir\Jobs\Processes\Hourly\QueryExchangeMarketDataJob;
 use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertExchangeSymbolsJob;
-use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertSymbolJob;
+use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertSymbolsJob;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\TradingPair;
@@ -31,7 +31,7 @@ class HourlyCommand extends Command
         // Upsert Symbols.
         foreach (TradingPair::all()->take(1) as $tradingPair) {
             CoreJobQueue::create([
-                'class' => UpsertSymbolJob::class,
+                'class' => UpsertSymbolsJob::class,
                 'queue' => 'cronjobs',
 
                 'arguments' => [

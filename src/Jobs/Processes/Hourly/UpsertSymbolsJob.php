@@ -9,7 +9,7 @@ use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\Symbol;
 use Nidavellir\Thor\Models\TradingPair;
 
-class UpsertSymbolJob extends BaseApiableJob
+class UpsertSymbolsJob extends BaseApiableJob
 {
     public int $cmcId;
 

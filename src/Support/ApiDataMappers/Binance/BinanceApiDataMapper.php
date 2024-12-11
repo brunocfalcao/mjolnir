@@ -39,8 +39,8 @@ class BinanceApiDataMapper extends BaseDataMapper
         foreach ($availableQuoteCurrencies as $quoteCurrency) {
             if (str_ends_with($token, $quoteCurrency)) {
                 return [
-                    str_replace($quoteCurrency, '', $token),
-                    $quoteCurrency,
+                    'base' => str_replace($quoteCurrency, '', $token),
+                    'quote' => $quoteCurrency,
                 ];
             }
         }
