@@ -2,12 +2,12 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\Hourly;
 
-use Nidavellir\Thor\Models\Quote;
-use Nidavellir\Thor\Models\Symbol;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
+use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\ExchangeSymbol;
+use Nidavellir\Thor\Models\Quote;
+use Nidavellir\Thor\Models\Symbol;
 
 class UpsertExchangeSymbolsJob extends BaseQueuableJob
 {
@@ -38,9 +38,8 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
          * 3. We will create the symbol on each quote (even if we don't use them).
          * 4. We will upsert data from the market and from the leverage.
          */
-
-        foreach ($parsedMarketData as $exchangeTradingPair) {
-            $tradingPair = $this->dataMapper->identifyBaseAndQuote($exchangeTradingPair['symbol']);
+        foreach ($parsedMarketData as $pair => $exchangeTradingPair) {
+            $tradingPair = $this->dataMapper->identifyBaseAndQuote($pair);
             $parsedTradingPair = $this->dataMapper->baseWithQuote($tradingPair['base'], $tradingPair['quote']);
 
             // Check if we have that symbol on our database.
@@ -50,7 +49,7 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
             if ($symbol) {
                 $data = [
                     'symbol_id' => $symbol->id,
-                    'quote_id'  => $quote->id,
+                    'quote_id' => $quote->id,
                     'api_system_id' => $this->apiSystem->id,
                     'is_upsertable' => true,
                     'price_precision' => $exchangeTradingPair['pricePrecision'],
@@ -58,23 +57,23 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
                     'min_notional' => $exchangeTradingPair['minNotional'],
                     'tick_size' => $exchangeTradingPair['tickSize'],
                     'symbol_information' => $exchangeTradingPair,
-                    'leverage_brackets' => $parsedMarketData[$parsedTradingPair]
+                    'leverage_brackets' => $parsedLeverageData[$parsedTradingPair],
                 ];
 
-                $exchangeSymbol = ExchangeSymbol
-                    ::where('symbol_id', $symbol->id)
+                $exchangeSymbol = ExchangeSymbol::where('symbol_id', $symbol->id)
                     ->where('quote_id', $quote->id)
                     ->where('api_system_id', $this->apiSystem->id)
                     ->first();
 
                 if ($exchangeSymbol) {
-                    echo 'Updating ' . $symbol->token . '/' . $quote->canonical . PHP_EOL;
+                    echo 'Updating '.$symbol->token.'/'.$quote->canonical.PHP_EOL;
 
                     $exchangeSymbol->update($data);
-                    continue;
-                };
 
-                echo 'Creating ' . $symbol->token . '/' . $quote->canonical . PHP_EOL;
+                    continue;
+                }
+
+                echo 'Creating '.$symbol->token.'/'.$quote->canonical.PHP_EOL;
 
                 ExchangeSymbol::create([
                     'symbol_id' => $symbol->id,
@@ -122,7 +121,7 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
         // Transform the array into a Laravel collection for easier manipulation
         $marketDataCollection = collect($marketData['symbols']);
 
-        $transformedData = $marketDataCollection->map(function ($symbolData) {
+        $transformedData = $marketDataCollection->mapWithKeys(function ($symbolData) {
             // Extract the filters array for specific keys
             $filters = collect($symbolData['filters']);
 
@@ -130,15 +129,21 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
             $tickSize = $filters->firstWhere('filterType', 'PRICE_FILTER')['tickSize'] ?? null;
 
             return [
-                'symbol' => $symbolData['symbol'],
-                'pricePrecision' => $symbolData['pricePrecision'],
-                'quantityPrecision' => $symbolData['quantityPrecision'],
-                'tickSize' => $tickSize,
-                'minNotional' => $minNotional,
+                $symbolData['symbol'] => [
+                    'pricePrecision' => $symbolData['pricePrecision'],
+                    'quantityPrecision' => $symbolData['quantityPrecision'],
+                    'tickSize' => $tickSize,
+                    'minNotional' => $minNotional,
+                ],
             ];
         });
 
-        // Convert the collection back to a JSON string
-        return $transformedData->toArray();
+        // Filter out symbols with underscores in their keys
+        $filteredData = $transformedData->filter(function ($value, $key) {
+            return strpos($key, '_') === false;
+        });
+
+        // Convert the filtered collection to an array
+        return $filteredData->toArray();
     }
 }

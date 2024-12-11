@@ -24,12 +24,13 @@ class HourlyCommand extends Command
     {
         File::put(storage_path('logs/laravel.log'), '');
         DB::table('core_job_queue')->truncate();
+        DB::table('exchange_symbols')->truncate();
         DB::table('rate_limits')->truncate();
 
         $blockUuid = (string) Str::uuid();
 
         // Upsert Symbols.
-        foreach (TradingPair::all()->take(1) as $tradingPair) {
+        foreach (TradingPair::all() as $tradingPair) {
             CoreJobQueue::create([
                 'class' => UpsertSymbolsJob::class,
                 'queue' => 'cronjobs',

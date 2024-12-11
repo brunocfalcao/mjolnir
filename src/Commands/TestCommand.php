@@ -5,10 +5,9 @@ namespace Nidavellir\Mjolnir\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertExchangeSymbolsJob;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertExchangeSymbolsJob;
-use Nidavellir\Mjolnir\Jobs\Processes\Hourly\QueryExchangeLeverageBracketsJob;
 
 class TestCommand extends Command
 {
@@ -27,7 +26,7 @@ class TestCommand extends Command
         $coreJobQueue = CoreJobQueue::create([
             'class' => UpsertExchangeSymbolsJob::class,
             'arguments' => [
-                'apiSystemId' => 1
+                'apiSystemId' => 1,
             ],
             'index' => 1,
             'queue' => 'sync',
@@ -36,7 +35,7 @@ class TestCommand extends Command
         // Lets tweak the 2 market data and leverage brackes to our purpose.
         CoreJobQueue::whereNotNull('canonical')->update([
             'block_uuid' => $coreJobQueue->block_uuid,
-            'index' => 1
+            'index' => 1,
         ]);
 
         CoreJobQueue::dispatch();
