@@ -4,9 +4,9 @@ namespace Nidavellir\Mjolnir\Support\ValueObjects;
 
 class ApiCredentials
 {
-    public array $credentials;
+    public ?array $credentials;
 
-    public function __construct(array $credentials = [])
+    public function __construct(?array $credentials = [])
     {
         $this->credentials = $credentials;
     }

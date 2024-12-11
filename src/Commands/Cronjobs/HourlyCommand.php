@@ -84,6 +84,13 @@ class HourlyCommand extends Command
             ]);
         }
 
+        /**
+         * The UpsertExchangeSymbolsJob, when it's finished, will
+         * create new core jobs for the indicators. Each exchange symbol
+         * will have its own block_uuid with fetch indicator and calculate
+         * trading side.
+         */
+
         return 0;
     }
 }

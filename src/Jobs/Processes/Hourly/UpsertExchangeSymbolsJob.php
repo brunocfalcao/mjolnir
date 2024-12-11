@@ -66,14 +66,10 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
                     ->first();
 
                 if ($exchangeSymbol) {
-                    echo 'Updating '.$symbol->token.'/'.$quote->canonical.PHP_EOL;
-
                     $exchangeSymbol->update($data);
 
                     continue;
                 }
-
-                echo 'Creating '.$symbol->token.'/'.$quote->canonical.PHP_EOL;
 
                 ExchangeSymbol::create([
                     'symbol_id' => $symbol->id,
