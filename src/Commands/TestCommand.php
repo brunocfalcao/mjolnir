@@ -5,10 +5,8 @@ namespace Nidavellir\Mjolnir\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertExchangeSymbolsJob;
 use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertFearAndGreedIndexJob;
+use Nidavellir\Thor\Models\CoreJobQueue;
 
 class TestCommand extends Command
 {

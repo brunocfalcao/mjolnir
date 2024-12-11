@@ -2,11 +2,11 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\Hourly;
 
+use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
+use Nidavellir\Mjolnir\Abstracts\BaseApiExceptionHandler;
+use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\TradeConfiguration;
-use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
-use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
-use Nidavellir\Mjolnir\Abstracts\BaseApiExceptionHandler;
 
 class UpsertFearAndGreedIndexJob extends BaseApiableJob
 {

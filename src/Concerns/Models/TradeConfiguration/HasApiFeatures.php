@@ -3,11 +3,10 @@
 namespace Nidavellir\Mjolnir\Concerns\Models\TradeConfiguration;
 
 use GuzzleHttp\Psr7\Response;
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Mjolnir\Support\ValueObjects\ApiResponse;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
-use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
+use Nidavellir\Mjolnir\Support\ValueObjects\ApiResponse;
+use Nidavellir\Thor\Models\Account;
 
 trait HasApiFeatures
 {
