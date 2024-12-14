@@ -10,7 +10,7 @@ class ADXIndicator extends BaseIndicator
 
     public string $type = 'validation';
 
-    public function isValid()
+    public function isValid(): bool
     {
         // Should be >= 25 to return true.
         return $this->data['value'][0] >= 25;

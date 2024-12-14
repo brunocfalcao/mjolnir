@@ -31,8 +31,18 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
 
     public function compute()
     {
-        $parsedMarketData = $this->parseMarketData();
-        $parsedLeverageData = $this->parseLeverageData();
+        // Remove non perpetuals trading pairs.
+        $marketData = collect(
+            $this->coreJobQueue
+                ->getByCanonical('market-data:'.$this->apiSystem->canonical)->first()->response
+        )->keyBy('symbol')->filter(function ($value, $key) {
+            return strpos($key, '_') === false;
+        });
+
+        $leverageData = collect(
+            $this->coreJobQueue
+                ->getByCanonical('leverage-data:'.$this->apiSystem->canonical)->first()->response
+        )->keyBy('symbol');
 
         /**
          * Time to upsert symbol to be created as an exchange symbol.
@@ -41,7 +51,7 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
          * 3. We will create the symbol on each quote (even if we don't use them).
          * 4. We will upsert data from the market and from the leverage.
          */
-        foreach ($parsedMarketData as $pair => $exchangeTradingPair) {
+        foreach ($marketData as $pair => $exchangeTradingPair) {
             $tradingPair = $this->dataMapper->identifyBaseAndQuote($pair);
             $parsedTradingPair = $this->dataMapper->baseWithQuote($tradingPair['base'], $tradingPair['quote']);
 
@@ -50,39 +60,23 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
             $quote = Quote::firstWhere('canonical', $tradingPair['quote']);
 
             if ($symbol) {
-                $data = [
-                    'symbol_id' => $symbol->id,
-                    'quote_id' => $quote->id,
-                    'api_system_id' => $this->apiSystem->id,
-                    'is_upsertable' => true,
-                    'price_precision' => $exchangeTradingPair['pricePrecision'],
-                    'quantity_precision' => $exchangeTradingPair['quantityPrecision'],
-                    'min_notional' => $exchangeTradingPair['minNotional'],
-                    'tick_size' => $exchangeTradingPair['tickSize'],
-                    'symbol_information' => $exchangeTradingPair,
-                    'leverage_brackets' => $parsedLeverageData[$parsedTradingPair],
-                ];
-
-                $exchangeSymbol = ExchangeSymbol::where('symbol_id', $symbol->id)
-                    ->where('quote_id', $quote->id)
-                    ->where('api_system_id', $this->apiSystem->id)
-                    ->first();
-
-                if ($exchangeSymbol) {
-                    $exchangeSymbol->update($data);
-                } else {
-                    $exchangeSymbol = ExchangeSymbol::create([
+                $exchangeSymbol = ExchangeSymbol::updateOrCreate(
+                    [
                         'symbol_id' => $symbol->id,
-                        'trade_configuration_id' => TradeConfiguration::active()->first()->id,
-                        'quote_id' => Quote::firstWhere('canonical', $tradingPair['quote'])->id,
+                        'quote_id' => $quote->id,
                         'api_system_id' => $this->apiSystem->id,
+                    ],
+                    [
+                        'trade_configuration_id' => TradeConfiguration::default()->first()->id,
                         'is_upsertable' => true,
                         'price_precision' => $exchangeTradingPair['pricePrecision'],
                         'quantity_precision' => $exchangeTradingPair['quantityPrecision'],
                         'min_notional' => $exchangeTradingPair['minNotional'],
                         'tick_size' => $exchangeTradingPair['tickSize'],
-                    ]);
-                }
+                        'symbol_information' => $exchangeTradingPair,
+                        'leverage_brackets' => $leverageData[$parsedTradingPair],
+                    ]
+                );
 
                 // Add CoreJobQueue to update indicator data, and to decide trade direction.
                 $blockUuid = (string) Str::uuid();
@@ -111,63 +105,5 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
                 ]);
             }
         }
-    }
-
-    public function parseLeverageData()
-    {
-        $marketDataCoreJobQueue = $this->coreJobQueue->getByCanonical('leverage-brackets:'.$this->apiSystem->canonical)->first();
-
-        $exchangeInformation = $marketDataCoreJobQueue->response;
-
-        $parsedLeverageData = collect(json_decode($exchangeInformation, true)['body']);
-
-        return $parsedLeverageData->mapWithKeys(function ($data) {
-            return [
-                $data['symbol'] => collect($data['brackets'])->map(function ($bracket) {
-                    return [
-                        'max' => $bracket['notionalCap'],
-                        'min' => $bracket['notionalFloor'],
-                        'leverage' => $bracket['initialLeverage'],
-                    ];
-                })->toArray(),
-            ];
-        })->toArray();
-    }
-
-    public function parseMarketData()
-    {
-        $marketDataCoreJobQueue = $this->coreJobQueue->getByCanonical('market-data:'.$this->apiSystem->canonical)->first();
-
-        $exchangeInformation = $marketDataCoreJobQueue->response;
-
-        $marketData = json_decode($exchangeInformation, true)['body'];
-
-        // Transform the array into a Laravel collection for easier manipulation
-        $marketDataCollection = collect($marketData['symbols']);
-
-        $transformedData = $marketDataCollection->mapWithKeys(function ($symbolData) {
-            // Extract the filters array for specific keys
-            $filters = collect($symbolData['filters']);
-
-            $minNotional = $filters->firstWhere('filterType', 'MIN_NOTIONAL')['notional'] ?? null;
-            $tickSize = $filters->firstWhere('filterType', 'PRICE_FILTER')['tickSize'] ?? null;
-
-            return [
-                $symbolData['symbol'] => [
-                    'pricePrecision' => $symbolData['pricePrecision'],
-                    'quantityPrecision' => $symbolData['quantityPrecision'],
-                    'tickSize' => $tickSize,
-                    'minNotional' => $minNotional,
-                ],
-            ];
-        });
-
-        // Filter out symbols with underscores in their keys
-        $filteredData = $transformedData->filter(function ($value, $key) {
-            return strpos($key, '_') == false;
-        });
-
-        // Convert the filtered collection to an array
-        return $filteredData->toArray();
     }
 }

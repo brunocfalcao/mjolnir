@@ -2,7 +2,6 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\Hourly;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseApiExceptionHandler;
@@ -47,8 +46,13 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
             $indicator = new $indicatorClass;
             $continue = true;
 
-            // Load data into the indicator.
-            $indicator->load($indicatorData[$indicatorModel->canonical]['result'], $indicatorData);
+            if (! array_key_exists($indicatorModel->canonical, $indicatorData)) {
+                // Load all data into the indicator. It's a computed indicator.
+                $indicator->load($indicatorData);
+            } else {
+                // Load specific indicator data.
+                $indicator->load($indicatorData[$indicatorModel->canonical]['result']);
+            }
 
             switch ($indicator->type) {
                 case 'validation':
@@ -136,14 +140,11 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
         // Only proceed if there is a change in direction or timeframe
         if ($currentDirection != $newSide || $currentTimeFrame != $this->timeFrame) {
-            DB::transaction(function () use ($newSide) {
-                $this->exchangeSymbol->lockForUpdate();
-                $this->exchangeSymbol->update([
-                    'direction' => $newSide,
-                    'indicator_timeframe' => $this->timeFrame,
-                    'is_tradeable' => true,
-                ]);
-            });
+            $this->exchangeSymbol->update([
+                'direction' => $newSide,
+                'indicator_timeframe' => $this->timeFrame,
+                'is_tradeable' => true,
+            ]);
         }
     }
 

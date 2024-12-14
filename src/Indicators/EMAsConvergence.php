@@ -6,7 +6,7 @@ use Nidavellir\Mjolnir\Abstracts\BaseIndicator;
 
 class EMAsConvergence extends BaseIndicator
 {
-    public string $endpoint = 'ema';
+    public string $endpoint = 'emas-convergence';
 
     public string $type = 'direction';
 
@@ -19,7 +19,7 @@ class EMAsConvergence extends BaseIndicator
     public function direction(): ?string
     {
         // Collect only the EMA indicators from the data
-        $emas = collect($this->totalIndicatorsData)
+        $emas = collect($this->data)
             ->filter(fn ($indicator, $key) => str_starts_with($key, 'ema-'));
 
         if ($emas->count() < 2) {

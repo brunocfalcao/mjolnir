@@ -70,7 +70,7 @@ class HourlyCommand extends Command
                 'arguments' => [
                     'apiSystemId' => $exchange->id,
                 ],
-                'canonical' => 'leverage-brackets:'.$exchange->canonical,
+                'canonical' => 'leverage-data:'.$exchange->canonical,
                 'index' => 1,
                 'block_uuid' => $blockUuid,
             ]);
