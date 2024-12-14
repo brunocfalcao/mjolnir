@@ -8,7 +8,9 @@ class BinanceRateLimiter extends BaseRateLimiter
 {
     public array $forbidHttpCodes = [418, 403, 401];
 
-    public array $rateLimitHttpCodes = [429];
+    public array $ignorableHttpCodes = ['404'];
+
+    public array $retryableHttpCodes = ['503'];
 
     public int $rateLimitbackoff = 20;
 }

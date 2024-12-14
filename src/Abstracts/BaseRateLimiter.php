@@ -10,9 +10,15 @@ use Nidavellir\Thor\Models\RateLimit;
 
 abstract class BaseRateLimiter
 {
-    public array $forbidHttpCodes;
+    public ?array $forbidHttpCodes = [];
 
-    public array $rateLimitHttpCodes;
+    public ?array $rateLimitHttpCodes = [];
+
+    public ?array $ignorableHttpCodes = [];
+
+    public ?array $retryableHttpCodes = [];
+
+    public ?int $rateLimitbackoff = null;
 
     // This is the default worker server backoff seconds recorded on the rate_limits.
     public int $rateLimitbackoffSeconds = 5;
