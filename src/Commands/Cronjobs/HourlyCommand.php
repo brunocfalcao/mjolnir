@@ -12,6 +12,7 @@ use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertExchangeSymbolsJob;
 use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertSymbolsJob;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\Symbol;
 use Nidavellir\Thor\Models\TradingPair;
 
 class HourlyCommand extends Command
@@ -31,16 +32,20 @@ class HourlyCommand extends Command
 
         // Upsert Symbols.
         foreach (TradingPair::all() as $tradingPair) {
-            CoreJobQueue::create([
-                'class' => UpsertSymbolsJob::class,
-                'queue' => 'cronjobs',
+            // Verify if the symbol is already on the database.
 
-                'arguments' => [
-                    'cmcId' => $tradingPair->cmc_id,
-                ],
-                'index' => 1,
-                'block_uuid' => $blockUuid,
-            ]);
+            if (! Symbol::where('cmc_id', $tradingPair->cmc_id)->exists()) {
+                CoreJobQueue::create([
+                    'class' => UpsertSymbolsJob::class,
+                    'queue' => 'cronjobs',
+
+                    'arguments' => [
+                        'cmcId' => $tradingPair->cmc_id,
+                    ],
+                    'index' => 1,
+                    'block_uuid' => $blockUuid,
+                ]);
+            }
         }
 
         // Exchange Information.

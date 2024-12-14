@@ -28,6 +28,8 @@ class UpsertSymbolsJob extends BaseApiableJob
             'cmc_id' => $this->cmcId,
         ], [
             'token' => $tradingPair->token,
+            'exchange_canonicals' => $tradingPair->exchange_canonicals,
+            'category_canonical' => $tradingPair->category_canonical,
         ]);
 
         $symbol->apiAccount = Account::admin('coinmarketcap');

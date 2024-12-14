@@ -20,7 +20,9 @@ class UpsertFearAndGreedIndexJob extends BaseApiableJob
     {
         TradeConfiguration::all()->each(function ($tradeConfiguration) {
             $response = $tradeConfiguration->apiFngQuery();
-            $tradeConfiguration->update(['fng_index' => $response->result['fng_index']]);
+            $tradeConfiguration->update([
+                'fng_index' => $response->result['fng_index'],
+            ]);
         });
     }
 }

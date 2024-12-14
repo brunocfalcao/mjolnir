@@ -2,12 +2,15 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\Hourly;
 
+use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
 use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\Quote;
 use Nidavellir\Thor\Models\Symbol;
+use Nidavellir\Thor\Models\TradeConfiguration;
 
 class UpsertExchangeSymbolsJob extends BaseQueuableJob
 {
@@ -67,19 +70,44 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
 
                 if ($exchangeSymbol) {
                     $exchangeSymbol->update($data);
-
-                    continue;
+                } else {
+                    $exchangeSymbol = ExchangeSymbol::create([
+                        'symbol_id' => $symbol->id,
+                        'trade_configuration_id' => TradeConfiguration::active()->first()->id,
+                        'quote_id' => Quote::firstWhere('canonical', $tradingPair['quote'])->id,
+                        'api_system_id' => $this->apiSystem->id,
+                        'is_upsertable' => true,
+                        'price_precision' => $exchangeTradingPair['pricePrecision'],
+                        'quantity_precision' => $exchangeTradingPair['quantityPrecision'],
+                        'min_notional' => $exchangeTradingPair['minNotional'],
+                        'tick_size' => $exchangeTradingPair['tickSize'],
+                    ]);
                 }
 
-                ExchangeSymbol::create([
-                    'symbol_id' => $symbol->id,
-                    'quote_id' => Quote::firstWhere('canonical', $tradingPair['quote'])->id,
-                    'api_system_id' => $this->apiSystem->id,
-                    'is_upsertable' => true,
-                    'price_precision' => $exchangeTradingPair['pricePrecision'],
-                    'quantity_precision' => $exchangeTradingPair['quantityPrecision'],
-                    'min_notional' => $exchangeTradingPair['minNotional'],
-                    'tick_size' => $exchangeTradingPair['tickSize'],
+                // Add CoreJobQueue to update indicator data, and to decide trade direction.
+
+                $blockUuid = (string) Str::uuid();
+
+                CoreJobQueue::create([
+                    'class' => QueryExchangeSymbolIndicatorJob::class,
+                    'queue' => 'cronjobs',
+
+                    'arguments' => [
+                        'exchangeSymbolId' => $exchangeSymbol->id,
+                    ],
+                    'index' => 1,
+                    'block_uuid' => $blockUuid,
+                ]);
+
+                CoreJobQueue::create([
+                    'class' => AssessExchangeSymbolDirectionJob::class,
+                    'queue' => 'cronjobs',
+
+                    'arguments' => [
+                        'exchangeSymbolId' => $exchangeSymbol->id,
+                    ],
+                    'index' => 2,
+                    'block_uuid' => $blockUuid,
                 ]);
             }
         }
@@ -136,7 +164,7 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
 
         // Filter out symbols with underscores in their keys
         $filteredData = $transformedData->filter(function ($value, $key) {
-            return strpos($key, '_') === false;
+            return strpos($key, '_') == false;
         });
 
         // Convert the filtered collection to an array

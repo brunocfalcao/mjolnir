@@ -5,7 +5,7 @@ namespace Nidavellir\Mjolnir\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertFearAndGreedIndexJob;
+use Nidavellir\Mjolnir\Jobs\Processes\Hourly\QueryExchangeSymbolIndicatorJob;
 use Nidavellir\Thor\Models\CoreJobQueue;
 
 class TestCommand extends Command
@@ -21,7 +21,10 @@ class TestCommand extends Command
         DB::table('rate_limits')->truncate();
 
         CoreJobQueue::create([
-            'class' => UpsertFearAndGreedIndexJob::class,
+            'class' => QueryExchangeSymbolIndicatorJob::class,
+            'arguments' => [
+                'exchangeSymbolId' => 1,
+            ],
             'queue' => 'cronjobs',
         ]);
 
