@@ -10,5 +10,5 @@ class CoinmarketCapRateLimiter extends BaseRateLimiter
 
     public array $rateLimitHttpCodes = [429];
 
-    public int $rateLimitbackoff = 60;
+    public int $rateLimitbackoffSeconds = 60;
 }

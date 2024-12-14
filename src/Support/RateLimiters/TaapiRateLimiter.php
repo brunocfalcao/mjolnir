@@ -8,5 +8,5 @@ class TaapiRateLimiter extends BaseRateLimiter
 {
     public array $forbidHttpCodes = [401, 402, 403];
 
-    public int $rateLimitbackoff = 5;
+    public int $rateLimitbackoffSeconds = 5;
 }

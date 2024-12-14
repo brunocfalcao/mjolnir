@@ -10,15 +10,13 @@ use Nidavellir\Thor\Models\RateLimit;
 
 abstract class BaseRateLimiter
 {
-    public ?array $forbidHttpCodes = [];
+    public array $forbidHttpCodes = [];
 
-    public ?array $rateLimitHttpCodes = [];
+    public array $rateLimitHttpCodes = [429];
 
-    public ?array $ignorableHttpCodes = [];
+    public array $ignorableHttpCodes = [];
 
-    public ?array $retryableHttpCodes = [];
-
-    public ?int $rateLimitbackoff = null;
+    public array $retryableHttpCodes = [];
 
     // This is the default worker server backoff seconds recorded on the rate_limits.
     public int $rateLimitbackoffSeconds = 5;
@@ -56,6 +54,13 @@ abstract class BaseRateLimiter
         $statusCode = $this->extractStatusCode($input);
 
         return $statusCode && in_array($statusCode, $this->forbidHttpCodes, true);
+    }
+
+    public function canBeRetried(RequestException|Response $input): bool
+    {
+        $statusCode = $this->extractStatusCode($input);
+
+        return $statusCode && in_array($statusCode, $this->retryableHttpCodes, true);
     }
 
     public function forbid(): void
@@ -100,7 +105,7 @@ abstract class BaseRateLimiter
             return $input->getResponse()->getStatusCode();
         }
 
-        return null; // No status code available.
+        return null;
     }
 
     public function isRateLimited()
@@ -141,7 +146,7 @@ abstract class BaseRateLimiter
     }
 
     // Assesses if with the response, we will now need to forbid or rate limit.
-    public function assessPollingLimit(Response $response)
+    public function shouldLimitNow(RequestException|Response $response)
     {
         $wasPolledLimited = false;
         if ($this->isNowRateLimited($response)) {
@@ -152,6 +157,10 @@ abstract class BaseRateLimiter
         if ($this->isNowForbidden($response)) {
             $wasPolledLimited = true;
             $this->forbid();
+        }
+
+        if ($this->canBeRetried($response)) {
+            $wasPolledLimited = true;
         }
 
         return $wasPolledLimited;

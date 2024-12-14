@@ -37,7 +37,7 @@ abstract class BaseApiableJob extends BaseQueuableJob
             // Result is a Guzzle Response.
             if ($this->result) {
                 if ($this->result instanceof Response) {
-                    $wasPolledLimited = $this->rateLimiter->assessPollingLimit($this->result);
+                    $isPolledLimited = $this->rateLimiter->shouldLimitNow($this->result);
 
                     if ($this->rateLimiter->isNowRateLimited($this->result)) {
                         $this->rateLimiter->throttle();
@@ -47,7 +47,14 @@ abstract class BaseApiableJob extends BaseQueuableJob
                         $this->rateLimiter->forbid();
                     }
 
-                    if ($wasPolledLimited) {
+                    if ($isPolledLimited) {
+                        /**
+                         * Allows the core job queue instance to be placed back to pending, but there will be a
+                         * backoff to all worker servers to pick this job again. This will (hopefully) allow
+                         * other worker server to pick the job. In case it's gracefully retry, then it's
+                         * okay too, since normally it will be a question of seconds before any worker
+                         * server to pick the job again.
+                         */
                         $this->coreJobQueue->updateToPending($this->rateLimiter->workerServerBackoffSeconds());
                     }
                 }
@@ -109,19 +116,9 @@ abstract class BaseApiableJob extends BaseQueuableJob
 
     public function handleRateLimitedBaseException(RequestException $exception)
     {
-        $isNowPollingLimited = false;
+        $isNowLimited = $this->rateLimiter->shouldLimitNow($exception);
 
-        if ($this->rateLimiter->isNowRateLimited($exception)) {
-            $retryAfter = $this->rateLimiter->throttle();
-            $isNowPollingLimited = true;
-        }
-
-        if ($this->rateLimiter->isNowForbidden($exception)) {
-            $this->rateLimiter->forbid();
-            $isNowPollingLimited = true;
-        }
-
-        if ($isNowPollingLimited) {
+        if ($isNowLimited) {
             $this->coreJobQueue->updateToPending($this->rateLimiter->workerServerBackoffSeconds());
 
             return true;
