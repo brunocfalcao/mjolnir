@@ -16,6 +16,8 @@ abstract class BaseApiClient
 
     protected ?Client $httpRequest = null;
 
+    protected ?ApiRequestLog $apiRequestLog = null;
+
     public function __construct(string $baseURL, ?ApiCredentials $credentials = null)
     {
         $this->baseURL = $baseURL;
@@ -40,11 +42,15 @@ abstract class BaseApiClient
                 'headers' => $this->getHeaders(),
             ];
 
-            if ($sendAsJson && strtoupper($apiRequest->method) !== 'GET') {
+            if ($sendAsJson && strtoupper($apiRequest->method) != 'GET') {
                 $options['json'] = $apiRequest->properties->toArray();
             } else {
                 $options['query'] = $apiRequest->properties->getOr('options', []);
             }
+
+            $logData['debug_data'] = $apiRequest->properties->getOr('debug', []);
+
+            $this->apiRequestLog = ApiRequestLog::create($logData);
 
             $response = $this->httpRequest->request(
                 $apiRequest->method,
@@ -56,7 +62,7 @@ abstract class BaseApiClient
             $logData['response'] = json_decode($response->getBody(), true);
             $logData['http_headers_returned'] = $response->getHeaders();
 
-            $this->logApiRequest($logData);
+            $this->updateRequestLogData($logData);
 
             return $response;
         } catch (RequestException $e) {
@@ -65,13 +71,13 @@ abstract class BaseApiClient
             $logData['response'] = $e->getResponse() ? (string) $e->getResponse()->getBody() : null;
             $logData['http_headers_returned'] = $e->getResponse() ? $e->getResponse()->getHeaders() : null;
 
-            $this->logApiRequest($logData);
+            $this->updateRequestLogData($logData);
 
             // Cascade exception so the e.g.: Core Job Queue can catch it.
             throw $e;
         } catch (\Throwable $e) {
             // Log the error log.
-            $this->logApiRequest(['error_message' => $e->getMessage().' (line '.$e->getLine().')']);
+            $this->updateRequestLogData(['error_message' => $e->getMessage().' (line '.$e->getLine().')']);
 
             // Cascade exception so the e.g.: Core Job Queue can catch it.
             throw $e;
@@ -91,9 +97,9 @@ abstract class BaseApiClient
         ]);
     }
 
-    protected function logApiRequest(array $logData)
+    protected function updateRequestLogData(array $logData)
     {
-        ApiRequestLog::create($logData);
+        $this->apiRequestLog->update($logData);
     }
 
     protected function buildQuery(string $path, array $properties = []): string

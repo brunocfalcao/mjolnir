@@ -42,6 +42,8 @@ class QueryExchangeSymbolIndicatorJob extends BaseApiableJob
         }
 
         $this->apiProperties = $this->apiDataMapper->prepareQueryIndicatorsProperties($this->exchangeSymbol, $this->timeframe);
+        $this->apiProperties->set('debug', ['core_job_queue_id' => $this->coreJobQueue->id]);
+
         $this->response = $this->apiAccount->withApi()->getIndicatorValues($this->apiProperties);
 
         $this->coreJobQueue->update([

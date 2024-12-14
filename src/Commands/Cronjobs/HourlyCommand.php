@@ -25,7 +25,8 @@ class HourlyCommand extends Command
     {
         File::put(storage_path('logs/laravel.log'), '');
         DB::table('core_job_queue')->truncate();
-        DB::table('exchange_symbols')->truncate();
+        DB::table('api_requests_log')->truncate();
+        //DB::table('exchange_symbols')->truncate();
         DB::table('rate_limits')->truncate();
 
         $blockUuid = (string) Str::uuid();

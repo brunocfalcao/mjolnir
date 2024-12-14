@@ -127,9 +127,12 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
             ]);
         } else {
             // End of the timeframes, and no conclusion reached.
+            // Don't change anything on the exchange symbol.
+            /*
             if ($this->exchangeSymbol->direction == null) {
                 $this->exchangeSymbol->update(['is_tradeable' => false]);
             }
+            */
         }
     }
 
