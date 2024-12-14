@@ -69,10 +69,14 @@ abstract class BaseQueuableJob extends BaseJob
             // Determine the serialized result
             $serializedResult = $this->serializeResult($this->result);
 
-            // Save the serialized result to the database
-            $this->coreJobQueue->update([
-                'response' => $serializedResult,
-            ]);
+            /**
+             * Update result, but only if it wasn't updated before.
+             */
+            if ($this->coreJobQueue->response == null) {
+                $this->coreJobQueue->update([
+                    'response' => $serializedResult,
+                ]);
+            }
         }
     }
 

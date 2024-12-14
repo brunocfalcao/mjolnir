@@ -85,7 +85,6 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
                 }
 
                 // Add CoreJobQueue to update indicator data, and to decide trade direction.
-
                 $blockUuid = (string) Str::uuid();
 
                 CoreJobQueue::create([
@@ -94,6 +93,7 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
 
                     'arguments' => [
                         'exchangeSymbolId' => $exchangeSymbol->id,
+                        'timeframe' => $exchangeSymbol->tradeConfiguration->indicator_timeframes[0],
                     ],
                     'index' => 1,
                     'block_uuid' => $blockUuid,
