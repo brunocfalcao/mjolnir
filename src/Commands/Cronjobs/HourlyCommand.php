@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Jobs\Processes\Hourly\QueryExchangeLeverageBracketsJob;
 use Nidavellir\Mjolnir\Jobs\Processes\Hourly\QueryExchangeMarketDataJob;
+use Nidavellir\Mjolnir\Jobs\Processes\Hourly\SyncAllSymbolsJob;
 use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertExchangeSymbolsJob;
 use Nidavellir\Mjolnir\Jobs\Processes\Hourly\UpsertSymbolsJob;
 use Nidavellir\Thor\Models\ApiSystem;
@@ -26,7 +27,8 @@ class HourlyCommand extends Command
         File::put(storage_path('logs/laravel.log'), '');
         DB::table('core_job_queue')->truncate();
         DB::table('api_requests_log')->truncate();
-        //DB::table('exchange_symbols')->truncate();
+        DB::table('symbols')->truncate();
+        DB::table('exchange_symbols')->truncate();
         DB::table('rate_limits')->truncate();
 
         $blockUuid = (string) Str::uuid();
@@ -39,7 +41,6 @@ class HourlyCommand extends Command
                 CoreJobQueue::create([
                     'class' => UpsertSymbolsJob::class,
                     'queue' => 'cronjobs',
-
                     'arguments' => [
                         'cmcId' => $tradingPair->cmc_id,
                     ],
@@ -48,6 +49,13 @@ class HourlyCommand extends Command
                 ]);
             }
         }
+
+        CoreJobQueue::create([
+            'class' => SyncAllSymbolsJob::class,
+            'queue' => 'cronjobs',
+            'index' => 2,
+            'block_uuid' => $blockUuid,
+        ]);
 
         // Exchange Information.
         foreach (ApiSystem::allExchanges() as $exchange) {

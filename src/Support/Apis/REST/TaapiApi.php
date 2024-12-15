@@ -45,7 +45,7 @@ class TaapiApi
                 'interval' => $properties->get('options.interval'),
                 'indicators' => $properties->get('options.indicators'),
             ],
-            'debug' => $properties->getOr('debug', [])
+            'debug' => $properties->getOr('debug', []),
         ];
 
         $apiRequest = ApiRequest::make(

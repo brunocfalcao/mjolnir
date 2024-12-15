@@ -26,6 +26,8 @@ abstract class BaseApiableJob extends BaseQueuableJob
 
         // Are we already polling limited?
         if ($this->isPollingLimited()) {
+            $this->coreJobQueue->updateToPending($this->rateLimiter->workerServerBackoffSeconds());
+
             return;
         }
 

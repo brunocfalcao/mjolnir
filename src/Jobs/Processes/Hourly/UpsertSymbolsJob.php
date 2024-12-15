@@ -32,9 +32,8 @@ class UpsertSymbolsJob extends BaseApiableJob
             'category_canonical' => $tradingPair->category_canonical,
         ]);
 
-        $symbol->apiAccount = Account::admin('coinmarketcap');
-
+        //$symbol->apiAccount = Account::admin('coinmarketcap');
         // Sync symbol with coinmarketcap data.
-        $apiResponse = $symbol->apiSyncMarketData();
+        //$apiResponse = $symbol->apiSyncMarketData();
     }
 }
