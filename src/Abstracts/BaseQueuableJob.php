@@ -12,19 +12,11 @@ abstract class BaseQueuableJob extends BaseJob
 
     public CoreJobQueue $coreJobQueue;
 
+    // Max retries for a "always pending" job. Then updates to "failed".
+    public int $retries = 3;
+
     public function handle()
     {
-        /**
-         * The refresh method will be triggered if a job is being retried.
-         * This allows us, for instance, to re-run a specific computation
-         * on the child job to refresh timestamps, variables, information.
-         *
-         * This method is only called after a first execution of the job.
-         */
-        if (method_exists($this, 'refresh') && $this->coreJobQueue->shouldBeRefreshed()) {
-            $this->refresh();
-        }
-
         try {
             $this->coreJobQueue->updateToRunning();
             $this->coreJobQueue->startDuration();

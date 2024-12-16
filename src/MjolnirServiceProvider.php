@@ -3,8 +3,10 @@
 namespace Nidavellir\Mjolnir;
 
 use Illuminate\Support\ServiceProvider;
+use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchAccountPositionsCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\HourlyCommand;
+use Nidavellir\Mjolnir\Commands\Debug\GetAccountBalanceCommand;
 use Nidavellir\Mjolnir\Commands\TestCommand;
 
 class MjolnirServiceProvider extends ServiceProvider
@@ -21,6 +23,9 @@ class MjolnirServiceProvider extends ServiceProvider
                 DispatchCommand::class,
                 TestCommand::class,
                 HourlyCommand::class,
+                DispatchAccountPositionsCommand::class,
+
+                GetAccountBalanceCommand::class,
             ]);
         }
     }

@@ -12,9 +12,6 @@ abstract class BaseApiableJob extends BaseQueuableJob
 
     public ?BaseApiExceptionHandler $exceptionHandler;
 
-    // Max retries for a "always pending" job. Then updates to "failed".
-    public int $retries = 3;
-
     protected function compute()
     {
         $this->checkApiRequiredClasses();
@@ -33,7 +30,6 @@ abstract class BaseApiableJob extends BaseQueuableJob
 
         try {
             // Verify if there is a return result, if so, assign it to $result.
-
             $this->result = $this->computeApiable();
 
             // Result is a Guzzle Response.
@@ -121,6 +117,13 @@ abstract class BaseApiableJob extends BaseQueuableJob
         $isNowLimited = $this->rateLimiter->shouldLimitNow($exception);
 
         if ($isNowLimited) {
+            /**
+             * Allows the core job queue instance to be placed back to pending, but there will be a
+             * backoff to all worker servers to pick this job again. This will (hopefully) allow
+             * other worker server to pick the job. In case it's gracefully retry, then it's
+             * okay too, since normally it will be a question of seconds before any worker
+             * server to pick the job again.
+             */
             $this->coreJobQueue->updateToPending($this->rateLimiter->workerServerBackoffSeconds());
 
             return true;

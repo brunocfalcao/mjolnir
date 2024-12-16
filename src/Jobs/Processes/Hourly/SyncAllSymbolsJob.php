@@ -3,15 +3,14 @@
 namespace Nidavellir\Mjolnir\Jobs\Processes\Hourly;
 
 use GuzzleHttp\Psr7\Response;
-use Nidavellir\Thor\Models\Symbol;
-use Nidavellir\Thor\Models\Account;
-use Illuminate\Support\Facades\Crypt;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
+use Nidavellir\Mjolnir\Abstracts\BaseApiExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\ApiProxy;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
-use Nidavellir\Mjolnir\Abstracts\BaseApiExceptionHandler;
-use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
+use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\Symbol;
 
 class SyncAllSymbolsJob extends BaseApiableJob
 {
