@@ -8,7 +8,7 @@ use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 
-class DispatchNewAccountPositionJob extends BaseApiableJob
+class FindBestPositionTokenJob extends BaseApiableJob
 {
     public Account $account;
 
@@ -24,5 +24,7 @@ class DispatchNewAccountPositionJob extends BaseApiableJob
         $this->exceptionHandler = BaseApiExceptionHandler::make($this->apiSystem->canonical);
     }
 
-    public function computeApiable() {}
+    public function computeApiable()
+    {
+    }
 }
