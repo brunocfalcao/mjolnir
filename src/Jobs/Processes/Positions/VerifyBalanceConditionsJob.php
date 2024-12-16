@@ -2,9 +2,11 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
+use Illuminate\Support\Str;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Mjolnir\Abstracts\BaseApiExceptionHandler;
@@ -45,6 +47,46 @@ class VerifyBalanceConditionsJob extends BaseApiableJob
         Position::create([
             'account_id' => $this->account->id
         ]);
+
+        $blockUuid = (string) Str::uuid();
+
+
+        /**
+        if (! $this->initializeExchangeSymbol()) {
+            return;
+        }
+        if (! $this->calculatePositionAmount()) {
+            return;
+        }
+        if (! $this->definePositionSide()) {
+            return;
+        }
+        if (! $this->calculateLeverage()) {
+            return;
+        }
+        if (! $this->meetsMinimumNotional()) {
+            return;
+        }
+        $this->updateMarginTypeToCrossed();
+        $this->updateTokenLeverageRatio();
+        $this->updateRemainingPositionData();
+        $this->dispatchOrders();
+         */
+        CoreJobQueue::create([
+            'class' => SelectPositionTokenJob::class,
+            'queue' => 'positions',
+            'index' => 1,
+            'block_uuid' => $blockUuid
+        ]);
+
+        CoreJobQueue::create([
+            'class' => SelectBestPositionTokenJob::class,
+            'queue' => 'positions',
+            'index' => 1,
+            'block_uuid' => $blockUuid
+        ]);
+
+
 
         return $response->result[$this->account->quote->canonical];
     }

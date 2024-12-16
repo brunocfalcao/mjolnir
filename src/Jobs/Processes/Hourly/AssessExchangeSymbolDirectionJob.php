@@ -126,13 +126,15 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
                 'block_uuid' => $blockUuid,
             ]);
         } else {
-            // End of the timeframes, and no conclusion reached.
-            // Don't change anything on the exchange symbol.
-            /*
+            // No conclusion reached: Disable exchange symbol.
             if ($this->exchangeSymbol->direction == null) {
-                $this->exchangeSymbol->update(['is_tradeable' => false]);
+                $this->exchangeSymbol->update([
+                    'is_tradeable' => false,
+                    'indicators' => null,
+                    'indicator_timeframe' => null,
+                    'indicators_last_synced_at' => null
+                ]);
             }
-            */
         }
     }
 
