@@ -59,6 +59,7 @@ class TestCommand extends Command
             'block_uuid' => $blockUuid,
         ]);
 
+        /*
         CoreJobQueue::create([
             'class' => AssessExchangeSymbolDirectionJob::class,
             'queue' => 'cronjobs',
@@ -69,6 +70,7 @@ class TestCommand extends Command
             'index' => 2,
             'block_uuid' => $blockUuid,
         ]);
+        */
 
         CoreJobQueue::dispatch();
 
