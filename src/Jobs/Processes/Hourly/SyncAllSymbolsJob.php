@@ -4,7 +4,7 @@ namespace Nidavellir\Mjolnir\Jobs\Processes\Hourly;
 
 use GuzzleHttp\Psr7\Response;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
-use Nidavellir\Mjolnir\Abstracts\BaseApiExceptionHandler;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\ApiProxy;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
@@ -19,7 +19,7 @@ class SyncAllSymbolsJob extends BaseApiableJob
     public function __construct()
     {
         $this->rateLimiter = RateLimitProxy::make('coinmarketcap')->withAccount(Account::admin('coinmarketcap'));
-        $this->exceptionHandler = BaseApiExceptionHandler::make('coinmarketcap');
+        $this->exceptionHandler = BaseExceptionHandler::make('coinmarketcap');
     }
 
     public function computeApiable()

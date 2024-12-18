@@ -3,7 +3,7 @@
 namespace Nidavellir\Mjolnir\Jobs\Processes\Hourly;
 
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
-use Nidavellir\Mjolnir\Abstracts\BaseApiExceptionHandler;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\Symbol;
@@ -17,7 +17,7 @@ class UpsertSymbolsJob extends BaseApiableJob
     {
         $this->cmcId = $cmcId;
         $this->rateLimiter = RateLimitProxy::make('coinmarketcap')->withAccount(Account::admin('coinmarketcap'));
-        $this->exceptionHandler = BaseApiExceptionHandler::make('coinmarketcap');
+        $this->exceptionHandler = BaseExceptionHandler::make('coinmarketcap');
     }
 
     public function computeApiable()

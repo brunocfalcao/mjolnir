@@ -12,6 +12,8 @@ abstract class BaseQueuableJob extends BaseJob
 
     public CoreJobQueue $coreJobQueue;
 
+    public int $workerServerBackoffSeconds = 5;
+
     // Max retries for a "always pending" job. Then updates to "failed".
     public int $retries = 3;
 
@@ -31,19 +33,41 @@ abstract class BaseQueuableJob extends BaseJob
                 $this->coreJobQueue->finalizeDuration();
             }
         } catch (\Throwable $e) {
-            // Same logic applies but now for a resolveException fallback.
+
+            /**
+             * We will try to run the 3 exception handler methods from the
+             * exceptionHandler if exists. Then we will run the local ones.
+             */
+            if (method_exists($this, 'retryException')) {
+                $this->retryException();
+
+                if (isset($this->exceptionHandler) && method_exists($this->exceptionHandler, 'retryException')) {
+                    $this->exceptionHandler->retryException();
+                }
+
+                return;
+            }
+
+            if (method_exists($this, 'ignoreException')) {
+                $this->ignoreException();
+
+                if (isset($this->exceptionHandler) && method_exists($this->exceptionHandler, 'ignoreException')) {
+                    $this->exceptionHandler->ignoreException();
+                }
+
+                return;
+            }
+
+            /**
+             * The resolve exception can be used for rollback calls, etc.
+             * But it will always escalate the exception.
+             */
             if (method_exists($this, 'resolveException')) {
                 $this->resolveException($e);
             }
 
-            // Same for the exception handler resolveException.
-            if (isset($this->exceptionHandler)) {
+            if (method_exists($this->exceptionHandler, 'resolveException')) {
                 $this->exceptionHandler->resolveException($e);
-            }
-
-            // Do we have a rollback option?
-            if (method_exists($this, 'rollback')) {
-                $this->rollback($e);
             }
 
             // Update to failed, and it's done.

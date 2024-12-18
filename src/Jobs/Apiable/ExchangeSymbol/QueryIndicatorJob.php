@@ -3,7 +3,7 @@
 namespace Nidavellir\Mjolnir\Jobs\Apiable\ExchangeSymbol;
 
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
-use Nidavellir\Mjolnir\Abstracts\BaseApiExceptionHandler;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
@@ -25,7 +25,7 @@ class QueryIndicatorJob extends BaseApiableJob
         $this->exchangeSymbol->apiDataMapper = new ApiDataMapperProxy('taapi');
 
         $this->rateLimiter = RateLimitProxy::make('taapi')->withAccount($adminAccount);
-        $this->exceptionHandler = BaseApiExceptionHandler::make('taapi');
+        $this->exceptionHandler = BaseExceptionHandler::make('taapi');
     }
 
     public function computeApiable()

@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-use Nidavellir\Mjolnir\Abstracts\BaseApiExceptionHandler;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Jobs\Processes\Hourly\AssessExchangeSymbolDirectionJob;
 use Nidavellir\Mjolnir\Jobs\Processes\Hourly\QueryExchangeSymbolIndicatorJob;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
@@ -31,7 +31,7 @@ class TestCommand extends Command
         $timeframe = '1h';
         $exchangeSymbol = ExchangeSymbol::findOrFail(1);
         $rateLimiter = RateLimitProxy::make('taapi')->withAccount(Account::admin('taapi'));
-        $exceptionHandler = BaseApiExceptionHandler::make('taapi');
+        $exceptionHandler = BaseExceptionHandler::make('taapi');
         $apiDataMapper = new ApiDataMapperProxy('taapi');
         $apiAccount = Account::admin('taapi');
 

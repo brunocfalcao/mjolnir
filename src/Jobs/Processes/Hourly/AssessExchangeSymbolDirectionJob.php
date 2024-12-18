@@ -4,7 +4,7 @@ namespace Nidavellir\Mjolnir\Jobs\Processes\Hourly;
 
 use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
-use Nidavellir\Mjolnir\Abstracts\BaseApiExceptionHandler;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\CoreJobQueue;
@@ -21,7 +21,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
     {
         $this->exchangeSymbol = ExchangeSymbol::findOrFail($exchangeSymbolId);
         $this->rateLimiter = RateLimitProxy::make('taapi')->withAccount(Account::admin('taapi'));
-        $this->exceptionHandler = BaseApiExceptionHandler::make('taapi');
+        $this->exceptionHandler = BaseExceptionHandler::make('taapi');
     }
 
     public function computeApiable()
@@ -132,7 +132,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
                     'is_tradeable' => false,
                     'indicators' => null,
                     'indicator_timeframe' => null,
-                    'indicators_last_synced_at' => null
+                    'indicators_last_synced_at' => null,
                 ]);
             }
         }

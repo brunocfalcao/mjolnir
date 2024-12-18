@@ -16,17 +16,6 @@ abstract class BaseRateLimiter
 
     public array $ignorableHttpCodes = [];
 
-    public array $retryableHttpCodes = [];
-
-    // This is the default worker server backoff seconds recorded on the rate_limits.
-    public int $rateLimitbackoffSeconds = 5;
-
-    /**
-     * This is the backoff seconds on the CoreJobQueue entry to allow
-     * a order worker server to pick the job.
-     */
-    public int $workerServerBackoffSeconds = 5;
-
     // The account used for the rate limit / forbid logic.
     public Account $account;
 
@@ -37,11 +26,10 @@ abstract class BaseRateLimiter
         return $this;
     }
 
-    public function workerServerBackoffSeconds()
-    {
-        return now()->addSeconds($this->workerServerBackoffSeconds);
-    }
-
+    /**
+     * Verifies if the Response or Request exception will now trigger
+     * a rate limit action.
+     */
     public function isNowRateLimited(RequestException|Response $input): bool
     {
         $statusCode = $this->extractStatusCode($input);
@@ -49,6 +37,10 @@ abstract class BaseRateLimiter
         return $statusCode && in_array($statusCode, $this->rateLimitHttpCodes, true);
     }
 
+    /**
+     * Verifies if the Response or Request exception will now trigger
+     * a forbidden action.
+     */
     public function isNowForbidden(RequestException|Response $input): bool
     {
         $statusCode = $this->extractStatusCode($input);
@@ -56,26 +48,29 @@ abstract class BaseRateLimiter
         return $statusCode && in_array($statusCode, $this->forbidHttpCodes, true);
     }
 
-    public function canBeRetried(RequestException|Response $input): bool
-    {
-        $statusCode = $this->extractStatusCode($input);
-
-        return $statusCode && in_array($statusCode, $this->retryableHttpCodes, true);
-    }
-
+    // Applies a forbid rate limit action.
     public function forbid(): void
     {
         $this->applyPollingLimit();
     }
 
-    // Returns the datetime that the rate limit is lifted.
-    public function throttle(): Carbon
+    // Or the child rate limit overrides this method, or defines the property.
+    public function rateLimitbackoffSeconds()
     {
-        $this->applyPollingLimit(now()->addSeconds($this->rateLimitbackoffSeconds));
+        if (property_exists($this, 'rateLimitbackoffSeconds')) {
+            return $this->rateLimitbackoffSeconds;
+        }
 
-        return now()->addSeconds($this->rateLimitbackoffSeconds);
+        throw new \Exception('No backoff rate limit duration property defined for '.get_class($this));
     }
 
+    // Applies a rate limit action.
+    public function rateLimit(): void
+    {
+        $this->applyPollingLimit(now()->addSeconds($this->rateLimitbackoffSeconds()));
+    }
+
+    // Applies the rate limit / forbid on the rate_limits table.
     protected function applyPollingLimit(?Carbon $retryAfter = null): void
     {
         $attributes = [
@@ -108,7 +103,8 @@ abstract class BaseRateLimiter
         return null;
     }
 
-    public function isRateLimited()
+    // Returns the datetime carbon instance for the rate limit deadline.
+    public function rateLimitedUntil(): Carbon
     {
         $rateLimit = RateLimit::where('account_id', $this->account->id)
             ->where('api_system_id', $this->account->api_system_id)
@@ -119,34 +115,47 @@ abstract class BaseRateLimiter
         if ($rateLimit && $rateLimit->retry_after?->isFuture()) {
             return $rateLimit->retry_after;
         }
+    }
+
+    public function isRateLimited(): bool
+    {
+        $rateLimit = RateLimit::where('account_id', $this->account->id)
+            ->where('api_system_id', $this->account->api_system_id)
+            ->where('hostname', gethostname())
+            ->first();
+
+        // Is the rate limit a future timestamp?
+        if ($rateLimit && $rateLimit->retry_after?->isFuture()) {
+            return true;
+        }
 
         // Delete entry if it exists and is on the past.
         if ($rateLimit) {
             $rateLimit->delete();
         }
 
-        return null;
+        return false;
     }
 
-    public function isForbidden()
+    // Checks if the current hostname is forbidden for this account.
+    public function isForbidden(): bool
     {
-        // Do we have an entry, at least?
+        // Retrieve the RateLimit instance for the current API system and hostname
         $instance = RateLimit::where('api_system_id', $this->account->api_system_id)
-            ->where('hostname', gethostname());
+            ->where('hostname', gethostname())
+            ->first();
 
+        // If no entry exists, it's not forbidden
         if (! $instance) {
             return false;
         }
 
-        // Is the worker server forbidden on this account?
-        return RateLimit::where('api_system_id', $this->account->api_system_id)
-            ->where('hostname', gethostname())
-            ->where('retry_after', null)
-            ->first();
+        // Check if retry_after is null (forbidden state)
+        return $instance->retry_after == null;
     }
 
     // Assesses if with the response, we will now need to forbid or rate limit.
-    public function shouldLimitNow(RequestException|Response $response)
+    public function isNowLimited(RequestException|Response $response)
     {
         $wasPolledLimited = false;
         if ($this->isNowRateLimited($response)) {
@@ -157,10 +166,6 @@ abstract class BaseRateLimiter
         if ($this->isNowForbidden($response)) {
             $wasPolledLimited = true;
             $this->forbid();
-        }
-
-        if ($this->canBeRetried($response)) {
-            $wasPolledLimited = true;
         }
 
         return $wasPolledLimited;

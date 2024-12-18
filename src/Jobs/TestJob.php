@@ -3,7 +3,7 @@
 namespace Nidavellir\Mjolnir\Jobs;
 
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
-use Nidavellir\Mjolnir\Abstracts\BaseApiExceptionHandler;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
 use Nidavellir\Mjolnir\Support\Proxies\ExceptionStubProxy;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
@@ -23,7 +23,7 @@ class TestJob extends BaseApiableJob
 
         $this->rateLimiter = RateLimitProxy::make('binance')->withAccount(Account::find(1));
 
-        $this->exceptionHandler = BaseApiExceptionHandler::make('binance');
+        $this->exceptionHandler = BaseExceptionHandler::make('binance');
     }
 
     public function refresh()

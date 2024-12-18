@@ -6,9 +6,8 @@ use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\ApiSystem;
 
-class FindBestPositionTokenJob extends BaseApiableJob
+class SelectPositionTokenJob extends BaseApiableJob
 {
     public Account $account;
 
@@ -24,5 +23,11 @@ class FindBestPositionTokenJob extends BaseApiableJob
         $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
     }
 
-    public function computeApiable() {}
+    public function computeApiable()
+    {
+        /**
+         * The exchange symbol selection is a complicated process that tries
+         * to use the best searching logic for profit efficiency.
+         */
+    }
 }

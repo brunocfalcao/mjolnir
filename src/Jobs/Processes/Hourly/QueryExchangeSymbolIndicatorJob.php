@@ -4,7 +4,7 @@ namespace Nidavellir\Mjolnir\Jobs\Processes\Hourly;
 
 use GuzzleHttp\Psr7\Response;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
-use Nidavellir\Mjolnir\Abstracts\BaseApiExceptionHandler;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
@@ -30,7 +30,7 @@ class QueryExchangeSymbolIndicatorJob extends BaseApiableJob
         $this->timeframe = $timeframe;
         $this->exchangeSymbol = ExchangeSymbol::findOrFail($exchangeSymbolId);
         $this->rateLimiter = RateLimitProxy::make('taapi')->withAccount(Account::admin('taapi'));
-        $this->exceptionHandler = BaseApiExceptionHandler::make('taapi');
+        $this->exceptionHandler = BaseExceptionHandler::make('taapi');
         $this->apiDataMapper = new ApiDataMapperProxy('taapi');
         $this->apiAccount = Account::admin('taapi');
     }
