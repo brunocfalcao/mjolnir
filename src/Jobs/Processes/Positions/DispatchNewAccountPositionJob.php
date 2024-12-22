@@ -2,25 +2,27 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
-use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\Position;
 
-class DispatchNewAccountPositionJob extends BaseApiableJob
+class DispatchNewAccountPositionJob extends BaseQueuableJob
 {
     public Account $account;
-
-    public ApiSystem $apiSystem;
 
     public function __construct(int $accountId)
     {
         $this->account = Account::findOrFail($accountId);
-        $this->apiSystem = $this->account->apiSystem;
-        $this->rateLimiter = RateLimitProxy::make($this->apiSystem->canonical)->withAccount($this->account);
-        $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
+        $this->exceptionHandler = BaseExceptionHandler::make($this->account->apiSystem->canonical);
     }
 
-    public function computeApiable() {}
+    public function computeApiable()
+    {
+        $position = Position::create([
+            'account_id' => $this->account->id,
+        ]);
+
+        return $position;
+    }
 }
