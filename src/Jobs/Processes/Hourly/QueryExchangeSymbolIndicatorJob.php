@@ -46,8 +46,6 @@ class QueryExchangeSymbolIndicatorJob extends BaseApiableJob
 
         $this->response = $this->apiAccount->withApi()->getIndicatorValues($this->apiProperties);
 
-        info('(QueryExchangeSymbolIndicatorJob.computeApiable) ID: '.$this->coreJobQueue->id);
-
         $this->coreJobQueue->update([
             'response' => $this->apiDataMapper->resolveQueryIndicatorsResponse($this->response),
         ]);

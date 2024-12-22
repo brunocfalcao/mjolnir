@@ -52,8 +52,6 @@ abstract class BaseApiClient
 
             $this->apiRequestLog = ApiRequestLog::create($logData);
 
-            info('(BaseApiClient.processRequest) ID: '.$apiRequest->properties->get('debug.core_job_queue_id'));
-
             $response = $this->httpRequest->request(
                 $apiRequest->method,
                 $apiRequest->path,
@@ -68,8 +66,6 @@ abstract class BaseApiClient
 
             return $response;
         } catch (RequestException $e) {
-            info('(BaseApiClient.processRequest.RequestException)');
-            info($apiRequest->properties->getOr('debug', []));
             // Log the error details without re-throwing
             $logData['http_response_code'] = $e->getResponse() ? $e->getResponse()->getStatusCode() : null;
             $logData['response'] = $e->getResponse() ? (string) $e->getResponse()->getBody() : null;
@@ -80,7 +76,6 @@ abstract class BaseApiClient
             // Cascade exception so the e.g.: Core Job Queue can catch it.
             throw $e;
         } catch (\Throwable $e) {
-            info('(BaseApiClient.processRequest.Exception)');
             // Log the error log.
             $this->updateRequestLogData(['error_message' => $e->getMessage().' (line '.$e->getLine().')']);
 

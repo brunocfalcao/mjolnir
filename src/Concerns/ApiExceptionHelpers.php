@@ -25,15 +25,10 @@ trait ApiExceptionHelpers
 
         $statusCode = $exception->getResponse()->getStatusCode();
 
-        info('Status Code: '.$statusCode);
-
         $responseBody = $this->getResponseBody($exception);
 
         if (isset($statusCodes[$statusCode])) {
             $codes = $statusCodes[$statusCode];
-
-            info($codes);
-            info($responseBody);
 
             // If specific codes are provided, check if the response code matches
             if (is_array($codes) && isset($responseBody['code'])) {

@@ -67,7 +67,6 @@ abstract class BaseRateLimiter
     // Applies a rate limit action.
     public function rateLimit(): void
     {
-        info('(BaseRateLimiter.rateLimit)');
         $this->applyPollingLimit(now()->addSeconds($this->rateLimitbackoffSeconds()));
     }
 
@@ -85,7 +84,6 @@ abstract class BaseRateLimiter
             'retry_after' => $retryAfter,
         ];
 
-        info('(BaseRateLimiter.applyPollingLimit)');
         $rateLimit = RateLimit::updateOrCreate($attributes, $values);
     }
 
@@ -161,13 +159,11 @@ abstract class BaseRateLimiter
     {
         $wasPolledLimited = false;
         if ($this->isNowRateLimited($response)) {
-            info('(BaseRateLimiter.isNowRateLimited)');
             $wasPolledLimited = true;
             $this->rateLimit();
         }
 
         if ($this->isNowForbidden($response)) {
-            info('(BaseRateLimiter.isNowForbidden)');
             $wasPolledLimited = true;
             $this->forbid();
         }

@@ -24,9 +24,4 @@ class QueryOrderJob extends BaseApiableJob
     {
         Order::find($this->id)->apiQuery();
     }
-
-    public function resolveException($e)
-    {
-        info('inside resolveException');
-    }
 }
