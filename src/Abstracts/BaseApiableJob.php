@@ -16,7 +16,8 @@ abstract class BaseApiableJob extends BaseQueuableJob
 
         // Are we already polling limited?
         if ($this->isPollingLimited()) {
-            $this->coreJobQueue->updateToRetry($this->rateLimiter->workerServerBackoffSeconds());
+            // At least we backoff the core job queue entry some seconds too.
+            $this->coreJobQueue->updateToRetry($this->rateLimiter->$this->rateLimitbackoffSeconds());
 
             return;
         }
@@ -29,18 +30,9 @@ abstract class BaseApiableJob extends BaseQueuableJob
                 // Check if it's a rate limit or forbidden exception.
                 $isNowLimited = $this->rateLimiter->isNowLimited($e);
                 if ($isNowLimited) {
-                    // Rate Limited?
-                    if ($this->rateLimiter->isRateLimited()) {
-                        return $this->coreJobQueue->updateToRetry($this->rateLimiter->rateLimitbackoffSeconds());
-                    }
-
-                    // Forbidden?
-                    if ($this->rateLimiter->isForbidden()) {
-                        return $this->coreJobQueue->updateToRetry($this->coreJobQueue->$workerServerBackoffSeconds);
-                    }
+                    // At least we backoff the work servers to pick the job again, we might get the same worker server.
+                    return $this->coreJobQueue->updateToRetry($this->rateLimiter->rateLimitbackoffSeconds());
                 }
-
-                throw new \Exception('BaseApiableJob returned a RequestException unhandled (neither rate limit, neither forbidden)! - '.$e->getMessage());
             }
 
             // Escalate to treat remaining exception types (ignorable, retriable, resolvable).
@@ -76,7 +68,7 @@ abstract class BaseApiableJob extends BaseQueuableJob
              * okay too, since normally it will be a question of seconds before any worker
              * server to pick the job again.
              */
-            $this->coreJobQueue->updateToRetry($this->rateLimiter->workerServerBackoffSeconds());
+            $this->coreJobQueue->updateToRetry($this->workerServerBackoffSeconds);
 
             return true;
         }

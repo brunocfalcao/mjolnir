@@ -24,10 +24,16 @@ trait ApiExceptionHelpers
         }
 
         $statusCode = $exception->getResponse()->getStatusCode();
+
+        info('Status Code: '.$statusCode);
+
         $responseBody = $this->getResponseBody($exception);
 
         if (isset($statusCodes[$statusCode])) {
             $codes = $statusCodes[$statusCode];
+
+            info($codes);
+            info($responseBody);
 
             // If specific codes are provided, check if the response code matches
             if (is_array($codes) && isset($responseBody['code'])) {
@@ -48,7 +54,7 @@ trait ApiExceptionHelpers
 
     private function getResponseBody(RequestException $exception): array
     {
-        $body = $exception->getResponse()->getBody()->getContents();
+        $body = $exception->getResponse()->getBody();
 
         return json_decode($body, true) ?? [];
     }

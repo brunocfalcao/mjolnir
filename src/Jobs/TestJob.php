@@ -27,6 +27,11 @@ class TestJob extends BaseApiableJob
     {
         info('computeApiable()');
         $binanceStub = ExceptionStubProxy::create('binance');
-        throw $binanceStub->simulateRateLimitExceeded();
+        throw $binanceStub->simulateNoNeedChangeMarginType();
+    }
+
+    public function resolveException(\throwable $e)
+    {
+        info('rolling back transaction!');
     }
 }

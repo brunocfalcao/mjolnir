@@ -59,6 +59,22 @@ class BinanceExceptionStub extends BaseExceptionStub
     }
 
     /**
+     * Simulate no need to change the margin type.
+     */
+    public function simulateNoNeedChangeMarginType(): \Exception
+    {
+        $response = new Response(400, [], json_encode([
+            'code' => -4046,
+            'msg' => '[Stub] No need to change the margin type.',
+        ]));
+
+        return RequestException::create(
+            new Request('POST', $this->exceptionDetails['endpoint'] ?? '/fapi/v1/marginType'),
+            $response
+        );
+    }
+
+    /**
      * Simulate a Forbidden (HTTP 403) exception.
      */
     public function simulateForbidden(): \Exception

@@ -9,12 +9,22 @@ class BinanceExceptionHandler extends BaseExceptionHandler
 {
     use ApiExceptionHelpers;
 
-    // Gracefully ignorable codes.
+    /**
+     * 400: Bad request.
+     * -4046: No need to change the margin type.
+     * -2013: Order doesn't exist.
+     */
     public $httpIgnorableStatusCodes = [
         400 => [-4046, -2013],
     ];
 
-    // Gracefully retriable codes.
+    /**
+     * 400: Bad request.
+     * -1021: Timestamp for this request is outside of the recvWindow.
+     *
+     * 503: Service unavailable.
+     * Several Binance server errors, like workload exceeded, we just retry.
+     */
     public $httpRetryableStatusCodes = [
         503,
         400 => [-1021],

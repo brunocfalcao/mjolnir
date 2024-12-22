@@ -58,7 +58,7 @@ abstract class BaseRateLimiter
     public function rateLimitbackoffSeconds()
     {
         if (property_exists($this, 'rateLimitbackoffSeconds')) {
-            return now()->addSeconds($this->rateLimitbackoffSeconds);
+            return $this->rateLimitbackoffSeconds;
         }
 
         throw new \Exception('No backoff rate limit duration property defined for '.get_class($this));
@@ -67,6 +67,7 @@ abstract class BaseRateLimiter
     // Applies a rate limit action.
     public function rateLimit(): void
     {
+        info('Add backoff seconds of '.$this->rateLimitbackoffSeconds());
         $this->applyPollingLimit(now()->addSeconds($this->rateLimitbackoffSeconds()));
     }
 
@@ -81,10 +82,12 @@ abstract class BaseRateLimiter
 
         // Format the Carbon instance to avoid issues with microseconds.
         $values = [
-            'retry_after' => $retryAfter ? $retryAfter->format('Y-m-d H:i:s') : null,
+            'retry_after' => $retryAfter,
         ];
 
-        RateLimit::updateOrCreate($attributes, $values);
+        info('Saving or updating RateLimit eloquent instance');
+        $rateLimit = RateLimit::updateOrCreate($attributes, $values);
+        info($rateLimit);
     }
 
     /**
@@ -159,11 +162,13 @@ abstract class BaseRateLimiter
     {
         $wasPolledLimited = false;
         if ($this->isNowRateLimited($response)) {
+            info('Rate Limit triggered');
             $wasPolledLimited = true;
             $this->rateLimit();
         }
 
         if ($this->isNowForbidden($response)) {
+            info('Forbid triggered');
             $wasPolledLimited = true;
             $this->forbid();
         }

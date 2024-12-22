@@ -3,6 +3,7 @@
 namespace Nidavellir\Mjolnir\Abstracts;
 
 use GuzzleHttp\Psr7\Response;
+use Nidavellir\Mjolnir\Exceptions\NonOverridableException;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Psr\Http\Message\ResponseInterface;
 
@@ -24,7 +25,8 @@ abstract class BaseQueuableJob extends BaseJob
 
             // Max retries reached?
             if ($this->coreJobQueue->retries == $this->retries + 1) {
-                throw new \Exception('CoreJobQueue max retries reached');
+                info('Max job tries reached!');
+                throw new NonOverridableException('CoreJobQueue max retries reached');
             }
 
             // Quick authorization method on the child job.
@@ -36,9 +38,7 @@ abstract class BaseQueuableJob extends BaseJob
                 }
 
                 if ($result == false) {
-                    $this->coreJobQueue->updateToRetry();
-
-                    return;
+                    return $this->coreJobQueue->updateToRetry(now()->addSeconds($this->workerServerBackoffSeconds));
                 }
             }
 
@@ -55,6 +55,25 @@ abstract class BaseQueuableJob extends BaseJob
                 $this->coreJobQueue->finalizeDuration();
             }
         } catch (\Throwable $e) {
+            if ($e instanceof NonOverridableException) {
+                // Last try to make things like a rollback.
+                if (method_exists($this, 'resolveException')) {
+                    $this->resolveException($e);
+                }
+
+                if (method_exists($this->exceptionHandler, 'resolveException')) {
+                    $this->exceptionHandler->resolveException($e);
+                }
+
+                // Update to failed, and it's done.
+                $this->coreJobQueue->updateToFailed($e);
+                $this->coreJobQueue->finalizeDuration();
+
+                return;
+            }
+
+            info('outside of the non overridable exception');
+
             /**
              * We will try to run the 3 exception handler methods from the
              * exceptionHandler if exists. Then we will run the local ones.
@@ -66,35 +85,38 @@ abstract class BaseQueuableJob extends BaseJob
             }
 
             if (isset($this->exceptionHandler) && method_exists($this->exceptionHandler, 'retryException')) {
+                info('Trying the exceptionHandler retryException()');
                 $orShouldRetry = $this->exceptionHandler->retryException($e);
             }
 
             if ((isset($shouldRetry) && $shouldRetry) || (isset($orShouldRetry) && $orShouldRetry)) {
-                $this->coreJobQueue->updateToRetry();
+                info('Conclusion: updateToRetry');
+                $this->coreJobQueue->updateToRetry(now()->addSeconds($this->workerServerBackoffSeconds));
 
                 return;
             }
 
             // Should gracefully ignore the exception?
             if (method_exists($this, 'ignoreException')) {
+                info('Trying the local ignoreException()');
                 $shouldIgnore = $this->ignoreException($e);
             }
 
             if (isset($this->exceptionHandler) && method_exists($this->exceptionHandler, 'ignoreException')) {
+                info('Trying the exceptionHandler ignoreException()');
                 $orShouldIgnore = $this->exceptionHandler->ignoreException($e);
             }
 
             if ((isset($shouldIgnore) && $shouldIgnore) || (isset($orShouldIgnore) && $orShouldIgnore)) {
+                info('Ignoring exception!');
+
                 $this->coreJobQueue->updateToCompleted();
                 $this->coreJobQueue->finalizeDuration();
 
                 return;
             }
 
-            /**
-             * The resolve exception can be used for rollback calls, etc.
-             * But it will always escalate the exception.
-             */
+            // Last try to make things like a rollback.
             if (method_exists($this, 'resolveException')) {
                 $this->resolveException($e);
             }
