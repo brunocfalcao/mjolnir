@@ -14,14 +14,34 @@ abstract class BaseQueuableJob extends BaseJob
 
     public int $workerServerBackoffSeconds = 5;
 
-    // Max retries for a "always pending" job. Then updates to "failed".
+    // Max retries for a "always pending" job. Then update to "failed".
     public int $retries = 3;
 
     public function handle()
     {
         try {
-            $this->coreJobQueue->updateToRunning();
             $this->coreJobQueue->startDuration();
+
+            // Max retries reached?
+            if ($this->coreJobQueue->retries == $this->retries + 1) {
+                throw new \Exception('CoreJobQueue max retries reached');
+            }
+
+            // Quick authorization method on the child job.
+            if (method_exists($this, 'authorize')) {
+                $result = $this->authorize();
+
+                if (!is_bool($result)) {
+                    throw new \Exception('The authorize method did not return a boolean');
+                }
+
+                if ($result == false) {
+                    $this->coreJobQueue->updateToRetry();
+                    return;
+                }
+            }
+
+            $this->coreJobQueue->updateToRunning();
 
             $this->computeAndStoreResult();
 
@@ -33,27 +53,38 @@ abstract class BaseQueuableJob extends BaseJob
                 $this->coreJobQueue->finalizeDuration();
             }
         } catch (\Throwable $e) {
-
             /**
              * We will try to run the 3 exception handler methods from the
              * exceptionHandler if exists. Then we will run the local ones.
              */
-            if (method_exists($this, 'retryException')) {
-                $this->retryException();
 
-                if (isset($this->exceptionHandler) && method_exists($this->exceptionHandler, 'retryException')) {
-                    $this->exceptionHandler->retryException();
-                }
+            // Should gracefully retry the core job?
+            if (method_exists($this, 'retryException')) {
+                $shouldRetry = $this->retryException($e);
+            }
+
+            if (isset($this->exceptionHandler) && method_exists($this->exceptionHandler, 'retryException')) {
+                $orShouldRetry = $this->exceptionHandler->retryException($e);
+            }
+
+            if ((isset($shouldRetry) && $shouldRetry) || (isset($orShouldRetry) && $orShouldRetry)) {
+                $this->coreJobQueue->updateToRetry();
 
                 return;
             }
 
+            // Should gracefully ignore the exception?
             if (method_exists($this, 'ignoreException')) {
-                $this->ignoreException();
+                $shouldIgnore = $this->ignoreException($e);
+            }
 
-                if (isset($this->exceptionHandler) && method_exists($this->exceptionHandler, 'ignoreException')) {
-                    $this->exceptionHandler->ignoreException();
-                }
+            if (isset($this->exceptionHandler) && method_exists($this->exceptionHandler, 'ignoreException')) {
+                $orShouldIgnore = $this->exceptionHandler->ignoreException($e);
+            }
+
+            if ((isset($shouldIgnore) && $shouldIgnore) || (isset($orShouldIgnore) && $orShouldIgnore)) {
+                $this->coreJobQueue->updateToCompleted();
+                $this->coreJobQueue->finalizeDuration();
 
                 return;
             }

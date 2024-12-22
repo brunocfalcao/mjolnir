@@ -14,11 +14,6 @@ abstract class BaseApiableJob extends BaseQueuableJob
     {
         $this->checkApiRequiredClasses();
 
-        // Max retries reached?
-        if ($this->coreJobQueue->retries == $this->retries + 1) {
-            throw new \Exception('CoreJobQueue max retries reached');
-        }
-
         // Are we already polling limited?
         if ($this->isPollingLimited()) {
             $this->coreJobQueue->updateToRetry($this->rateLimiter->workerServerBackoffSeconds());
@@ -50,7 +45,7 @@ abstract class BaseApiableJob extends BaseQueuableJob
              */
 
             // Is the Request Exception, a rate limit/forbidden exception?
-            $isNowLimited = $this->shouldLimitNow($e);
+            $isNowLimited = $this->isNowLimited($e);
             if ($isNowLimited) {
                 // Rate Limited?
                 if ($this->rateLimiter->isRateLimited()) {
@@ -87,7 +82,7 @@ abstract class BaseApiableJob extends BaseQueuableJob
 
     public function verifyRateLimitedBaseException(RequestException $exception)
     {
-        $isNowLimited = $this->rateLimiter->shouldLimitNow($exception);
+        $isNowLimited = $this->rateLimiter->isNowLimited($exception);
 
         if ($isNowLimited) {
             /**

@@ -28,27 +28,15 @@ abstract class BaseExceptionHandler
     }
 
     // In case we should retry the action, and not raise an exception.
-    public function shouldRetry(RequestException $exception): bool
+    public function retryException(\Exception $exception): bool
     {
         return false;
-    }
-
-    // In case it's needed to resolve the request exception.
-    public function resolveRequestException(RequestException $exception)
-    {
-        return null;
     }
 
     // In case we should ignore the request exception, without retrying it.
-    public function ignoreRequestException(RequestException $exception)
+    public function ignoreException(\Exception $exception): bool
     {
         return false;
-    }
-
-    // Last fallback for ignoring any exception at the end.
-    public function ignoreException(\Throwable $e)
-    {
-        return null;
     }
 
     // Last fallback for resolving any exception at the end.

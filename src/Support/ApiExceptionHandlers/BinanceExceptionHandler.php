@@ -9,13 +9,14 @@ class BinanceExceptionHandler extends BaseExceptionHandler
 {
     use ApiExceptionHelpers;
 
+    // Gracefully ignorable codes.
     public $httpIgnorableStatusCodes = [
-        400 => [-4046],
-        502 => null, // Null means ignore all responses with this HTTP status
+        400 => [-4046, -2013],
     ];
 
+    // Gracefully retriable codes.
     public $httpRetryableStatusCodes = [
-        523 => null, // Retry all 523 responses
-        524 => [-1011, -1012], // Retry only these specific error codes for 524
+        503,
+        400 => [-1021],
     ];
 }

@@ -6,18 +6,23 @@ use GuzzleHttp\Exception\RequestException;
 
 trait ApiExceptionHelpers
 {
-    public function retryException(RequestException $exception): bool
+    public function retryException(\Exception $exception): bool
     {
         return $this->shouldHandleException($exception, $this->httpRetryableStatusCodes);
     }
 
-    public function ignoreException(RequestException $exception): bool
+    public function ignoreException(\Exception $exception): bool
     {
         return $this->shouldHandleException($exception, $this->httpIgnorableStatusCodes);
     }
 
-    private function shouldHandleException(RequestException $exception, array $statusCodes): bool
+    private function shouldHandleException(\Exception $exception, array $statusCodes): bool
     {
+        // Check if the exception is a Guzzle RequestException
+        if (!$exception instanceof RequestException) {
+            return false;
+        }
+
         $statusCode = $exception->getResponse()->getStatusCode();
         $responseBody = $this->getResponseBody($exception);
 
@@ -46,10 +51,5 @@ trait ApiExceptionHelpers
         $body = $exception->getResponse()->getBody()->getContents();
 
         return json_decode($body, true) ?? [];
-    }
-
-    public function resolveException(\Throwable $exception)
-    {
-        // Add exception resolution logic if needed
     }
 }
