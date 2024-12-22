@@ -58,7 +58,7 @@ abstract class BaseRateLimiter
     public function rateLimitbackoffSeconds()
     {
         if (property_exists($this, 'rateLimitbackoffSeconds')) {
-            return $this->rateLimitbackoffSeconds;
+            return now()->addSeconds($this->rateLimitbackoffSeconds);
         }
 
         throw new \Exception('No backoff rate limit duration property defined for '.get_class($this));
@@ -160,7 +160,7 @@ abstract class BaseRateLimiter
         $wasPolledLimited = false;
         if ($this->isNowRateLimited($response)) {
             $wasPolledLimited = true;
-            $this->throttle();
+            $this->rateLimit();
         }
 
         if ($this->isNowForbidden($response)) {

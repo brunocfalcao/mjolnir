@@ -24,43 +24,27 @@ abstract class BaseApiableJob extends BaseQueuableJob
         try {
             // Return result, to be saved in the core job queue instance.
             return $this->computeApiable();
-        } catch (RequestException $e) {
+        } catch (\Throwable $e) {
+            if ($e instanceof RequestException) {
+                // Check if it's a rate limit or forbidden exception.
+                $isNowLimited = $this->rateLimiter->isNowLimited($e);
+                if ($isNowLimited) {
+                    // Rate Limited?
+                    if ($this->rateLimiter->isRateLimited()) {
+                        return $this->coreJobQueue->updateToRetry($this->rateLimiter->rateLimitbackoffSeconds());
+                    }
 
-            /**
-             * There are different types of api exceptions. It's complicated.
-             *
-             * 1. A rate limit exception (forbidden or rate limited).
-             * System will apply the rate limit on the rate limit table, and
-             * will backoff the core job queue some seconds.
-             *
-             * 2. An ignorable exception.
-             * System will just completely ignore the exception and treat it
-             * as if the core job queue and the api call were perfectly fine.
-             *
-             * 3. A graceful retriable session (like HTTP 503) so this is just
-             * a server backoff duration, and the system will retry again.
-             *
-             * 4. A real request exception that should be cascaded to the parent
-             * class.
-             */
-
-            // Is the Request Exception, a rate limit/forbidden exception?
-            $isNowLimited = $this->isNowLimited($e);
-            if ($isNowLimited) {
-                // Rate Limited?
-                if ($this->rateLimiter->isRateLimited()) {
-                    return $this->updateToRetry($this->rateLimiter->rateLimitbackoffSeconds());
+                    // Forbidden?
+                    if ($this->rateLimiter->isForbidden()) {
+                        return $this->coreJobQueue->updateToRetry($this->coreJobQueue->$workerServerBackoffSeconds);
+                    }
                 }
 
-                // Forbidden?
-                if ($this->rateLimiter->isForbidden()) {
-                    return $this->updateToRetry($this->coreJobQueue->$workerServerBackoffSeconds);
-                }
+                throw new \Exception('BaseApiableJob returned a RequestException unhandled (neither rate limit, neither forbidden)! - '.$e->getMessage());
             }
 
+            // Escalate to treat remaining exception types (ignorable, retriable, resolvable).
             throw $e;
-            $this->coreJobQueue->updateToCompleted();
-            $this->coreJobQueue->finalizeDuration();
         }
     }
 

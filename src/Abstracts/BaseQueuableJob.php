@@ -44,6 +44,9 @@ abstract class BaseQueuableJob extends BaseJob
 
             $this->coreJobQueue->updateToRunning();
 
+            // Punch it.
+            $this->computeAndStoreResult();
+
             // Did the child job touched the status or the duration? -- Yes, skip.
             if (! $this->coreJobQueue->wasChanged('status')) {
                 $this->coreJobQueue->updateToCompleted();
