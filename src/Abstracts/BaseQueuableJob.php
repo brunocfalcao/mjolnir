@@ -31,19 +31,18 @@ abstract class BaseQueuableJob extends BaseJob
             if (method_exists($this, 'authorize')) {
                 $result = $this->authorize();
 
-                if (!is_bool($result)) {
+                if (! is_bool($result)) {
                     throw new \Exception('The authorize method did not return a boolean');
                 }
 
                 if ($result == false) {
                     $this->coreJobQueue->updateToRetry();
+
                     return;
                 }
             }
 
             $this->coreJobQueue->updateToRunning();
-
-            $this->computeAndStoreResult();
 
             // Did the child job touched the status or the duration? -- Yes, skip.
             if (! $this->coreJobQueue->wasChanged('status')) {

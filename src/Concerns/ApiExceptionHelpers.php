@@ -19,7 +19,7 @@ trait ApiExceptionHelpers
     private function shouldHandleException(\Exception $exception, array $statusCodes): bool
     {
         // Check if the exception is a Guzzle RequestException
-        if (!$exception instanceof RequestException) {
+        if (! $exception instanceof RequestException) {
             return false;
         }
 

@@ -2,7 +2,6 @@
 
 namespace Nidavellir\Mjolnir\Abstracts;
 
-use GuzzleHttp\Exception\RequestException;
 use Nidavellir\Mjolnir\Support\ApiExceptionHandlers\AlternativeMeExceptionHandler;
 use Nidavellir\Mjolnir\Support\ApiExceptionHandlers\BinanceExceptionHandler;
 use Nidavellir\Mjolnir\Support\ApiExceptionHandlers\CoinmarketCapExceptionHandler;

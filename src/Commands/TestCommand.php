@@ -2,19 +2,18 @@
 
 namespace Nidavellir\Mjolnir\Commands;
 
-use Illuminate\Support\Str;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Nidavellir\Thor\Models\Account;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Jobs\Processes\Hourly\AssessExchangeSymbolDirectionJob;
 use Nidavellir\Mjolnir\Jobs\TestJob;
+use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
+use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\ExchangeSymbol;
-use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
-use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
-use Nidavellir\Mjolnir\Jobs\Processes\Hourly\QueryExchangeSymbolIndicatorJob;
-use Nidavellir\Mjolnir\Jobs\Processes\Hourly\AssessExchangeSymbolDirectionJob;
 
 class TestCommand extends Command
 {

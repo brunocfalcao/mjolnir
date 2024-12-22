@@ -30,11 +30,6 @@ class TestJob extends BaseApiableJob
         return false;
     }
 
-    public function refresh()
-    {
-        info('Started running refresh() ['.$this->coreJobQueue->id.']');
-    }
-
     public function computeApiable()
     {
         info('Started running computeApiable() ['.$this->coreJobQueue->id.']');
