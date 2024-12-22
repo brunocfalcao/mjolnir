@@ -8,13 +8,11 @@ use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 
-class FindBestPositionTokenJob extends BaseApiableJob
+class DispatchNewAccountPositionJob extends BaseApiableJob
 {
     public Account $account;
 
     public ApiSystem $apiSystem;
-
-    public array $balance;
 
     public function __construct(int $accountId)
     {

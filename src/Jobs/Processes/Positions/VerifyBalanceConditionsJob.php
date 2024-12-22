@@ -8,7 +8,6 @@ use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Position;
 
 class VerifyBalanceConditionsJob extends BaseApiableJob
@@ -46,7 +45,6 @@ class VerifyBalanceConditionsJob extends BaseApiableJob
         // To we have at least one position with all limit orders filled?
         $this->checkAtLeastOnePositionWithAllLimitOrdersFilled();
 
-        // Add a new Position entry. The observer will trigger the position opening start.
         $position = Position::create([
             'account_id' => $this->account->id,
         ]);
@@ -74,75 +72,6 @@ class VerifyBalanceConditionsJob extends BaseApiableJob
         $this->updateRemainingPositionData();
         $this->dispatchOrders();
          */
-        CoreJobQueue::create([
-            'class' => SelectPositionTokenJob::class,
-            'queue' => 'positions',
-            'arguments' => [
-                'positionId' => $this->position->id,
-            ],
-            'index' => 1,
-            'block_uuid' => $blockUuid,
-        ]);
-
-        CoreJobQueue::create([
-            'class' => CalculatePositionAmountJob::class,
-            'queue' => 'positions',
-            'arguments' => [
-                'positionId' => $this->position->id,
-            ],
-            'index' => 2,
-            'block_uuid' => $blockUuid,
-        ]);
-
-        CoreJobQueue::create([
-            'class' => CalculatePositionLeverageJob::class,
-            'queue' => 'positions',
-            'arguments' => [
-                'positionId' => $this->position->id,
-            ],
-            'index' => 3,
-            'block_uuid' => $blockUuid,
-        ]);
-
-        CoreJobQueue::create([
-            'class' => UpdateMarginTypeToCrossedJob::class,
-            'queue' => 'positions',
-            'arguments' => [
-                'positionId' => $this->position->id,
-            ],
-            'index' => 4,
-            'block_uuid' => $blockUuid,
-        ]);
-
-        CoreJobQueue::create([
-            'class' => UpdateTokenLeverageRatioJob::class,
-            'queue' => 'positions',
-            'arguments' => [
-                'positionId' => $this->position->id,
-            ],
-            'index' => 4,
-            'block_uuid' => $blockUuid,
-        ]);
-
-        CoreJobQueue::create([
-            'class' => UpdateRemainingPositionDataJob::class,
-            'queue' => 'positions',
-            'arguments' => [
-                'positionId' => $this->position->id,
-            ],
-            'index' => 5,
-            'block_uuid' => $blockUuid,
-        ]);
-
-        CoreJobQueue::create([
-            'class' => DispatchPositionOrdersJob::class,
-            'queue' => 'orders',
-            'arguments' => [
-                'positionId' => $this->position->id,
-            ],
-            'index' => 6,
-            'block_uuid' => $blockUuid,
-        ]);
 
         return $response->result[$this->account->quote->canonical];
     }

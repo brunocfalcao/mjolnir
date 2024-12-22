@@ -2,32 +2,34 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
-use Nidavellir\Thor\Models\Account;
 
-class SelectPositionTokenJob extends BaseApiableJob
+class SelectPositionTokenJob extends BaseQueuableJob
 {
     public Account $account;
 
     public ApiSystem $apiSystem;
 
-    public array $balance;
+    public Position $position;
 
-    public function __construct(int $accountId)
+    public CoreJobQueue $previousCoreJobQueue;
+
+    public function __construct()
     {
-        $this->account = Account::findOrFail($accountId);
+        $this->previousCoreJobQueue = $this->coreJobQueue->getPrevious()->first();
+        $this->position = Position::findOrFail($previousCoreJobQueue->response['position_id']);
+        $this->account = $this->position->account;
         $this->apiSystem = $this->account->apiSystem;
         $this->rateLimiter = RateLimitProxy::make($this->apiSystem->canonical)->withAccount($this->account);
         $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
     }
 
-    public function computeApiable()
+    public function compute()
     {
-        /**
-         * The exchange symbol selection is a complicated process that tries
-         * to use the best searching logic for profit efficiency.
-         */
     }
 }
