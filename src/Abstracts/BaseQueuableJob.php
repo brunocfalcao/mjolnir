@@ -15,6 +15,8 @@ abstract class BaseQueuableJob extends BaseJob
 
     public int $workerServerBackoffSeconds = 5;
 
+    public bool $coreJobQueueStatusUpdated = false;
+
     // Max retries for a "always pending" job. Then update to "failed".
     public int $retries = 3;
 
@@ -25,7 +27,6 @@ abstract class BaseQueuableJob extends BaseJob
 
             // Max retries reached?
             if ($this->coreJobQueue->retries == $this->retries + 1) {
-                info('Max job tries reached!');
                 throw new NonOverridableException('CoreJobQueue max retries reached');
             }
 
@@ -45,15 +46,22 @@ abstract class BaseQueuableJob extends BaseJob
             $this->coreJobQueue->updateToRunning();
 
             // Punch it.
+            info('(BaseQueableJob.computeAndStoreResult) ID: '.$this->coreJobQueue->id);
             $this->computeAndStoreResult();
 
-            // Did the child job touched the status or the duration? -- Yes, skip.
-            if (! $this->coreJobQueue->wasChanged('status')) {
+            /**
+             * Sometimes a child job will update core job queue and don't want
+             * the base queueable job to re-update it again. E.g.: BaseApiableJob
+             * when thrown a RequestException.
+             */
+            if (! $this->coreJobQueueStatusUpdated) {
+                info('(BaseQueueable.coreJobQueueStatusUpdated) ID: '.$this->coreJobQueue->id);
+                // Complete core job queue instance.
+                $this->coreJobQueue->finalizeDuration();
                 $this->coreJobQueue->updateToCompleted();
             }
-            if (! $this->coreJobQueue->wasChanged('duration')) {
-                $this->coreJobQueue->finalizeDuration();
-            }
+
+            // All good.
         } catch (\Throwable $e) {
             if ($e instanceof NonOverridableException) {
                 // Last try to make things like a rollback.
@@ -65,14 +73,14 @@ abstract class BaseQueuableJob extends BaseJob
                     $this->exceptionHandler->resolveException($e);
                 }
 
-                // Update to failed, and it's done.
-                $this->coreJobQueue->updateToFailed($e);
-                $this->coreJobQueue->finalizeDuration();
+                if (! $this->coreJobQueueStatusUpdated) {
+                    // Update to failed, and it's done.
+                    $this->coreJobQueue->updateToFailed($e);
+                    $this->coreJobQueue->finalizeDuration();
+                }
 
                 return;
             }
-
-            info('outside of the non overridable exception');
 
             /**
              * We will try to run the 3 exception handler methods from the
@@ -85,12 +93,10 @@ abstract class BaseQueuableJob extends BaseJob
             }
 
             if (isset($this->exceptionHandler) && method_exists($this->exceptionHandler, 'retryException')) {
-                info('Trying the exceptionHandler retryException()');
                 $orShouldRetry = $this->exceptionHandler->retryException($e);
             }
 
             if ((isset($shouldRetry) && $shouldRetry) || (isset($orShouldRetry) && $orShouldRetry)) {
-                info('Conclusion: updateToRetry');
                 $this->coreJobQueue->updateToRetry(now()->addSeconds($this->workerServerBackoffSeconds));
 
                 return;
@@ -98,20 +104,18 @@ abstract class BaseQueuableJob extends BaseJob
 
             // Should gracefully ignore the exception?
             if (method_exists($this, 'ignoreException')) {
-                info('Trying the local ignoreException()');
                 $shouldIgnore = $this->ignoreException($e);
             }
 
             if (isset($this->exceptionHandler) && method_exists($this->exceptionHandler, 'ignoreException')) {
-                info('Trying the exceptionHandler ignoreException()');
                 $orShouldIgnore = $this->exceptionHandler->ignoreException($e);
             }
 
             if ((isset($shouldIgnore) && $shouldIgnore) || (isset($orShouldIgnore) && $orShouldIgnore)) {
-                info('Ignoring exception!');
-
-                $this->coreJobQueue->updateToCompleted();
-                $this->coreJobQueue->finalizeDuration();
+                if (! $this->coreJobQueueStatusUpdated) {
+                    $this->coreJobQueue->updateToCompleted();
+                    $this->coreJobQueue->finalizeDuration();
+                }
 
                 return;
             }
@@ -125,9 +129,11 @@ abstract class BaseQueuableJob extends BaseJob
                 $this->exceptionHandler->resolveException($e);
             }
 
-            // Update to failed, and it's done.
-            $this->coreJobQueue->updateToFailed($e);
-            $this->coreJobQueue->finalizeDuration();
+            if (! $this->coreJobQueueStatusUpdated) {
+                // Update to failed, and it's done.
+                $this->coreJobQueue->updateToFailed($e);
+                $this->coreJobQueue->finalizeDuration();
+            }
         }
     }
 

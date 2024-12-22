@@ -27,13 +27,13 @@ abstract class BaseExceptionHandler
     }
 
     // In case we should retry the action, and not raise an exception.
-    public function retryException(\Exception $exception): bool
+    public function retryException(\Throwable $exception): bool
     {
         return false;
     }
 
     // In case we should ignore the request exception, without retrying it.
-    public function ignoreException(\Exception $exception): bool
+    public function ignoreException(\Throwable $exception): bool
     {
         return false;
     }

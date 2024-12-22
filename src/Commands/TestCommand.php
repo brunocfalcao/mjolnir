@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Jobs\Processes\Hourly\AssessExchangeSymbolDirectionJob;
-use Nidavellir\Mjolnir\Jobs\TestJob;
+use Nidavellir\Mjolnir\Jobs\Processes\Hourly\QueryExchangeSymbolIndicatorJob;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
@@ -48,15 +48,25 @@ class TestCommand extends Command
         $blockUuid = (string) Str::uuid();
 
         CoreJobQueue::create([
-            'class' => TestJob::class,
+            'class' => QueryExchangeSymbolIndicatorJob::class,
             'queue' => 'cronjobs',
 
             'arguments' => [
-                'orderId' => 1,
-                'positionId' => 1,
+                'exchangeSymbolId' => 32,
+                'timeframe' => '1h',
             ],
-
             'index' => 1,
+            'block_uuid' => $blockUuid,
+        ]);
+
+        CoreJobQueue::create([
+            'class' => AssessExchangeSymbolDirectionJob::class,
+            'queue' => 'cronjobs',
+
+            'arguments' => [
+                'exchangeSymbolId' => 32,
+            ],
+            'index' => 2,
             'block_uuid' => $blockUuid,
         ]);
 

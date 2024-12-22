@@ -37,7 +37,6 @@ class QueryExchangeSymbolIndicatorJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        info('Query Exchange Symbol Indicator - Core Job Queue ID: '.$this->coreJobQueue->id);
         if (! $this->timeframe) {
             $this->timeframe = $this->exchangeSymbol->tradeConfiguration->indicator_timeframes[0];
         }
@@ -46,6 +45,8 @@ class QueryExchangeSymbolIndicatorJob extends BaseApiableJob
         $this->apiProperties->set('debug', ['core_job_queue_id' => $this->coreJobQueue->id]);
 
         $this->response = $this->apiAccount->withApi()->getIndicatorValues($this->apiProperties);
+
+        info('(QueryExchangeSymbolIndicatorJob.computeApiable) ID: '.$this->coreJobQueue->id);
 
         $this->coreJobQueue->update([
             'response' => $this->apiDataMapper->resolveQueryIndicatorsResponse($this->response),
