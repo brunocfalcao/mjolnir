@@ -42,9 +42,9 @@ class DispatchAccountPositionsCommand extends Command
 
             // Dispatch jobs for each delta.
             if ($delta > 0) {
-                $blockUuid = (string) Str::uuid();
-
                 for ($i = 0; $i < $delta; $i++) {
+                    $blockUuid = (string) Str::uuid();
+
                     /**
                      * Verify all the financial conditions to open a new position
                      * for the respective account, and also specific
@@ -74,87 +74,6 @@ class DispatchAccountPositionsCommand extends Command
                         'index' => 2,
                         'block_uuid' => $blockUuid,
                     ]);
-
-                    /**
-                     * Next is to select the right token. A token selection have
-                     * tons of logic and rules to select the best token at the
-                     * right time, for the right profit, with the right
-                     * direction.
-                     */
-                    CoreJobQueue::create([
-                        'class' => SelectPositionTokenJob::class,
-                        'queue' => 'positions',
-                        'index' => 3,
-                        'block_uuid' => $blockUuid,
-                    ]);
-
-                    /**
-                     * Next is to calculate the position amount, also given
-                     * risk-management conditions and the respective
-                     * margin that will be used (without leverage).
-                     */
-
-                    /*
-                    CoreJobQueue::create([
-                        'class' => CalculatePositionAmountJob::class,
-                        'queue' => 'positions',
-                        'arguments' => [
-                            'positionId' => $this->position->id,
-                        ],
-                        'index' => 4,
-                        'block_uuid' => $blockUuid,
-                    ]);
-
-                    CoreJobQueue::create([
-                        'class' => CalculatePositionLeverageJob::class,
-                        'queue' => 'positions',
-                        'arguments' => [
-                            'positionId' => $this->position->id,
-                        ],
-                        'index' => 5,
-                        'block_uuid' => $blockUuid,
-                    ]);
-
-                    CoreJobQueue::create([
-                        'class' => UpdateMarginTypeToCrossedJob::class,
-                        'queue' => 'positions',
-                        'arguments' => [
-                            'positionId' => $this->position->id,
-                        ],
-                        'index' => 6,
-                        'block_uuid' => $blockUuid,
-                    ]);
-
-                    CoreJobQueue::create([
-                        'class' => UpdateTokenLeverageRatioJob::class,
-                        'queue' => 'positions',
-                        'arguments' => [
-                            'positionId' => $this->position->id,
-                        ],
-                        'index' => 7,
-                        'block_uuid' => $blockUuid,
-                    ]);
-
-                    CoreJobQueue::create([
-                        'class' => UpdateRemainingPositionDataJob::class,
-                        'queue' => 'positions',
-                        'arguments' => [
-                            'positionId' => $this->position->id,
-                        ],
-                        'index' => 8,
-                        'block_uuid' => $blockUuid,
-                    ]);
-
-                    CoreJobQueue::create([
-                        'class' => DispatchPositionOrdersJob::class,
-                        'queue' => 'orders',
-                        'arguments' => [
-                            'positionId' => $this->position->id,
-                        ],
-                        'index' => 9,
-                        'block_uuid' => $blockUuid,
-                    ]);
-                    */
                 }
             }
         }

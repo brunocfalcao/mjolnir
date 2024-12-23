@@ -78,7 +78,7 @@ class VerifyBalanceConditionsJob extends BaseApiableJob
 
     protected function verifyMinimumBalance()
     {
-        if ($this->balance[$this->account->quote->canonical]['availableBalance'] < $this->account->minimum_balance) {
+        if ($this->balance[$this->account->quote->canonical]['availableBalance'] < $this->account->minimum_margin) {
             throw new \Exception('Cancelling Position opening: Account less than the minimum balance');
         }
     }
@@ -101,16 +101,24 @@ class VerifyBalanceConditionsJob extends BaseApiableJob
 
     protected function checkAtLeastOnePositionWithAllLimitOrdersFilled()
     {
-        // Get all positions for the account with the "opened" scope applied.
-        $positions = Position::opened()->where('account_id', $this->account->id)->get();
+        // Get all positions for the account with the "opened" scope applied, eager loading the 'orders' relationship
+        $positions = Position::opened()
+            ->where('account_id', $this->account->id)
+            ->with('orders') // Eager load 'orders'
+            ->get();
 
         foreach ($positions as $position) {
-            // Do we have zero limit orders to fill?
-            if ($position->orders()
-                ->where('type', 'LIMIT')
-                ->where('status', 'NEW')
-                ->count() == 0) {
-                throw new \Exception('Cancelling Position opening: At least one open position have all limit orders filled');
+            $orders = $position->orders;
+
+            // Check if we have orders
+            if ($orders->count() > 0) {
+                // Filter orders where type = LIMIT and is_syncing = false
+                $limitOrders = $orders->where('type', 'LIMIT')->where('is_syncing', false);
+
+                // Check if there are no limit orders with status = NEW
+                if ($limitOrders->where('status', 'NEW')->count() == 0) {
+                    throw new \Exception('Cancelling Position opening: At least one open position has all limit orders filled');
+                }
             }
         }
     }

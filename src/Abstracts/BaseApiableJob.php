@@ -8,8 +8,6 @@ abstract class BaseApiableJob extends BaseQueuableJob
 {
     public ?BaseRateLimiter $rateLimiter;
 
-    public ?BaseExceptionHandler $exceptionHandler;
-
     protected function compute()
     {
         $this->checkApiRequiredClasses();

@@ -17,6 +17,8 @@ abstract class BaseQueuableJob extends BaseJob
 
     public bool $coreJobQueueStatusUpdated = false;
 
+    public ?BaseExceptionHandler $exceptionHandler;
+
     // Max retries for a "always pending" job. Then update to "failed".
     public int $retries = 3;
 
