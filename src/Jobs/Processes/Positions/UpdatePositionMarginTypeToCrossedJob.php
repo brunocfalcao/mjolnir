@@ -9,7 +9,7 @@ use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\Position;
 
-class UpdateMarginTypeToCrossedJob extends BaseApiableJob
+class UpdatePositionMarginTypeToCrossedJob extends BaseApiableJob
 {
     public Account $account;
 

@@ -2,13 +2,12 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\Position;
 
 class DispatchPositionOrdersJob extends BaseQueuableJob
 {
@@ -27,7 +26,5 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
         $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
     }
 
-    public function compute()
-    {
-    }
+    public function compute() {}
 }

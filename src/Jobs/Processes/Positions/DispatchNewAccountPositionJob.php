@@ -48,6 +48,7 @@ class DispatchNewAccountPositionJob extends BaseQueuableJob
                 'block_uuid' => $blockUuid,
             ]);
         }
+        return;
 
         if (! $position->margin) {
             CoreJobQueue::create([
@@ -74,7 +75,7 @@ class DispatchNewAccountPositionJob extends BaseQueuableJob
         }
 
         CoreJobQueue::create([
-            'class' => UpdateMarginTypeToCrossedJob::class,
+            'class' => UpdatePositionMarginTypeToCrossedJob::class,
             'queue' => 'positions',
             'arguments' => [
                 'positionId' => $position->id,
