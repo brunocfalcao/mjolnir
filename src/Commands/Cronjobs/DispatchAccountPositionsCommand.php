@@ -3,6 +3,7 @@
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -28,6 +29,8 @@ class DispatchAccountPositionsCommand extends Command
         DB::table('positions')->truncate();
         DB::table('orders')->truncate();
 
+        $this->createTestingData();
+
         // Only process accounts belonging to traders.
         $accounts = Account::whereHas('user', function ($query) {
             $query->where('is_trader', true); // Ensure the user is a trader
@@ -43,6 +46,8 @@ class DispatchAccountPositionsCommand extends Command
             // Dispatch jobs for each delta.
             if ($delta > 0) {
                 for ($i = 0; $i < $delta; $i++) {
+                    info('Open new position for account '.$account->id);
+
                     $blockUuid = (string) Str::uuid();
 
                     /**
@@ -79,5 +84,41 @@ class DispatchAccountPositionsCommand extends Command
         }
 
         return 0;
+    }
+
+    protected function createTestingData()
+    {
+        // Create the first Position (fast-traded, satisfies the criteria)
+        $fastTradedPosition = Position::create([
+            'account_id' => 1, // Replace with a valid account_id
+            'exchange_symbol_id' => 1, // Replace with a valid exchange_symbol_id
+            'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago
+            'closed_at' => Carbon::now(), // Closed now
+            'created_at' => Carbon::now()->subMinutes(2), // Created 2 minutes ago
+            'updated_at' => Carbon::now(), // Updated now
+            'status' => 'new', // Set the status to closed
+        ]);
+
+        // Create the first Position (fast-traded, satisfies the criteria)
+        $fastTradedPosition = Position::create([
+            'account_id' => 1, // Replace with a valid account_id
+            'exchange_symbol_id' => 2, // Replace with a valid exchange_symbol_id
+            'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago
+            'closed_at' => Carbon::now(), // Closed now
+            'created_at' => Carbon::now()->subMinutes(2), // Created 2 minutes ago
+            'updated_at' => Carbon::now(), // Updated now
+            'status' => 'closed', // Set the status to closed
+        ]);
+
+        // Create the second Position (does not satisfy the criteria, created more than 5 minutes ago)
+        $oldPosition = Position::create([
+            'account_id' => 1, // Replace with a valid account_id
+            'exchange_symbol_id' => 3, // Replace with a valid exchange_symbol_id
+            'started_at' => Carbon::now()->subMinutes(10), // Started 10 minutes ago
+            'closed_at' => Carbon::now()->subMinutes(7), // Closed 7 minutes ago
+            'created_at' => Carbon::now()->subMinutes(10), // Created 10 minutes ago
+            'updated_at' => Carbon::now()->subMinutes(7), // Updated 7 minutes ago
+            'status' => 'closed', // Set the status to closed
+        ]);
     }
 }

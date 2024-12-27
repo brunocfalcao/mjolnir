@@ -2,7 +2,6 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
-use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
@@ -45,40 +44,12 @@ class VerifyBalanceConditionsJob extends BaseApiableJob
         // To we have at least one position with all limit orders filled?
         $this->checkAtLeastOnePositionWithAllLimitOrdersFilled();
 
-        $position = Position::create([
-            'account_id' => $this->account->id,
-        ]);
-
-        $blockUuid = (string) Str::uuid();
-
-        /**
-        if (! $this->initializeExchangeSymbol()) {
-            return;
-        }
-        if (! $this->calculatePositionAmount()) {
-            return;
-        }
-        if (! $this->definePositionSide()) {
-            return;
-        }
-        if (! $this->calculateLeverage()) {
-            return;
-        }
-        if (! $this->meetsMinimumNotional()) {
-            return;
-        }
-        $this->updateMarginTypeToCrossed();
-        $this->updateTokenLeverageRatio();
-        $this->updateRemainingPositionData();
-        $this->dispatchOrders();
-         */
-
         return $response->result[$this->account->quote->canonical];
     }
 
     protected function verifyMinimumBalance()
     {
-        if ($this->balance[$this->account->quote->canonical]['availableBalance'] < $this->account->minimum_margin) {
+        if ($this->balance[$this->account->quote->canonical]['availableBalance'] < $this->account->minimum_balance) {
             throw new \Exception('Cancelling Position opening: Account less than the minimum balance');
         }
     }

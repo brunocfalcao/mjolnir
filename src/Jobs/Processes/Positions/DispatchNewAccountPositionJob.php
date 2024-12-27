@@ -48,6 +48,7 @@ class DispatchNewAccountPositionJob extends BaseQueuableJob
                 'block_uuid' => $blockUuid,
             ]);
         }
+
         return;
 
         if (! $position->margin) {
