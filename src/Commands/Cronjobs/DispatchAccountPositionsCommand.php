@@ -2,16 +2,18 @@
 
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
-use Illuminate\Console\Command;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-use Nidavellir\Mjolnir\Jobs\Processes\Positions\DispatchNewAccountPositionJob;
-use Nidavellir\Mjolnir\Jobs\Processes\Positions\VerifyBalanceConditionsJob;
+use Illuminate\Support\Carbon;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use Nidavellir\Thor\Models\Symbol;
 use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\CoreJobQueue;
+use Illuminate\Support\Facades\File;
 use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\ExchangeSymbol;
+use Nidavellir\Mjolnir\Jobs\Processes\Positions\VerifyBalanceConditionsJob;
+use Nidavellir\Mjolnir\Jobs\Processes\Positions\DispatchNewAccountPositionJob;
 
 class DispatchAccountPositionsCommand extends Command
 {
@@ -30,6 +32,10 @@ class DispatchAccountPositionsCommand extends Command
         DB::table('orders')->truncate();
 
         $this->createTestingData();
+
+        // The BTC exchange symbol shouldn't be tradeable. Enforce it.
+        ExchangeSymbol::where('symbol_id', Symbol::firstWhere('token', 'BTC')->id)
+                      ->update(['is_tradeable' => false]);
 
         // Only process accounts belonging to traders.
         $accounts = Account::whereHas('user', function ($query) {

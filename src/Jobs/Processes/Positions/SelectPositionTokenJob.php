@@ -35,6 +35,7 @@ class SelectPositionTokenJob extends BaseQueuableJob
          * and was it closed in less than 3 minutes, and no more than 5 mins ago?
          * Then select the same token again.
          */
+
         $exchangeSymbol = $this->tryToGetAfastTradedToken();
 
         if ($exchangeSymbol) {
@@ -82,13 +83,109 @@ class SelectPositionTokenJob extends BaseQueuableJob
             $directionPriority = $btcExchangeSymbol->direction;
         }
 
+        // Eager load the tradeConfiguration relationship
+        $availableExchangeSymbols = $availableExchangeSymbols->load('tradeConfiguration');
+
+        $orderedExchangeSymbols = $availableExchangeSymbols
+        ->sortBy(function ($exchangeSymbol) use ($directionPriority) {
+            // First, prioritize by the direction.
+            $directionMatch = $exchangeSymbol->direction == $directionPriority ? 0 : 1;
+
+            // Second, sort by the index of the indicator_timeframe within the indicator_timeframes array.
+            $indicatorTimeframes = $exchangeSymbol->tradeConfiguration->indicator_timeframes ?? [];
+
+            // Find the index of the indicator_timeframe in the indicator_timeframes array.
+            $indicatorTimeframeIndex = array_search($exchangeSymbol->indicator_timeframe, $indicatorTimeframes);
+
+            // If the timeframe is not found in the array, assign a high value to push it to the end.
+            $indicatorTimeframeIndex = $indicatorTimeframeIndex !== false ? $indicatorTimeframeIndex : PHP_INT_MAX;
+
+            // Combine direction match and timeframe index for sorting.
+            return [$directionMatch, $indicatorTimeframeIndex];
+        })
+        ->values(); // Reindex the collection.
+
         /**
-         * If we do have a direction priority, by the trade configuration or
-         * by the BTC exchange symbol, then we need to sort the exchange symbols
-         * using that direction. If there is no direction, that we don't sort
-         * by this direction priority, and we keep the remaining priority
-         * conditions.
+         * We now have a perfect $orderedExchangeSymbols sorted by the right
+         * order to select the best token. Next step is to know what category
+         * are we missing a token.
          */
+        $categories = Symbol::query()
+        ->select('category_canonical')
+        ->distinct()
+        ->get()
+        ->pluck('category_canonical');
+
+        $eligibleExchangeSymbol = $this->findEligibleSymbol($orderedExchangeSymbols);
+    }
+
+    protected function findEligibleSymbol($orderedExchangeSymbols)
+    {
+        // Step 1: Calculate the trades per category
+        $maxConcurrentTrades = $this->account->max_concurrent_trades;
+        info("Max Concurrent Trades: $maxConcurrentTrades");
+
+        $categories = Symbol::query()->select('category_canonical')->distinct()->get()->pluck('category_canonical');
+        $totalCategories = $categories->count();
+        info("Total Categories: $totalCategories");
+        info("Categories: " . $categories->join(', '));
+
+        $tradesPerCategory = intdiv($maxConcurrentTrades, $totalCategories); // Rounded down trades per category
+        $extraTrades = $maxConcurrentTrades % $totalCategories; // Remaining trades to be distributed
+        info("Trades Per Category: $tradesPerCategory");
+        info("Extra Trades to Distribute: $extraTrades");
+
+        // Distribute the trades per category
+        $tradesAllocation = $categories->mapWithKeys(function ($category, $index) use ($tradesPerCategory, $extraTrades) {
+            $allocatedTrades = $tradesPerCategory + ($index < $extraTrades ? 1 : 0);
+            info("Category: $category, Allocated Trades: $allocatedTrades");
+            return [$category => $allocatedTrades];
+        });
+
+        // Step 2: Check for missing trades in each category
+        $missingTrades = $tradesAllocation->filter(function ($allowedTrades, $category) {
+            $openedTradesCount = Position::opened()
+            ->whereHas('exchangeSymbol', function ($query) use ($category) {
+                $query->where('category_canonical', $category);
+            })
+            ->count();
+
+            info("Category: $category, Allowed Trades: $allowedTrades, Opened Trades: $openedTradesCount");
+
+            return $openedTradesCount < $allowedTrades; // Only return categories with missing trades
+        });
+
+        info("Missing Trades Categories: " . $missingTrades->keys()->join(', '));
+
+        // Step 3: Find the eligible exchange symbol for the top-priority missing trade
+        foreach ($missingTrades as $category => $allowedTrades) {
+            $openedTradesCount = Position::opened()
+            ->whereHas('exchangeSymbol', function ($query) use ($category) {
+                $query->where('category_canonical', $category);
+            })
+                ->count();
+
+            info("Processing Category: $category");
+            info("Allowed Trades: $allowedTrades, Opened Trades: $openedTradesCount");
+
+            if ($openedTradesCount < $allowedTrades) {
+                // Find the topmost exchange symbol for this category
+                $eligibleExchangeSymbol = $orderedExchangeSymbols
+                    ->first(function ($exchangeSymbol) use ($category) {
+                        return $exchangeSymbol->symbol->category_canonical === $category;
+                    });
+
+                if ($eligibleExchangeSymbol) {
+                        info("Eligible Exchange Symbol Found: " . $eligibleExchangeSymbol->symbol->token);
+                        return $eligibleExchangeSymbol;
+                } else {
+                    info("No eligible exchange symbol found for category: $category");
+                }
+            }
+        }
+
+        info("No eligible exchange symbol found for any category.");
+        return null;
     }
 
     protected function updatePositionWithExchangeSymbol(ExchangeSymbol $exchangeSymbol)
