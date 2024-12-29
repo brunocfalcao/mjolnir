@@ -49,8 +49,6 @@ class DispatchNewAccountPositionJob extends BaseQueuableJob
             ]);
         }
 
-        return;
-
         if (! $position->margin) {
             CoreJobQueue::create([
                 'class' => CalculatePositionMarginJob::class,
@@ -84,6 +82,8 @@ class DispatchNewAccountPositionJob extends BaseQueuableJob
             'index' => $index++,
             'block_uuid' => $blockUuid,
         ]);
+
+        return;
 
         CoreJobQueue::create([
             'class' => UpdateTokenLeverageRatioJob::class,

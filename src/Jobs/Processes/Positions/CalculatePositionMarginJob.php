@@ -7,6 +7,7 @@ use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\Position;
 
 class CalculatePositionMarginJob extends BaseApiableJob
@@ -17,6 +18,10 @@ class CalculatePositionMarginJob extends BaseApiableJob
 
     public Position $position;
 
+    public ExchangeSymbol $exchangeSymbol;
+
+    public float $balance;
+
     public function __construct(int $positionId)
     {
         $this->position = Position::findOrFail($positionId);
@@ -24,7 +29,27 @@ class CalculatePositionMarginJob extends BaseApiableJob
         $this->apiSystem = $this->account->apiSystem;
         $this->rateLimiter = RateLimitProxy::make($this->apiSystem->canonical)->withAccount($this->account);
         $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
+        $this->exchangeSymbol = $this->position->exchangeSymbol;
     }
 
-    public function computeApiable() {}
+    public function computeApiable()
+    {
+        /**
+         * The position margin is the absolute portfolio amount used for the
+         * current position. It will needed to be updated the positions.margin.
+         *
+         * The margin is a simple calculation from the accounts.position_size_percentage
+         * versus the account balance that exists.
+         */
+
+        // Lets start by fetching the balance.
+        $response = $this->account->apiQueryBalance();
+        $this->balance = $response->result[$this->account->quote->canonical]['availableBalance'];
+
+        // The available balance will then be sliced for this account size percentage.
+        $margin = round($this->balance * $this->account->position_size_percentage / 100);
+
+        // Update the position margin, and move on.
+        $this->position->update(['margin' => $margin]);
+    }
 }

@@ -2,7 +2,6 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
-use Illuminate\Support\Facades\DB;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Thor\Models\Account;
@@ -22,6 +21,7 @@ class SelectPositionTokenJob extends BaseQueuableJob
 
     public function __construct(int $positionId)
     {
+        // Load the position and related account and API system
         $this->position = Position::findOrFail($positionId);
         $this->account = $this->position->account;
         $this->apiSystem = $this->account->apiSystem;
@@ -30,11 +30,10 @@ class SelectPositionTokenJob extends BaseQueuableJob
 
     public function compute()
     {
-        info('------------  SELECT POSITION TOKEN JOB -----------------');
         /**
-         * Check if this token was traded on this account as the last symbol to be closed
-         * and was closed in less than 3 minutes, and no more than 5 mins ago.
-         * If so, select the same token again.
+         * Attempt to reuse a recently fast-traded token.
+         * This checks if a token was closed in less than 3 minutes and no more than 5 minutes ago.
+         * If a valid token is found, update the position with it and stop further processing.
          */
         $exchangeSymbol = $this->tryToGetAfastTradedToken();
 
@@ -44,28 +43,31 @@ class SelectPositionTokenJob extends BaseQueuableJob
             return;
         }
 
-        // Compute the available exchange symbols for the next trade
+        // Get all currently opened exchange symbols for the account
         $openedExchangeSymbols = Position::opened()
             ->whereNotNull('exchange_symbol_id')
             ->where('account_id', $this->account->id)
             ->get()
             ->pluck('exchange_symbol_id');
 
+        // Fetch all tradeable exchange symbols for the account's quote
         $tradeableExchangeSymbols = ExchangeSymbol::tradeable()
             ->where('quote_id', $this->account->quote->id)
             ->get();
 
+        // Filter out symbols that are already in use by opened positions
         $availableExchangeSymbols = $tradeableExchangeSymbols->reject(function ($exchangeSymbol) use ($openedExchangeSymbols) {
-            return $openedExchangeSymbols->contains($exchangeSymbol->id); // Filter out symbols already in use
+            return $openedExchangeSymbols->contains($exchangeSymbol->id);
         })->values();
 
         /**
-         * Determine direction priority: either from trade configuration or BTC direction.
-         * The priority is given to the Trade Configuration in case it exists.
+         * Determine the direction priority for trades.
+         * Priority is determined either by a predefined trade configuration or BTC's direction.
          */
         $directionPriority = TradeConfiguration::default()->first()->direction_priority;
 
         if ($directionPriority == null) {
+            // Use BTC's direction if no predefined priority exists
             $btcExchangeSymbol = ExchangeSymbol::where(
                 'symbol_id',
                 Symbol::firstWhere('token', 'BTC')->id
@@ -80,119 +82,103 @@ class SelectPositionTokenJob extends BaseQueuableJob
             }
         }
 
-        // Eager load the tradeConfiguration and symbol relationships
+        // Eager load relationships for sorting
         $availableExchangeSymbols = $availableExchangeSymbols->load('symbol', 'tradeConfiguration');
 
-        // Order exchange symbols based on priority (if exists) and timeframes
+        /**
+         * Sort exchange symbols based on direction priority (if exists) and timeframes.
+         * If no direction priority is defined, sort only by indicator timeframes.
+         */
         $orderedExchangeSymbols = $availableExchangeSymbols
             ->sortBy(function ($exchangeSymbol) use ($directionPriority) {
                 $indicatorTimeframes = $exchangeSymbol->tradeConfiguration->indicator_timeframes ?? [];
                 $indicatorTimeframeIndex = array_search($exchangeSymbol->indicator_timeframe, $indicatorTimeframes);
                 $indicatorTimeframeIndex = $indicatorTimeframeIndex !== false ? $indicatorTimeframeIndex : PHP_INT_MAX;
 
-                // If directionPriority is null, ignore direction and sort only by timeframe
                 if ($directionPriority == null) {
-                    return $indicatorTimeframeIndex;
+                    return $indicatorTimeframeIndex; // Sort only by timeframe
                 }
 
-                // If directionPriority exists, sort first by direction, then by timeframe
+                // Sort first by direction match, then by timeframe
                 $directionMatch = $exchangeSymbol->direction == $directionPriority ? 0 : 1;
 
                 return [$directionMatch, $indicatorTimeframeIndex];
             })
             ->values();
 
-        // Log ordered exchange symbols
-        info('Ordered Exchange Symbols:');
-        $orderedExchangeSymbols->each(function ($exchangeSymbol) {
-            info("Exchange Symbol ID: {$exchangeSymbol->id}, Token: {$exchangeSymbol->symbol->token}, Category: {$exchangeSymbol->symbol->category_canonical}, Direction: {$exchangeSymbol->direction}, Timeframe: {$exchangeSymbol->indicator_timeframe}");
-        });
-
-        // Find the eligible exchange symbol for this position
+        /**
+         * Find the most suitable exchange symbol for the position.
+         * This ensures the symbol is eligible based on category allocation and concurrency rules.
+         */
         $eligibleExchangeSymbol = $this->findEligibleSymbol($orderedExchangeSymbols);
 
         if ($eligibleExchangeSymbol) {
             $this->updatePositionWithExchangeSymbol($eligibleExchangeSymbol);
-        } else {
-            info('No eligible exchange symbol found for position ID: '.$this->position->id);
+
+            return;
         }
     }
 
     protected function findEligibleSymbol($orderedExchangeSymbols)
     {
+        // Get the maximum number of concurrent trades allowed for the account
         $maxConcurrentTrades = $this->account->max_concurrent_trades;
-        info("Max Concurrent Trades: $maxConcurrentTrades");
 
-        // Retrieve all distinct categories
+        // Retrieve all unique symbol categories
         $categories = Symbol::query()->select('category_canonical')->distinct()->get()->pluck('category_canonical');
         $totalCategories = $categories->count();
-        info("Total Categories: $totalCategories");
-        info('Categories: '.$categories->join(', '));
 
-        // Calculate trades allocation per category
+        // Allocate trades evenly across categories
         $tradesPerCategory = intdiv($maxConcurrentTrades, $totalCategories);
         $extraTrades = $maxConcurrentTrades % $totalCategories;
-        info("Trades Per Category: $tradesPerCategory");
-        info("Extra Trades to Distribute: $extraTrades");
 
-        // Assign trade allocation to each category
+        // Map categories to their allowed trade allocations
         $tradesAllocation = $categories->mapWithKeys(function ($category, $index) use ($tradesPerCategory, $extraTrades) {
             $allocatedTrades = $tradesPerCategory + ($index < $extraTrades ? 1 : 0);
-            info("Category: $category, Allocated Trades: $allocatedTrades");
 
             return [$category => $allocatedTrades];
         });
 
-        // Keep track of already assigned symbols for this account
+        // Get all exchange symbols currently assigned to open positions
         $alreadyAssignedSymbols = Position::opened()
             ->where('account_id', $this->account->id)
             ->get()
             ->pluck('exchange_symbol_id')
             ->toArray();
 
-        // Find the first category with missing trades
+        // Iterate over categories to find the first with missing trades
         foreach ($tradesAllocation as $category => $allowedTrades) {
+            // Count the number of currently opened trades for this category
             $openedTradesCount = Position::opened()
                 ->whereHas('exchangeSymbol.symbol', function ($query) use ($category) {
                     $query->where('category_canonical', $category);
                 })
                 ->count();
 
-            info("Category: $category, Allowed Trades: $allowedTrades, Opened Trades: $openedTradesCount");
-
-            // If there are missing positions in this category
+            // If the category has room for more trades
             if ($openedTradesCount < $allowedTrades) {
-                info("Category with missing positions found: $category");
-
-                // Find the first exchange symbol in the ordered collection that belongs to this category and is not already assigned
+                // Find the first eligible exchange symbol for the category
                 $eligibleExchangeSymbol = $orderedExchangeSymbols
                     ->first(function ($exchangeSymbol) use ($category, $alreadyAssignedSymbols) {
                         return $exchangeSymbol->symbol->category_canonical == $category &&
-                            ! in_array($exchangeSymbol->id, $alreadyAssignedSymbols); // Ensure symbol is not already assigned
+                            ! in_array($exchangeSymbol->id, $alreadyAssignedSymbols); // Ensure it is not already assigned
                     });
 
                 if ($eligibleExchangeSymbol) {
-                    info("Eligible Exchange Symbol Found: ID {$eligibleExchangeSymbol->id}, Token: {$eligibleExchangeSymbol->symbol->token}, Direction: {$eligibleExchangeSymbol->direction}, Timeframe: {$eligibleExchangeSymbol->indicator_timeframe}");
-
                     return $eligibleExchangeSymbol;
-                } else {
-                    info("No eligible exchange symbol found for category: $category");
-
-                    return null; // Explicitly return null if no symbol is found
                 }
             }
         }
 
-        info('No eligible exchange symbol found for any category.');
-
+        // Return null if no eligible symbol is found
         return null;
     }
 
     protected function updatePositionWithExchangeSymbol(ExchangeSymbol $exchangeSymbol)
     {
         /**
-         * Check if the exchange symbol is already selected for any open position
-         * in the account. If yes, retry the job gracefully.
+         * Check if the exchange symbol is already assigned to another open position
+         * in the account. If so, retry the job gracefully.
          */
         $exchangeSymbolAlreadySelected = Position::opened()
             ->where('account_id', $this->account->id)
@@ -200,22 +186,19 @@ class SelectPositionTokenJob extends BaseQueuableJob
             ->exists();
 
         if (! $exchangeSymbolAlreadySelected) {
-            DB::transaction(function () use ($exchangeSymbol) {
-                $this->position->update(['exchange_symbol_id' => $exchangeSymbol->id]);
-                info("Updated position ID {$this->position->id} with Exchange Symbol ID {$exchangeSymbol->id}");
-            });
+            // Assign the exchange symbol to the position in a transaction
+            $this->position->update(['exchange_symbol_id' => $exchangeSymbol->id]);
 
             return;
         }
 
-        /**
-         * Gracefully retry again this core job queue entry.
-         */
+        // Retry the job later if a conflict is detected
         $this->coreJobQueue->updateToRetry(now()->addSeconds(10));
     }
 
     protected function tryToGetAfastTradedToken()
     {
+        // Get all exchange symbols currently in use for open positions
         $openPositionExchangeSymbols = ExchangeSymbol::whereIn(
             'id',
             Position::where('account_id', $this->account->id)
@@ -224,12 +207,14 @@ class SelectPositionTokenJob extends BaseQueuableJob
                 ->unique()
         )->get();
 
+        // Get recently closed positions within the past 5 minutes
         $recentClosedPositions = Position::where('account_id', $this->account->id)
             ->whereNotNull('closed_at')
             ->where('closed_at', '>=', now()->subMinutes(5))
             ->with('exchangeSymbol')
             ->get();
 
+        // Filter for positions that were closed in under 3 minutes
         $fastTradedExchangeSymbols = $recentClosedPositions->filter(function ($position) {
             if (! $position->exchangeSymbol) {
                 return false;
@@ -246,10 +231,12 @@ class SelectPositionTokenJob extends BaseQueuableJob
             return null;
         }
 
+        // Reject symbols already in use for open positions
         $filteredExchangeSymbols = $fastTradedExchangeSymbols->reject(function ($exchangeSymbol) use ($openPositionExchangeSymbols) {
             return $openPositionExchangeSymbols->contains($exchangeSymbol);
         });
 
+        // Order symbols by the duration of their last trade (ascending)
         $orderedExchangeSymbols = $filteredExchangeSymbols->sortBy(function ($exchangeSymbol) use ($recentClosedPositions) {
             $position = $recentClosedPositions->firstWhere('exchange_symbol_id', $exchangeSymbol->id);
 

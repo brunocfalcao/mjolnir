@@ -28,10 +28,10 @@ class DispatchAccountPositionsCommand extends Command
         DB::table('core_job_queue')->truncate();
         DB::table('api_requests_log')->truncate();
         DB::table('rate_limits')->truncate();
-        //DB::table('positions')->truncate();
+        DB::table('positions')->truncate();
         DB::table('orders')->truncate();
 
-        //$this->createTestingData();
+        $this->createTestingData();
 
         // The BTC exchange symbol shouldn't be tradeable. Enforce it.
         ExchangeSymbol::where('symbol_id', Symbol::firstWhere('token', 'BTC')->id)
@@ -52,8 +52,6 @@ class DispatchAccountPositionsCommand extends Command
             // Dispatch jobs for each delta.
             if ($delta > 0) {
                 for ($i = 0; $i < $delta; $i++) {
-                    info('Dispatching a position');
-
                     $blockUuid = (string) Str::uuid();
 
                     /**
