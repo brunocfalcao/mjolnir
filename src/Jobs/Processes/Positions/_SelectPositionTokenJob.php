@@ -12,7 +12,7 @@ use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\Symbol;
 use Nidavellir\Thor\Models\TradeConfiguration;
 
-class SelectPositionTokenJob extends BaseQueuableJob
+class _SelectPositionTokenJob extends BaseQueuableJob
 {
     public Account $account;
 
@@ -143,13 +143,6 @@ class SelectPositionTokenJob extends BaseQueuableJob
             return [$category => $allocatedTrades];
         });
 
-        // Keep track of already assigned symbols for this account
-        $alreadyAssignedSymbols = Position::opened()
-            ->where('account_id', $this->account->id)
-            ->get()
-            ->pluck('exchange_symbol_id')
-            ->toArray();
-
         // Find the first category with missing trades
         foreach ($tradesAllocation as $category => $allowedTrades) {
             $openedTradesCount = Position::opened()
@@ -164,11 +157,10 @@ class SelectPositionTokenJob extends BaseQueuableJob
             if ($openedTradesCount < $allowedTrades) {
                 info("Category with missing positions found: $category");
 
-                // Find the first exchange symbol in the ordered collection that belongs to this category and is not already assigned
+                // Find the first exchange symbol in the ordered collection that belongs to this category
                 $eligibleExchangeSymbol = $orderedExchangeSymbols
-                    ->first(function ($exchangeSymbol) use ($category, $alreadyAssignedSymbols) {
-                        return $exchangeSymbol->symbol->category_canonical == $category &&
-                            ! in_array($exchangeSymbol->id, $alreadyAssignedSymbols); // Ensure symbol is not already assigned
+                    ->first(function ($exchangeSymbol) use ($category) {
+                        return $exchangeSymbol->symbol->category_canonical == $category;
                     });
 
                 if ($eligibleExchangeSymbol) {
@@ -199,19 +191,18 @@ class SelectPositionTokenJob extends BaseQueuableJob
             ->where('exchange_symbol_id', $exchangeSymbol->id)
             ->exists();
 
-        if (! $exchangeSymbolAlreadySelected) {
-            DB::transaction(function () use ($exchangeSymbol) {
-                $this->position->update(['exchange_symbol_id' => $exchangeSymbol->id]);
-                info("Updated position ID {$this->position->id} with Exchange Symbol ID {$exchangeSymbol->id}");
-            });
+        if ($exchangeSymbolAlreadySelected) {
+            info("Exchange Symbol ID {$exchangeSymbol->id} is already selected for an open position. Retrying...");
+            $this->coreJobQueue->updateToRetry(now()->addSeconds(10));
 
             return;
         }
 
-        /**
-         * Gracefully retry again this core job queue entry.
-         */
-        $this->coreJobQueue->updateToRetry(now()->addSeconds(10));
+        // Ensure the update is atomic to avoid race conditions
+        DB::transaction(function () use ($exchangeSymbol) {
+            $this->position->update(['exchange_symbol_id' => $exchangeSymbol->id]);
+            info("Updated position ID {$this->position->id} with Exchange Symbol ID {$exchangeSymbol->id}");
+        });
     }
 
     protected function tryToGetAfastTradedToken()

@@ -2,18 +2,18 @@
 
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
-use Illuminate\Support\Str;
-use Illuminate\Support\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Nidavellir\Thor\Models\Symbol;
-use Nidavellir\Thor\Models\Account;
 use Illuminate\Support\Facades\File;
-use Nidavellir\Thor\Models\Position;
+use Illuminate\Support\Str;
+use Nidavellir\Mjolnir\Jobs\Processes\Positions\DispatchNewAccountPositionJob;
+use Nidavellir\Mjolnir\Jobs\Processes\Positions\VerifyBalanceConditionsJob;
+use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\ExchangeSymbol;
-use Nidavellir\Mjolnir\Jobs\Processes\Positions\VerifyBalanceConditionsJob;
-use Nidavellir\Mjolnir\Jobs\Processes\Positions\DispatchNewAccountPositionJob;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\Symbol;
 
 class DispatchAccountPositionsCommand extends Command
 {
@@ -28,14 +28,14 @@ class DispatchAccountPositionsCommand extends Command
         DB::table('core_job_queue')->truncate();
         DB::table('api_requests_log')->truncate();
         DB::table('rate_limits')->truncate();
-        DB::table('positions')->truncate();
+        //DB::table('positions')->truncate();
         DB::table('orders')->truncate();
 
-        $this->createTestingData();
+        //$this->createTestingData();
 
         // The BTC exchange symbol shouldn't be tradeable. Enforce it.
         ExchangeSymbol::where('symbol_id', Symbol::firstWhere('token', 'BTC')->id)
-                      ->update(['is_tradeable' => false]);
+            ->update(['is_tradeable' => false]);
 
         // Only process accounts belonging to traders.
         $accounts = Account::whereHas('user', function ($query) {
@@ -52,7 +52,7 @@ class DispatchAccountPositionsCommand extends Command
             // Dispatch jobs for each delta.
             if ($delta > 0) {
                 for ($i = 0; $i < $delta; $i++) {
-                    info('Open new position for account '.$account->id);
+                    info('Dispatching a position');
 
                     $blockUuid = (string) Str::uuid();
 
@@ -97,7 +97,7 @@ class DispatchAccountPositionsCommand extends Command
         // Create the first Position (fast-traded, satisfies the criteria)
         $fastTradedPosition = Position::create([
             'account_id' => 1, // Replace with a valid account_id
-            'exchange_symbol_id' => 1, // Replace with a valid exchange_symbol_id
+            'exchange_symbol_id' => 8, // Replace with a valid exchange_symbol_id
             'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago
             'closed_at' => Carbon::now(), // Closed now
             'created_at' => Carbon::now()->subMinutes(2), // Created 2 minutes ago
@@ -108,7 +108,7 @@ class DispatchAccountPositionsCommand extends Command
         // Create the first Position (fast-traded, satisfies the criteria)
         $fastTradedPosition = Position::create([
             'account_id' => 1, // Replace with a valid account_id
-            'exchange_symbol_id' => 2, // Replace with a valid exchange_symbol_id
+            'exchange_symbol_id' => 11, // Replace with a valid exchange_symbol_id
             'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago
             'closed_at' => Carbon::now(), // Closed now
             'created_at' => Carbon::now()->subMinutes(2), // Created 2 minutes ago
@@ -124,6 +124,17 @@ class DispatchAccountPositionsCommand extends Command
             'closed_at' => Carbon::now()->subMinutes(7), // Closed 7 minutes ago
             'created_at' => Carbon::now()->subMinutes(10), // Created 10 minutes ago
             'updated_at' => Carbon::now()->subMinutes(7), // Updated 7 minutes ago
+            'status' => 'closed', // Set the status to closed
+        ]);
+
+        // Create the first Position (fast-traded, satisfies the criteria)
+        $fastTradedPosition = Position::create([
+            'account_id' => 1, // Replace with a valid account_id
+            'exchange_symbol_id' => 12, // Replace with a valid exchange_symbol_id
+            'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago
+            'closed_at' => Carbon::now(), // Closed now
+            'created_at' => Carbon::now()->subMinutes(2), // Created 2 minutes ago
+            'updated_at' => Carbon::now(), // Updated now
             'status' => 'closed', // Set the status to closed
         ]);
     }
