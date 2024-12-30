@@ -7,6 +7,7 @@ use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsAccountBal
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsExchangeInformationQuery;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsLeverageBracketsQuery;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsOrderQuery;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsSymbolMarginType;
 
 class BinanceApiDataMapper extends BaseDataMapper
 {
@@ -14,6 +15,7 @@ class BinanceApiDataMapper extends BaseDataMapper
     use MapsExchangeInformationQuery;
     use MapsLeverageBracketsQuery;
     use MapsOrderQuery;
+    use MapsSymbolMarginType;
 
     /**
      * Returns the well formed base symbol with the quote on it.

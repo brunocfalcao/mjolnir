@@ -245,4 +245,12 @@ class SelectPositionTokenJob extends BaseQueuableJob
 
         return $orderedExchangeSymbols->first() ?: null;
     }
+
+    public function resolveException(\Throwable $e)
+    {
+        $this->position->update([
+            'status' => 'cancelled',
+            'error_message' => $e->getMessage()
+        ]);
+    }
 }

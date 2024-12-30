@@ -26,5 +26,7 @@ class UpdateTokenLeverageRatioJob extends BaseApiableJob
         $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
     }
 
-    public function computeApiable() {}
+    public function computeApiable()
+    {
+    }
 }

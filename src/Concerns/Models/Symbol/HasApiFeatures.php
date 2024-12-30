@@ -21,6 +21,15 @@ trait HasApiFeatures
         return new ApiDataMapperProxy($this->apiAccount->apiSystem->canonical);
     }
 
+    public function apiUpdateMarginTypeToCrossed(Account $account)
+    {
+        $this->apiAccount = $account;
+        $this->apiProperties = $this->apiMapper()->prepareUpdateMarginTypeProperties($this, $account);
+        $this->apiResponse = $this->apiAccount->withApi()->updateMarginType($this->apiProperties);
+
+        return $this->apiMapper()->resolveUpdateMarginTypeResponse($this->apiResponse);
+    }
+
     public function apiSyncMarketData(): ApiResponse
     {
         $this->apiProperties = $this->apiMapper()->prepareSyncMarketDataProperties($this);

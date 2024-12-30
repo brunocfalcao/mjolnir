@@ -6,7 +6,7 @@ use Nidavellir\Mjolnir\Abstracts\BaseRateLimiter;
 
 class BinanceRateLimiter extends BaseRateLimiter
 {
-    public array $forbidHttpCodes = [401 => [-2015], 418, 403, 401];
+    public array $forbidHttpCodes = [401 => [-2015], 418, 403];
 
     public array $rateLimitHttpCodes = [429];
 

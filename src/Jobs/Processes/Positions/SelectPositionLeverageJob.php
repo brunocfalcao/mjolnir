@@ -9,7 +9,7 @@ use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\Position;
 
-class CalculatePositionLeverageJob extends BaseQueuableJob
+class SelectPositionLeverageJob extends BaseQueuableJob
 {
     public Account $account;
 
@@ -71,5 +71,13 @@ class CalculatePositionLeverageJob extends BaseQueuableJob
         // Update the position's leverage with the calculated value
         $this->position->leverage = $finalLeverage;
         $this->position->save();
+    }
+
+    public function resolveException(\Throwable $e)
+    {
+        $this->position->update([
+            'status' => 'cancelled',
+            'error_message' => $e->getMessage()
+        ]);
     }
 }

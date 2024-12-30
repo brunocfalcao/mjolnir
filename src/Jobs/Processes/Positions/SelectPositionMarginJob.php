@@ -10,7 +10,7 @@ use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\Position;
 
-class CalculatePositionMarginJob extends BaseApiableJob
+class SelectPositionMarginJob extends BaseApiableJob
 {
     public Account $account;
 
@@ -51,5 +51,13 @@ class CalculatePositionMarginJob extends BaseApiableJob
 
         // Update the position margin, and move on.
         $this->position->update(['margin' => $margin]);
+    }
+
+    public function resolveException(\Throwable $e)
+    {
+        $this->position->update([
+            'status' => 'cancelled',
+            'error_message' => $e->getMessage()
+        ]);
     }
 }

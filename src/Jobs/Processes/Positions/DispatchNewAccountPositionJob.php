@@ -3,11 +3,12 @@
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
 use Illuminate\Support\Str;
-use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Jobs\Processes\Positions\UpdatePositionMarginTypeToCrossedJob;
 
 class DispatchNewAccountPositionJob extends BaseQueuableJob
 {
@@ -51,7 +52,7 @@ class DispatchNewAccountPositionJob extends BaseQueuableJob
 
         if (! $position->margin) {
             CoreJobQueue::create([
-                'class' => CalculatePositionMarginJob::class,
+                'class' => SelectPositionMarginJob::class,
                 'queue' => 'positions',
                 'arguments' => [
                     'positionId' => $position->id,
@@ -63,7 +64,7 @@ class DispatchNewAccountPositionJob extends BaseQueuableJob
 
         if (! $position->leverage) {
             CoreJobQueue::create([
-                'class' => CalculatePositionLeverageJob::class,
+                'class' => SelectPositionLeverageJob::class,
                 'queue' => 'positions',
                 'arguments' => [
                     'positionId' => $position->id,

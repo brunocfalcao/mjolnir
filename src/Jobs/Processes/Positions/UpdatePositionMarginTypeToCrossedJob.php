@@ -26,5 +26,8 @@ class UpdatePositionMarginTypeToCrossedJob extends BaseApiableJob
         $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
     }
 
-    public function computeApiable() {}
+    public function computeApiable()
+    {
+        return $this->position->exchangeSymbol->symbol->apiUpdateMarginTypeToCrossed($this->account);
+    }
 }
