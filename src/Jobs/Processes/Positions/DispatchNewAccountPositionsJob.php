@@ -3,31 +3,35 @@
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
 use Illuminate\Support\Str;
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Jobs\Processes\Positions\UpdatePositionMarginTypeToCrossedJob;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\Position;
 
-class DispatchNewAccountPositionJob extends BaseQueuableJob
+class DispatchNewAccountPositionsJob extends BaseQueuableJob
 {
     public Account $account;
 
     public array $extraData;
 
-    public function __construct(int $accountId, array $extraData = [])
+    public int $numPositions;
+
+    public function __construct(int $accountId, int $numPositions, array $extraData = [])
     {
         $this->account = Account::findOrFail($accountId);
         $this->exceptionHandler = BaseExceptionHandler::make($this->account->apiSystem->canonical);
         $this->extraData = $extraData;
+        $this->numPositions = $numPositions;
     }
 
     public function compute()
     {
         $data = array_merge($this->extraData, ['account_id' => $this->account->id]);
 
-        $position = Position::create($data);
+        for ($i = 0; $i < $this->numPositions; $i++) {
+            $position = Position::create($data);
+        }
 
         /**
          * When we create a new position we will sequence the next jobs on the
@@ -40,7 +44,7 @@ class DispatchNewAccountPositionJob extends BaseQueuableJob
 
         if (! $position->exchange_symbol_id) {
             CoreJobQueue::create([
-                'class' => SelectPositionTokenJob::class,
+                'class' => AssignTokensToPositionsJob::class,
                 'queue' => 'positions',
                 'arguments' => [
                     'positionId' => $position->id,
@@ -49,6 +53,8 @@ class DispatchNewAccountPositionJob extends BaseQueuableJob
                 'block_uuid' => $blockUuid,
             ]);
         }
+
+        return;
 
         if (! $position->margin) {
             CoreJobQueue::create([

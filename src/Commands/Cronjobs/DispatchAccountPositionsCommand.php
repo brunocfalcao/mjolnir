@@ -7,7 +7,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-use Nidavellir\Mjolnir\Jobs\Processes\Positions\DispatchNewAccountPositionJob;
+use Nidavellir\Mjolnir\Jobs\Processes\Positions\DispatchNewAccountPositionsJob;
 use Nidavellir\Mjolnir\Jobs\Processes\Positions\VerifyBalanceConditionsJob;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\CoreJobQueue;
@@ -49,41 +49,38 @@ class DispatchAccountPositionsCommand extends Command
             // Calculate the delta.
             $delta = $account->max_concurrent_trades - $openPositions->count();
 
-            // Dispatch jobs for each delta.
+            $blockUuid = (string) Str::uuid();
+
             if ($delta > 0) {
-                for ($i = 0; $i < $delta; $i++) {
-                    $blockUuid = (string) Str::uuid();
+                /**
+                 * Verify all the financial conditions to open a new position
+                 * for the respective account, and also specific
+                 * risk-management conditions that might stop
+                 * the position to be opened.
+                 */
+                CoreJobQueue::create([
+                    'class' => VerifyBalanceConditionsJob::class,
+                    'queue' => 'positions',
+                    'arguments' => [
+                        'accountId' => $account->id,
+                    ],
+                    'index' => 1,
+                    'block_uuid' => $blockUuid,
+                ]);
 
-                    /**
-                     * Verify all the financial conditions to open a new position
-                     * for the respective account, and also specific
-                     * risk-management conditions that might stop
-                     * the position to be opened.
-                     */
-                    CoreJobQueue::create([
-                        'class' => VerifyBalanceConditionsJob::class,
-                        'queue' => 'positions',
-                        'arguments' => [
-                            'accountId' => $account->id,
-                        ],
-                        'index' => 1,
-                        'block_uuid' => $blockUuid,
-                    ]);
-
-                    /**
-                     * This will create a new position in the database, only
-                     * with the account and with the syncing on.
-                     */
-                    CoreJobQueue::create([
-                        'class' => DispatchNewAccountPositionJob::class,
-                        'queue' => 'positions',
-                        'arguments' => [
-                            'accountId' => $account->id,
-                        ],
-                        'index' => 2,
-                        'block_uuid' => $blockUuid,
-                    ]);
-                }
+                /**
+                 * Create as much positions as the delta.
+                 */
+                CoreJobQueue::create([
+                    'class' => DispatchNewAccountPositionsJob::class,
+                    'queue' => 'positions',
+                    'arguments' => [
+                        'accountId' => $account->id,
+                        'numPositions' => $delta,
+                    ],
+                    'index' => 2,
+                    'block_uuid' => $blockUuid,
+                ]);
             }
         }
 

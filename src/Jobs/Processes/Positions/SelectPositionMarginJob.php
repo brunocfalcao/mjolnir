@@ -57,7 +57,7 @@ class SelectPositionMarginJob extends BaseApiableJob
     {
         $this->position->update([
             'status' => 'cancelled',
-            'error_message' => $e->getMessage()
+            'error_message' => $e->getMessage(),
         ]);
     }
 }

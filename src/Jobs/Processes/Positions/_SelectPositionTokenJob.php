@@ -250,7 +250,7 @@ class _SelectPositionTokenJob extends BaseQueuableJob
     {
         $this->position->update([
             'status' => 'cancelled',
-            'error_message' => $e->getMessage()
+            'error_message' => $e->getMessage(),
         ]);
     }
 }
