@@ -9,71 +9,42 @@ use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Position;
 
-class DispatchNewAccountPositionsJob extends BaseQueuableJob
+class CreatePositionLifecycleJob extends BaseQueuableJob
 {
     public Account $account;
 
-    public array $extraData;
+    public Position $position;
 
-    public int $numPositions;
-
-    public function __construct(int $accountId, int $numPositions, array $extraData = [])
+    public function __construct(int $positionId)
     {
-        $this->account = Account::findOrFail($accountId);
+        $this->position = Position::findOrFail($positionId);
+        $this->account = Account::findOrFail($this->position->account->id);
         $this->exceptionHandler = BaseExceptionHandler::make($this->account->apiSystem->canonical);
-        $this->extraData = $extraData;
-        $this->numPositions = $numPositions;
     }
 
     public function compute()
     {
-        $data = array_merge($this->extraData, ['account_id' => $this->account->id]);
-
-        for ($i = 0; $i < $this->numPositions; $i++) {
-            $position = Position::create($data);
-        }
-
-        /**
-         * When we create a new position we will sequence the next jobs on the
-         * core job queue, accordingly to the missing data.
-         *
-         * We will start a new core job queue block uuid.
-         */
         $blockUuid = (string) Str::uuid();
         $index = 1;
 
-        if (! $position->exchange_symbol_id) {
-            CoreJobQueue::create([
-                'class' => AssignTokensToPositionsJob::class,
-                'queue' => 'positions',
-                'arguments' => [
-                    'positionId' => $position->id,
-                ],
-                'index' => $index++,
-                'block_uuid' => $blockUuid,
-            ]);
-        }
-
-        return;
-
-        if (! $position->margin) {
+        if (! $this->position->margin) {
             CoreJobQueue::create([
                 'class' => SelectPositionMarginJob::class,
                 'queue' => 'positions',
                 'arguments' => [
-                    'positionId' => $position->id,
+                    'positionId' => $this->position->id,
                 ],
                 'index' => $index++,
                 'block_uuid' => $blockUuid,
             ]);
         }
 
-        if (! $position->leverage) {
+        if (! $this->position->leverage) {
             CoreJobQueue::create([
                 'class' => SelectPositionLeverageJob::class,
                 'queue' => 'positions',
                 'arguments' => [
-                    'positionId' => $position->id,
+                    'positionId' => $this->position->id,
                 ],
                 'index' => $index++,
                 'block_uuid' => $blockUuid,
@@ -84,7 +55,7 @@ class DispatchNewAccountPositionsJob extends BaseQueuableJob
             'class' => UpdatePositionMarginTypeToCrossedJob::class,
             'queue' => 'positions',
             'arguments' => [
-                'positionId' => $position->id,
+                'positionId' => $this->position->id,
             ],
             'index' => $index++,
             'block_uuid' => $blockUuid,
@@ -96,7 +67,7 @@ class DispatchNewAccountPositionsJob extends BaseQueuableJob
             'class' => UpdateTokenLeverageRatioJob::class,
             'queue' => 'positions',
             'arguments' => [
-                'positionId' => $position->id,
+                'positionId' => $this->position->id,
             ],
             'index' => $index++,
             'block_uuid' => $blockUuid,
@@ -106,7 +77,7 @@ class DispatchNewAccountPositionsJob extends BaseQueuableJob
             'class' => UpdateRemainingPositionDataJob::class,
             'queue' => 'positions',
             'arguments' => [
-                'positionId' => $position->id,
+                'positionId' => $this->position->id,
             ],
             'index' => $index++,
             'block_uuid' => $blockUuid,
@@ -116,7 +87,7 @@ class DispatchNewAccountPositionsJob extends BaseQueuableJob
             'class' => DispatchPositionOrdersJob::class,
             'queue' => 'positions',
             'arguments' => [
-                'positionId' => $position->id,
+                'positionId' => $this->position->id,
             ],
             'index' => $index++,
             'block_uuid' => $blockUuid,

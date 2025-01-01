@@ -2,14 +2,16 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
-use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
+use Illuminate\Support\Str;
+use Nidavellir\Thor\Models\Symbol;
 use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\ExchangeSymbol;
-use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\Symbol;
 use Nidavellir\Thor\Models\TradeConfiguration;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Jobs\Processes\Positions\CreatePositionLifecycleJob;
 
 class AssignTokensToPositionsJob extends BaseQueuableJob
 {
@@ -190,6 +192,21 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
          * Next step is to trigger a core job queue graph for each of the positions
          * to then follow their own lifecycle until the orders are placed.
          */
+        foreach (Position::opened()->fromAccount($this->account)->get() as $position) {
+            $index = 1;
+            $blockUuid = (string) Str::uuid();
+
+            CoreJobQueue::create([
+                'class' => CreatePositionLifecycleJob::class,
+                'queue' => 'positions',
+                'arguments' => [
+                    'positionId' => $position->id,
+                ],
+                'index' => $index++,
+                'block_uuid' => $blockUuid,
+            ]);
+        }
+
 
         return null;
     }

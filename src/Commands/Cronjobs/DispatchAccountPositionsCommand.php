@@ -7,7 +7,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-use Nidavellir\Mjolnir\Jobs\Processes\Positions\DispatchNewAccountPositionsJob;
+use Nidavellir\Mjolnir\Jobs\Processes\Positions\CreateNewAccountPositionsJob;
 use Nidavellir\Mjolnir\Jobs\Processes\Positions\VerifyBalanceConditionsJob;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\CoreJobQueue;
@@ -69,10 +69,10 @@ class DispatchAccountPositionsCommand extends Command
                 ]);
 
                 /**
-                 * Create as much positions as the delta.
+                 * Create as much positions as the delta using this job.
                  */
                 CoreJobQueue::create([
-                    'class' => DispatchNewAccountPositionsJob::class,
+                    'class' => CreateNewAccountPositionsJob::class,
                     'queue' => 'positions',
                     'arguments' => [
                         'accountId' => $account->id,
