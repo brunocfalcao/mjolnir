@@ -2,7 +2,6 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
-use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Thor\Models\Account;

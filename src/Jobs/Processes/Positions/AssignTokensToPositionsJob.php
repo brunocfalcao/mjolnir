@@ -3,15 +3,14 @@
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
 use Illuminate\Support\Str;
-use Nidavellir\Thor\Models\Symbol;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\ExchangeSymbol;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\Symbol;
 use Nidavellir\Thor\Models\TradeConfiguration;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
-use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Jobs\Processes\Positions\CreatePositionLifecycleJob;
 
 class AssignTokensToPositionsJob extends BaseQueuableJob
 {
@@ -46,23 +45,31 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
             ->get();
 
         // Log the available tradeable exchange symbols
-        info('Tradeable Exchange Symbols:', $tradeableExchangeSymbols->pluck('id', 'symbol.token')->toArray());
+        //info('Tradeable Exchange Symbols:', $tradeableExchangeSymbols->pluck('id', 'symbol.token')->toArray());
 
         /**
          * Filter out exchange symbols already assigned to opened positions.
          */
         $openedExchangeSymbols = Position::opened()
-            ->whereNotNull('exchange_symbol_id')
+            ->whereNotNull('positions.exchange_symbol_id')
             ->where('positions.account_id', $this->account->id)
-            ->get()
             ->pluck('positions.exchange_symbol_id');
 
+        $openedExchangeSymbols = collect($openedExchangeSymbols);
+
+        info('Opened Exchange Symbols: '.json_encode($openedExchangeSymbols->toArray()));
+
         $availableExchangeSymbols = $tradeableExchangeSymbols->reject(function ($exchangeSymbol) use ($openedExchangeSymbols) {
-            return $openedExchangeSymbols->contains($exchangeSymbol->id);
+            $isRemoved = $openedExchangeSymbols->contains($exchangeSymbol->id);
+            if ($isRemoved) {
+                info('Removing Exchange Symbol:', ['id' => $exchangeSymbol->id, 'token' => $exchangeSymbol->symbol->token]);
+            }
+
+            return $isRemoved;
         })->values();
 
         // Log the available exchange symbols after filtering
-        info('Available Exchange Symbols:', $availableExchangeSymbols->pluck('id', 'symbol.token')->toArray());
+        //info('Available Exchange Symbols:', $availableExchangeSymbols->pluck('id', 'symbol.token')->toArray());
 
         /**
          * Sort exchange symbols by direction priority and indicator timeframes.
@@ -97,7 +104,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
         })->values();
 
         // Log the ordered exchange symbols
-        info('Ordered Exchange Symbols:', $orderedExchangeSymbols->pluck('id', 'symbol.token')->toArray());
+        //info('Ordered Exchange Symbols:', $orderedExchangeSymbols->pluck('id', 'symbol.token')->toArray());
 
         /**
          * Iterate over positions and assign tokens.
@@ -105,19 +112,22 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
          */
         foreach ($positions as $position) {
             // Log the remaining symbols before processing
-            info('Symbols before processing position '.$position->id.':', $orderedExchangeSymbols->pluck('id', 'symbol.token')->toArray());
+            //info('Symbols before processing position '.$position->id.':', $orderedExchangeSymbols->pluck('id', 'symbol.token')->toArray());
+
+            info(' ');
+            info('-- Processing Position ID '.$position->id);
 
             $fastTradedExchangeSymbol = $this->tryToGetAfastTradedToken();
 
             if ($fastTradedExchangeSymbol) {
-                info('Fast Traded Symbol Selected:', ['id' => $fastTradedExchangeSymbol->id, 'token' => $fastTradedExchangeSymbol->symbol->token]);
+                //info('Fast Traded Symbol Selected:', ['id' => $fastTradedExchangeSymbol->id, 'token' => $fastTradedExchangeSymbol->symbol->token]);
                 $this->updatePositionWithExchangeSymbol($position, $fastTradedExchangeSymbol, 'Fast trade exchange symbol');
                 $orderedExchangeSymbols = $orderedExchangeSymbols->reject(function ($symbol) use ($fastTradedExchangeSymbol) {
                     return $symbol->id == $fastTradedExchangeSymbol->id;
                 })->values();
 
                 // Log the remaining symbols after processing fast traded
-                info('Symbols after fast traded for position '.$position->id.':', $orderedExchangeSymbols->pluck('id', 'symbol.token')->toArray());
+                //info('Symbols after fast traded for position '.$position->id.':', $orderedExchangeSymbols->pluck('id', 'symbol.token')->toArray());
 
                 continue;
             }
@@ -207,7 +217,6 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
             ]);
         }
 
-
         return null;
     }
 
@@ -218,8 +227,9 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
             ->where('positions.exchange_symbol_id', $exchangeSymbol->id)
             ->exists();
 
+        info('Updating Position ID '.$position->id.' with Exchange Symbol ID '.$exchangeSymbol->id);
         if (! $exchangeSymbolAlreadySelected) {
-            info('Updating Position ID '.$position->id.' with Exchange Symbol ID '.$exchangeSymbol->id);
+            info('Update completed. Position completed.');
             $position->update([
                 'exchange_symbol_id' => $exchangeSymbol->id,
                 'comments' => $comments,
@@ -273,7 +283,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
         })->values();
 
         if ($orderedExchangeSymbols->isNotEmpty()) {
-            info('Fast traded token selected:', $orderedExchangeSymbols->first()->toArray());
+            info('Fast traded token selected: '.$orderedExchangeSymbols->first()->symbol->token);
         }
 
         return $orderedExchangeSymbols->first() ?: null;

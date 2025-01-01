@@ -92,7 +92,7 @@ class DispatchAccountPositionsCommand extends Command
         // Create the first Position (fast-traded, satisfies the criteria)
         $fastTradedPosition = Position::create([
             'account_id' => 1, // Replace with a valid account_id
-            'exchange_symbol_id' => 8, // Replace with a valid exchange_symbol_id
+            'exchange_symbol_id' => 2, // Replace with a valid exchange_symbol_id
             'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago
             'closed_at' => Carbon::now(), // Closed now
             'created_at' => Carbon::now()->subMinutes(2), // Created 2 minutes ago
@@ -103,7 +103,7 @@ class DispatchAccountPositionsCommand extends Command
         // Create the first Position (fast-traded, satisfies the criteria)
         $fastTradedPosition = Position::create([
             'account_id' => 1, // Replace with a valid account_id
-            'exchange_symbol_id' => 11, // Replace with a valid exchange_symbol_id
+            'exchange_symbol_id' => 12, // Replace with a valid exchange_symbol_id
             'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago
             'closed_at' => Carbon::now(), // Closed now
             'created_at' => Carbon::now()->subMinutes(2), // Created 2 minutes ago
@@ -125,7 +125,7 @@ class DispatchAccountPositionsCommand extends Command
         // Create the first Position (fast-traded, satisfies the criteria)
         $fastTradedPosition = Position::create([
             'account_id' => 1, // Replace with a valid account_id
-            'exchange_symbol_id' => 12, // Replace with a valid exchange_symbol_id
+            'exchange_symbol_id' => 17, // Replace with a valid exchange_symbol_id
             'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago
             'closed_at' => Carbon::now(), // Closed now
             'created_at' => Carbon::now()->subMinutes(2), // Created 2 minutes ago
