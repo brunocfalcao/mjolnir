@@ -33,9 +33,9 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
          * also the exchange_symbol_id is null.
          */
         $positions = Position::opened()
-                             ->where('account_id', $this->account->id)
-                             ->whereNull('exchange_symbol_id')
-                             ->get();
+            ->where('account_id', $this->account->id)
+            ->whereNull('exchange_symbol_id')
+            ->get();
 
         // Fetch all available tradeable exchange symbols for the account's quote
         $tradeableExchangeSymbols = ExchangeSymbol::tradeable()
@@ -177,7 +177,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
                 $eligibleExchangeSymbol = $orderedExchangeSymbols
                     ->first(function ($exchangeSymbol) use ($category, $alreadyAssignedSymbols) {
                         return $exchangeSymbol->symbol->category_canonical == $category &&
-                            !in_array($exchangeSymbol->id, $alreadyAssignedSymbols);
+                            ! in_array($exchangeSymbol->id, $alreadyAssignedSymbols);
                     });
 
                 if ($eligibleExchangeSymbol) {
@@ -201,7 +201,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
             ->where('positions.exchange_symbol_id', $exchangeSymbol->id)
             ->exists();
 
-        if (!$exchangeSymbolAlreadySelected) {
+        if (! $exchangeSymbolAlreadySelected) {
             info('Updating Position ID '.$position->id.' with Exchange Symbol ID '.$exchangeSymbol->id);
             $position->update([
                 'exchange_symbol_id' => $exchangeSymbol->id,
@@ -230,7 +230,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
             ->get();
 
         $fastTradedExchangeSymbols = $recentClosedPositions->filter(function ($position) {
-            if (!$position->exchangeSymbol || !$position->exchangeSymbol->is_tradeable) {
+            if (! $position->exchangeSymbol || ! $position->exchangeSymbol->is_tradeable) {
                 return false;
             }
 
