@@ -21,6 +21,15 @@ trait HasApiFeatures
         return new ApiDataMapperProxy($this->apiAccount->apiSystem->canonical);
     }
 
+    public function apiUpdateLeverageRatio(Account $account, int $leverage)
+    {
+        $this->apiAccount = $account;
+        $this->apiProperties = $this->apiMapper()->prepareUpdateLeverageRatioProperties($this, $account, $leverage);
+        $this->apiResponse = $this->apiAccount->withApi()->changeInitialLeverage($this->apiProperties);
+
+        return $this->apiMapper()->resolveUpdateLeverageRatioResponse($this->apiResponse);
+    }
+
     public function apiUpdateMarginTypeToCrossed(Account $account)
     {
         $this->apiAccount = $account;

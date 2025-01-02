@@ -3,11 +3,12 @@
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
 use Illuminate\Support\Str;
-use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Jobs\Processes\Positions\UpdateTokenLeverageRatioJob;
 
 class CreatePositionLifecycleJob extends BaseQueuableJob
 {
@@ -61,8 +62,6 @@ class CreatePositionLifecycleJob extends BaseQueuableJob
             'block_uuid' => $blockUuid,
         ]);
 
-        return;
-
         CoreJobQueue::create([
             'class' => UpdateTokenLeverageRatioJob::class,
             'queue' => 'positions',
@@ -72,6 +71,8 @@ class CreatePositionLifecycleJob extends BaseQueuableJob
             'index' => $index++,
             'block_uuid' => $blockUuid,
         ]);
+
+        return;
 
         CoreJobQueue::create([
             'class' => UpdateRemainingPositionDataJob::class,

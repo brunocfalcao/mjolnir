@@ -26,5 +26,16 @@ class UpdateTokenLeverageRatioJob extends BaseApiableJob
         $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
     }
 
-    public function computeApiable() {}
+    public function computeApiable()
+    {
+        return $this->position->exchangeSymbol->symbol->apiUpdateLeverageRatio($this->account, $this->position->leverage);
+    }
+
+    public function resolveException(\Throwable $e)
+    {
+        $this->position->update([
+            'status' => 'failed',
+            'error_message' => $e->getMessage(),
+        ]);
+    }
 }
