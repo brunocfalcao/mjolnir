@@ -71,8 +71,6 @@ class CreatePositionLifecycleJob extends BaseQueuableJob
             'block_uuid' => $blockUuid,
         ]);
 
-        return;
-
         CoreJobQueue::create([
             'class' => UpdateRemainingPositionDataJob::class,
             'queue' => 'positions',
@@ -82,6 +80,8 @@ class CreatePositionLifecycleJob extends BaseQueuableJob
             'index' => $index++,
             'block_uuid' => $blockUuid,
         ]);
+
+        return;
 
         CoreJobQueue::create([
             'class' => DispatchPositionOrdersJob::class,

@@ -2,12 +2,13 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
-use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
-use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\TradeConfiguration;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 
 class UpdateRemainingPositionDataJob extends BaseQueuableJob
 {
@@ -26,5 +27,26 @@ class UpdateRemainingPositionDataJob extends BaseQueuableJob
         $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
     }
 
-    public function compute() {}
+    public function compute()
+    {
+        if (!$this->position->order_ratios) {
+            $tradeConfig = TradeConfiguration::default()->first();
+
+            $this->position->update([
+                'order_ratios' => [
+                    'MARKET' => $tradeConfig->order_ratios['MARKET'],
+                    'LIMIT' => $tradeConfig->order_ratios['LIMIT']
+                ],
+                'profit_percentage' => $tradeConfig->order_ratios['PROFIT'][0]
+            ]);
+        }
+    }
+
+    public function resolveException(\Throwable $e)
+    {
+        $this->position->update([
+            'status' => 'failed',
+            'error_message' => $e->getMessage(),
+        ]);
+    }
 }

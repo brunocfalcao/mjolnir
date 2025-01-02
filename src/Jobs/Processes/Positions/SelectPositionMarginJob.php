@@ -49,8 +49,11 @@ class SelectPositionMarginJob extends BaseApiableJob
         // The available balance will then be sliced for this account size percentage.
         $margin = round($this->balance * $this->account->position_size_percentage / 100);
 
-        // Update the position margin, and move on.
-        $this->position->update(['margin' => $margin]);
+        // Override?
+        if (!$this->position->margin) {
+            // Update the position margin, and move on.
+            $this->position->update(['margin' => $margin]);
+        }
     }
 
     public function resolveException(\Throwable $e)
