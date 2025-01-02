@@ -28,6 +28,9 @@ class CreateNewAccountPositionsJob extends BaseQueuableJob
     {
         $data = array_merge($this->extraData, ['account_id' => $this->account->id]);
 
+        // Start syncing position.
+        $data['is_syncing'] = true;
+
         for ($i = 0; $i < $this->numPositions; $i++) {
             $position = Position::create($data);
         }

@@ -313,6 +313,10 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
          */
         Position::where('positions.account_id', $this->account->id)
             ->whereNull('positions.exchange_symbol_id')
-            ->update(['status' => 'failed', 'error_message' => $e->getMessage()]);
+            ->update([
+                'status' => 'failed',
+                'error_message' => $e->getMessage(),
+                'is_syncing' => false
+            ]);
     }
 }
