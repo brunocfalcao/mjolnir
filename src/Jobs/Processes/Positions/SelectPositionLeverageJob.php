@@ -76,7 +76,7 @@ class SelectPositionLeverageJob extends BaseQueuableJob
     public function resolveException(\Throwable $e)
     {
         $this->position->update([
-            'status' => 'cancelled',
+            'status' => 'failed',
             'error_message' => $e->getMessage(),
         ]);
     }

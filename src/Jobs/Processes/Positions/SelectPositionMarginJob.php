@@ -56,7 +56,7 @@ class SelectPositionMarginJob extends BaseApiableJob
     public function resolveException(\Throwable $e)
     {
         $this->position->update([
-            'status' => 'cancelled',
+            'status' => 'failed',
             'error_message' => $e->getMessage(),
         ]);
     }

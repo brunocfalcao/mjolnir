@@ -3,9 +3,9 @@
 namespace Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests;
 
 use GuzzleHttp\Psr7\Response;
-use Nidavellir\Thor\Models\Symbol;
-use Nidavellir\Thor\Models\Account;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\Symbol;
 
 trait MapsSymbolLeverageRatios
 {

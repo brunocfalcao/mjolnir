@@ -3,16 +3,15 @@
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
 use Illuminate\Support\Str;
-use Nidavellir\Thor\Models\Symbol;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\ExchangeSymbol;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\Symbol;
 use Nidavellir\Thor\Models\TradeConfiguration;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
-use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Jobs\Processes\Positions\CreatePositionLifecycleJob;
 
 class AssignTokensToPositionsJob extends BaseQueuableJob
 {
@@ -73,20 +72,24 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
 
         /**
          * Fetch the direction priority from the default trade configuration.
-         * If direction priority is not set, fallback to the direction of BTC.
+         * If direction priority is not set, then try to see if we need to
+         * follow the BTC indicator from the account configuration.
          */
         $directionPriority = TradeConfiguration::default()->first()->direction_priority;
 
         if ($directionPriority == null) {
-            $btcExchangeSymbol = ExchangeSymbol::where(
-                'symbol_id',
-                Symbol::firstWhere('token', 'BTC')->id
-            )->where('exchange_symbols.quote_id', $this->account->quote->id)
-                ->where('exchange_symbols.is_active', true)
-                ->first();
+            if ($this->account->follow_btc_indicator) {
+                $btcExchangeSymbol = ExchangeSymbol::where(
+                    'symbol_id',
+                    Symbol::firstWhere('token', 'BTC')->id
+                )->where('exchange_symbols.quote_id', $this->account->quote->id)
+                    ->where('exchange_symbols.is_active', true)
+                    ->first();
 
-            if ($btcExchangeSymbol && $btcExchangeSymbol->direction) {
-                $directionPriority = $btcExchangeSymbol->direction;
+                // If BTC has a direction concluded, follow it.
+                if ($btcExchangeSymbol && $btcExchangeSymbol->direction) {
+                    $directionPriority = $btcExchangeSymbol->direction;
+                }
             }
         }
 
@@ -200,7 +203,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
                 $eligibleExchangeSymbol = $orderedExchangeSymbols
                     ->first(function ($exchangeSymbol) use ($category, $alreadyAssignedSymbols) {
                         return $exchangeSymbol->symbol->category_canonical == $category &&
-                            !in_array($exchangeSymbol->id, $alreadyAssignedSymbols);
+                            ! in_array($exchangeSymbol->id, $alreadyAssignedSymbols);
                     });
 
                 if ($eligibleExchangeSymbol) {
@@ -212,7 +215,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
         return null; // Return null if no eligible symbols are found.
     }
 
-    protected function updatePositionWithExchangeSymbol(Position $position, ExchangeSymbol $exchangeSymbol, string $comments = null)
+    protected function updatePositionWithExchangeSymbol(Position $position, ExchangeSymbol $exchangeSymbol, ?string $comments = null)
     {
         /**
          * Check if the exchange symbol is already selected for another position.
@@ -226,7 +229,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
         $data = [];
 
         // Check if we can override the direction.
-        if (!$position->direction) {
+        if (! $position->direction) {
             $data['direction'] = $exchangeSymbol->direction;
         }
 
@@ -234,11 +237,11 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
         $data['exchange_symbol_id'] = $exchangeSymbol->id;
         $data['comments'] = $comments;
 
-        if (!$exchangeSymbolAlreadySelected) {
+        if (! $exchangeSymbolAlreadySelected) {
             $position->update($data);
         } else {
             $position->update([
-                'status' => 'cancelled', 'comments' => 'Exchange Symbol position conflict.'
+                'status' => 'cancelled', 'comments' => 'Exchange Symbol position conflict.',
             ]);
         }
     }
@@ -269,7 +272,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
          * Identify fast-traded exchange symbols that were closed within 2 minutes.
          */
         $fastTradedExchangeSymbols = $recentClosedPositions->filter(function ($position) {
-            if (!$position->exchangeSymbol || !$position->exchangeSymbol->is_tradeable) {
+            if (! $position->exchangeSymbol || ! $position->exchangeSymbol->is_tradeable) {
                 return false;
             }
 

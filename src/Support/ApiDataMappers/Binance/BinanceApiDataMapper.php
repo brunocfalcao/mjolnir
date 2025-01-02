@@ -3,20 +3,20 @@
 namespace Nidavellir\Mjolnir\Support\ApiDataMappers\Binance;
 
 use Nidavellir\Mjolnir\Abstracts\BaseDataMapper;
-use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsOrderQuery;
-use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsSymbolMarginType;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsAccountBalanceQuery;
-use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsSymbolLeverageRatios;
-use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsLeverageBracketsQuery;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsExchangeInformationQuery;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsLeverageBracketsQuery;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsOrderQuery;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsSymbolLeverageRatios;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsSymbolMarginType;
 
 class BinanceApiDataMapper extends BaseDataMapper
 {
-    use MapsSymbolLeverageRatios;
     use MapsAccountBalanceQuery;
     use MapsExchangeInformationQuery;
     use MapsLeverageBracketsQuery;
     use MapsOrderQuery;
+    use MapsSymbolLeverageRatios;
     use MapsSymbolMarginType;
 
     /**
