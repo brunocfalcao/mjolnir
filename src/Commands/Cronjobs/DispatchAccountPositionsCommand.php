@@ -17,21 +17,18 @@ use Nidavellir\Thor\Models\Symbol;
 
 class DispatchAccountPositionsCommand extends Command
 {
-    protected $signature = 'excalibur:dispatch-account-positions';
+    protected $signature = 'excalibur:dispatch-account-positions {--clean : Truncate tables, clear logs, and create testing data before execution}';
 
     protected $description = 'Dispatch all possible remaining to be opened positions, for all possible accounts';
 
     public function handle()
     {
-        // Clear logs and truncate tables
         File::put(storage_path('logs/laravel.log'), '');
-        DB::table('core_job_queue')->truncate();
-        DB::table('api_requests_log')->truncate();
-        DB::table('rate_limits')->truncate();
-        DB::table('positions')->truncate();
-        DB::table('orders')->truncate();
 
-        $this->createTestingData();
+        if ($this->option('clean')) {
+            $this->cleanData();
+            $this->createTestingData();
+        }
 
         // The BTC exchange symbol shouldn't be tradeable. Enforce it.
         $btc = ExchangeSymbol::firstWhere('symbol_id', Symbol::firstWhere('token', 'BTC'));
@@ -58,6 +55,9 @@ class DispatchAccountPositionsCommand extends Command
             $delta = $account->max_concurrent_trades - $openPositions->count();
 
             $blockUuid = (string) Str::uuid();
+
+            info('Max concurrent trades: ' . $account->max_concurrent_trades);
+            info('Opened positions: ' . $openPositions->count());
 
             if ($delta > 0) {
                 /**
@@ -95,10 +95,20 @@ class DispatchAccountPositionsCommand extends Command
         return 0;
     }
 
+    protected function cleanData()
+    {
+        // Clear logs and truncate tables
+        DB::table('core_job_queue')->truncate();
+        DB::table('api_requests_log')->truncate();
+        DB::table('rate_limits')->truncate();
+        DB::table('positions')->truncate();
+        DB::table('orders')->truncate();
+    }
+
     protected function createTestingData()
     {
         // Create the first Position (fast-traded, satisfies the criteria)
-        $fastTradedPosition = Position::create([
+        Position::create([
             'account_id' => 1, // Replace with a valid account_id
             'exchange_symbol_id' => 2, // Replace with a valid exchange_symbol_id
             'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago
@@ -109,7 +119,7 @@ class DispatchAccountPositionsCommand extends Command
         ]);
 
         // Create the first Position (fast-traded, satisfies the criteria)
-        $fastTradedPosition = Position::create([
+        Position::create([
             'account_id' => 1, // Replace with a valid account_id
             'exchange_symbol_id' => 12, // Replace with a valid exchange_symbol_id
             'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago
@@ -120,7 +130,7 @@ class DispatchAccountPositionsCommand extends Command
         ]);
 
         // Create the second Position (does not satisfy the criteria, created more than 5 minutes ago)
-        $oldPosition = Position::create([
+        Position::create([
             'account_id' => 1, // Replace with a valid account_id
             'exchange_symbol_id' => 3, // Replace with a valid exchange_symbol_id
             'started_at' => Carbon::now()->subMinutes(10), // Started 10 minutes ago
@@ -130,8 +140,8 @@ class DispatchAccountPositionsCommand extends Command
             'status' => 'closed', // Set the status to closed
         ]);
 
-        // Create the first Position (fast-traded, satisfies the criteria)
-        $fastTradedPosition = Position::create([
+        // Create another Position (fast-traded, satisfies the criteria)
+        Position::create([
             'account_id' => 1, // Replace with a valid account_id
             'exchange_symbol_id' => 17, // Replace with a valid exchange_symbol_id
             'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago

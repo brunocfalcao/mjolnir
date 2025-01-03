@@ -91,6 +91,6 @@ class CreatePositionLifecycleJob extends BaseQueuableJob
             'block_uuid' => $blockUuid,
         ]);
 
-        return $position;
+        return $this->position;
     }
 }

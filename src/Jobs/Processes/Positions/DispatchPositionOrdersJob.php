@@ -76,6 +76,7 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
                 'uuid' => (string) Str::uuid(),
                 'is_syncing' => true,
                 'type' => 'LIMIT',
+                'status' => 'NEW',
                 'side' => $side['same'], // LONG => Limit BUY orders.
                 'quantity' => api_format_quantity($this->quantity / $ratio[1], $this->position->exchangeSymbol),
                 'price' => $this->getAveragePrice($ratio[0]),

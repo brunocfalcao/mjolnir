@@ -13,7 +13,7 @@ use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\Symbol;
 use Nidavellir\Thor\Models\TradeConfiguration;
 
-class AssignTokensToPositionsJob extends BaseQueuableJob
+class _AssignTokensToPositionsJob extends BaseQueuableJob
 {
     public Account $account;
 
@@ -117,7 +117,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
          */
         foreach ($positions as $position) {
             // Try to get a fast-traded token first, if available.
-            $fastTradedExchangeSymbol = $this->tryToGetAfastTradedToken($orderedExchangeSymbols);
+            $fastTradedExchangeSymbol = $this->tryToGetAfastTradedToken();
 
             if ($fastTradedExchangeSymbol) {
                 $this->updatePositionWithExchangeSymbol($position, $fastTradedExchangeSymbol, 'Fast trade exchange symbol.');
@@ -246,7 +246,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
         }
     }
 
-    protected function tryToGetAfastTradedToken($orderedExchangeSymbols)
+    protected function tryToGetAfastTradedToken()
     {
         /**
          * Fetch exchange symbols already in use for opened positions.
@@ -288,10 +288,10 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
         }
 
         /**
-         * Filter out symbols already in use for opened positions and not in the ordered list.
+         * Filter out symbols already in use for opened positions.
          */
-        $filteredExchangeSymbols = $fastTradedExchangeSymbols->reject(function ($exchangeSymbol) use ($openPositionExchangeSymbols, $orderedExchangeSymbols) {
-            return $openPositionExchangeSymbols->contains($exchangeSymbol) || !$orderedExchangeSymbols->contains('id', $exchangeSymbol->id);
+        $filteredExchangeSymbols = $fastTradedExchangeSymbols->reject(function ($exchangeSymbol) use ($openPositionExchangeSymbols) {
+            return $openPositionExchangeSymbols->contains($exchangeSymbol);
         });
 
         /**

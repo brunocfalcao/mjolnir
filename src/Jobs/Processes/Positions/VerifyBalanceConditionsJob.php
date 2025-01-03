@@ -82,14 +82,8 @@ class VerifyBalanceConditionsJob extends BaseApiableJob
             $orders = $position->orders;
 
             // Check if we have orders
-            if ($orders->count() > 0) {
-                // Filter orders where type = LIMIT and is_syncing = false
-                $limitOrders = $orders->where('type', 'LIMIT')->where('is_syncing', false);
-
-                // Check if there are no limit orders with status = NEW
-                if ($limitOrders->where('status', 'NEW')->count() == 0) {
-                    throw new \Exception('Cancelling Position opening: At least one open position has all limit orders filled');
-                }
+            if ($orders->count() > 0 && $orders->where('type', 'LIMIT')->where('status', 'NEW')->count() == 0) {
+                throw new \Exception('Position not created due to at least one position on this account that has all limit orders filled');
             }
         }
     }
