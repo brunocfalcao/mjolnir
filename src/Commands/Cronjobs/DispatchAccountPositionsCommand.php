@@ -27,7 +27,7 @@ class DispatchAccountPositionsCommand extends Command
 
         if ($this->option('clean')) {
             $this->cleanData();
-            $this->createTestingData();
+            //$this->createTestingData();
         }
 
         // The BTC exchange symbol shouldn't be tradeable. Enforce it.
@@ -55,9 +55,6 @@ class DispatchAccountPositionsCommand extends Command
             $delta = $account->max_concurrent_trades - $openPositions->count();
 
             $blockUuid = (string) Str::uuid();
-
-            info('Max concurrent trades: ' . $account->max_concurrent_trades);
-            info('Opened positions: ' . $openPositions->count());
 
             if ($delta > 0) {
                 /**
