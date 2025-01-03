@@ -14,8 +14,6 @@ trait HasApiFeatures
 
     public Response $apiResponse;
 
-    public Account $apiAccount;
-
     public function apiMapper()
     {
         return new ApiDataMapperProxy($this->canonical);
@@ -23,8 +21,10 @@ trait HasApiFeatures
 
     public function apiQueryMarketData(): ApiResponse
     {
+        $account = Account::admin($this->canonical);
+
         $this->apiProperties = $this->apiMapper()->prepareQueryMarketDataProperties($this);
-        $this->apiResponse = $this->apiAccount->withApi()->getExchangeInformation($this->apiProperties);
+        $this->apiResponse = $account->withApi()->getExchangeInformation($this->apiProperties);
 
         return new ApiResponse(
             response: $this->apiResponse,
@@ -34,8 +34,10 @@ trait HasApiFeatures
 
     public function apiQueryLeverageBracketsData(): ApiResponse
     {
+        $account = Account::admin($this->canonical);
+
         $this->apiProperties = $this->apiMapper()->prepareQueryLeverageBracketsDataProperties();
-        $this->apiResponse = $this->apiAccount->withApi()->getLeverageBrackets($this->apiProperties);
+        $this->apiResponse = $account->withApi()->getLeverageBrackets($this->apiProperties);
 
         return new ApiResponse(
             response: $this->apiResponse,

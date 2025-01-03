@@ -5,6 +5,7 @@ namespace Nidavellir\Mjolnir\Concerns\Models\ExchangeSymbol;
 use GuzzleHttp\Psr7\Response;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
+use Nidavellir\Thor\Models\Account;
 
 trait HasApiFeatures
 {
@@ -12,18 +13,19 @@ trait HasApiFeatures
 
     public Response $apiResponse;
 
-    public Account $apiAccount;
-
-    public function apiMapper()
+    public function apiMapper($canonical)
     {
-        return new ApiDataMapperProxy($this->apiAccount->apiSystem->canonical);
+        return new ApiDataMapperProxy($canonical);
     }
 
-    public function apiMarkPrice()
+    public function apiQueryMarkPrice(Account $account)
     {
-        $this->apiProperties = $this->apiMapper()->prepareOrderQueryProperties($this);
-        $this->apiResponse = $this->apiAccount()->withApi()->orderQuery($this->apiProperties);
+        $symbol = get_base_token_for_exchange($this->symbol->token, $account->apiSystem->canonical);
+        $parsedSymbol = $this->apiMapper($account->apiSystem->canonical)->baseWithQuote($this->symbol->token, $account->quote->canonical);
 
-        return $this->apiMapper()->resolveOrderQueryResponse($this->apiResponse);
+        $this->apiProperties = $this->apiMapper($account->apiSystem->canonical)->prepareQueryMarkPriceProperties($parsedSymbol);
+        $this->apiResponse = $account->withApi()->getMarkPrice($this->apiProperties);
+
+        return $this->apiMapper($account->apiSystem->canonical)->resolveQueryMarkPriceResponse($this->apiResponse);
     }
 }

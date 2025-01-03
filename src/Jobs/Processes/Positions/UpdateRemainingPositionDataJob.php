@@ -2,13 +2,13 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\TradeConfiguration;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\TradeConfiguration;
 
 class UpdateRemainingPositionDataJob extends BaseQueuableJob
 {
@@ -29,15 +29,12 @@ class UpdateRemainingPositionDataJob extends BaseQueuableJob
 
     public function compute()
     {
-        if (!$this->position->order_ratios) {
+        if (! $this->position->order_ratios) {
             $tradeConfig = TradeConfiguration::default()->first();
 
             $this->position->update([
-                'order_ratios' => [
-                    'MARKET' => $tradeConfig->order_ratios['MARKET'],
-                    'LIMIT' => $tradeConfig->order_ratios['LIMIT']
-                ],
-                'profit_percentage' => $tradeConfig->order_ratios['PROFIT'][0]
+                'order_ratios' => $tradeConfig->order_ratios,
+                'profit_percentage' => $tradeConfig->profit_percentage,
             ]);
         }
     }

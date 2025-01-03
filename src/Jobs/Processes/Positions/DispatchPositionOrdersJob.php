@@ -3,13 +3,14 @@
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
 use Illuminate\Support\Str;
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
+use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\Order;
+use Nidavellir\Thor\Models\Position;
 
 class DispatchPositionOrdersJob extends BaseQueuableJob
 {
@@ -20,6 +21,8 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
     public Position $position;
 
     public float $markPrice;
+
+    public float $quantity;
 
     public function __construct(int $positionId)
     {
@@ -41,21 +44,43 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
          */
         $dataMapper = new ApiDataMapperProxy($this->position->account->apiSystem->canonical);
 
-        // Get the order same side, depending on the position direction - For the limit orders.
-        $side = $this->position->direction == 'LONG' ? $dataMapper->buyType() : $dataMapper->sellType();
-
-        // Get the order opposite side, depending on the position direction - For the profit order.
-        $oppositeSide = $this->position->direction == 'LONG' ? $dataMapper->sellType() : $dataMapper->buyType();
+        // Compute sides.
+        $isLong = $this->position->direction == 'LONG';
+        $side = [
+            'same' => $isLong ? 'BUY' : 'SELL',
+            'opposite' => $isLong ? 'SELL' : 'BUY',
+        ];
 
         // Obtain the current mark price.
+        $this->markPrice = $this->position->exchangeSymbol->apiQueryMarkPrice($this->account);
 
+        if (! $this->markPrice) {
+            throw new \Exception('Mark price not fetched for position ID '.$this->position->id.'. Cancelling position');
+        }
 
-        Order::create([
-            'position_id' => $this->position->id,
-            'uuid' => (string) Str::uuid(),
-            'is_syncing' => true,
-
+        // Update opening price.
+        $this->position->update([
+            'opening_price' => $this->markPrice,
         ]);
+
+        // Calculate the total trade quantity given the notional and mark price.
+        $this->quantity = $this->getTotalTradeQuantity();
+
+        /**
+         * Create orders.
+         * Limit orders, then market order, then profit order.
+         */
+        foreach ($this->position->order_ratios as $ratio) {
+            Order::create([
+                'position_id' => $this->position->id,
+                'uuid' => (string) Str::uuid(),
+                'is_syncing' => true,
+                'type' => 'LIMIT',
+                'side' => $side['same'], // LONG => Limit BUY orders.
+                'quantity' => api_format_quantity($this->quantity / $ratio[1], $this->position->exchangeSymbol),
+                'price' => $this->getAveragePrice($ratio[0]),
+            ]);
+        }
     }
 
     protected function getAveragePrice(float $percentage): float
@@ -65,16 +90,20 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
             ? $this->markPrice + $change
             : $this->markPrice - $change;
 
-        return round(floor($newPrice / $this->exchangeSymbol->tick_size) * $this->exchangeSymbol->tick_size, $this->exchangeSymbol->price_precision);
+        return api_format_price($newPrice, $this->position->exchangeSymbol);
     }
 
-    protected function getQuantityFromAmountDivider(int $divider): float
+    protected function getTotalTradeQuantity(): float
     {
-        return round($this->notional / $this->markPrice / $divider, $this->exchangeSymbol->quantity_precision);
+        return api_format_quantity(notional($this->position) / $this->markPrice, $this->position->exchangeSymbol);
     }
 
-    protected function setTotalTradeQuantity(): void
+    public function resolveException(\Throwable $e)
     {
-        $this->tradeQuantity = $this->notional / $this->markPrice;
+        $this->position->update([
+            'status' => 'failed',
+            'is_syncing' => false,
+            'error_message' => $e->getMessage(),
+        ]);
     }
 }

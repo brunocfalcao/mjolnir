@@ -180,7 +180,7 @@ class BinanceApi
     public function getMarkPrice(ApiProperties $properties)
     {
         $this->validate($properties, [
-            'options.symbol' => 'required|string',
+            'options.symbol' => 'required',
         ]);
 
         $apiRequest = ApiRequest::make(

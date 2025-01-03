@@ -27,7 +27,6 @@ class QueryExchangeLeverageBracketsJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        $this->apiSystem->apiAccount = Account::admin($this->apiSystem->canonical);
         $apiResponse = $this->apiSystem->apiQueryLeverageBracketsData();
         $this->coreJobQueue->update(['response' => $apiResponse->result]);
 

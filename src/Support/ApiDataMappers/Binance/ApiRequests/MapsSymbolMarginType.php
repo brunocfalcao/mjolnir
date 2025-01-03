@@ -14,7 +14,7 @@ trait MapsSymbolMarginType
         /**
          * Obtain the trading pair for this exchange.
          */
-        $symbol = get_trading_pair_for_exchange($symbol->token, $account->apiSystem->canonical);
+        $symbol = get_base_token_for_exchange($symbol->token, $account->apiSystem->canonical);
         $parsedSymbol = $this->baseWithQuote($symbol, $account->quote->canonical);
 
         $properties = new ApiProperties;
