@@ -140,10 +140,10 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
                 // If no eligible symbol is found, try assigning any remaining fallback symbol.
                 if ($orderedExchangeSymbols->isNotEmpty()) {
                     $fallbackSymbol = $orderedExchangeSymbols->shift();
-                    $this->updatePositionWithExchangeSymbol($position, $fallbackSymbol, 'Fallback symbol due to no eligible symbol.');
+                    $this->updatePositionWithExchangeSymbol($position, $fallbackSymbol, 'Fallback symbol due to no eligible symbol on the right category');
                 } else {
                     // If no symbols are left, cancel the position.
-                    $position->update(['status' => 'cancelled', 'comments' => 'No ExchangeSymbol available for trading.']);
+                    $position->update(['status' => 'cancelled', 'comments' => 'No ExchangeSymbol available for trading']);
                 }
             }
         }

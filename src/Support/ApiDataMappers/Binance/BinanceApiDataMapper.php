@@ -20,6 +20,24 @@ class BinanceApiDataMapper extends BaseDataMapper
     use MapsSymbolMarginType;
 
     /**
+     * The BUY canonical for the limit orders. For instance the LIMIT-BUY order
+     * type canonical.
+     */
+    public function buyType()
+    {
+        return 'BUY';
+    }
+
+    /**
+     * The SELL canonical for the limit orders. For instance the LIMIT-SELL order
+     * type canonical.
+     */
+    public function sellType()
+    {
+        return 'SELL';
+    }
+
+    /**
      * Returns the well formed base symbol with the quote on it.
      * E.g.: AVAXUSDT. On other cases, for other exchanges, it can
      * return AVAX/USDT (Coinbase for instance).
