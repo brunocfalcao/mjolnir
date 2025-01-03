@@ -33,6 +33,7 @@ class UpdateRemainingPositionDataJob extends BaseQueuableJob
             $tradeConfig = TradeConfiguration::default()->first();
 
             $this->position->update([
+                'started_at' => now(),
                 'order_ratios' => $tradeConfig->order_ratios,
                 'profit_percentage' => $tradeConfig->profit_percentage,
             ]);

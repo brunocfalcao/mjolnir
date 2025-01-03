@@ -30,4 +30,12 @@ trait HasApiFeatures
 
         return $this->apiMapper()->resolveOrderQueryResponse($this->apiResponse);
     }
+
+    public function apiPlace(): array
+    {
+        $this->apiProperties = $this->apiMapper()->preparePlaceOrderProperties($this);
+        $this->apiResponse = $this->apiAccount()->withApi()->placeOrder($this->apiProperties);
+
+        return $this->apiMapper()->resolvePlaceOrderResponse($this->apiResponse);
+    }
 }
