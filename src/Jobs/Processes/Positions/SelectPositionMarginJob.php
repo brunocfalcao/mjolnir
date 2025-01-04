@@ -44,7 +44,12 @@ class SelectPositionMarginJob extends BaseApiableJob
 
         // Lets start by fetching the balance.
         $response = $this->account->apiQueryBalance();
-        $this->balance = $response->result[$this->account->quote->canonical]['availableBalance'];
+
+        $this->balance = $response->result[$this->account->quote->canonical]['crossWalletBalance'];
+
+        info('[SelectPositionMarginJob] - Balance: '.$this->balance);
+        info('[SelectPositionMarginJob] - Max balance percentage: '.$this->account->max_balance_percentage);
+        info('[SelectPositionMarginJob] - Position size percentage: '.$this->account->position_size_percentage);
 
         // The available balance will then be sliced for this account size percentage.
         $margin = remove_trailing_zeros(
@@ -60,6 +65,8 @@ class SelectPositionMarginJob extends BaseApiableJob
             // Update the position margin, and move on.
             $this->position->update(['margin' => $margin]);
         }
+
+        info('[SelectPositionMarginJob] - Margin: '.$this->position->margin);
     }
 
     public function resolveException(\Throwable $e)

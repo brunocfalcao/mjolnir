@@ -16,20 +16,20 @@ use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Symbol;
 use Nidavellir\Thor\Models\TradingPair;
 
-class HourlyCommand extends Command
+class RefreshBaseDataCommand extends Command
 {
-    protected $signature = 'mjolnir:hourly';
+    protected $signature = 'mjolnir:refresh-base-data';
 
     protected $description = 'Executes the hourly refresh cronjobs (symbols, exchange symbols, delisting, etc)';
 
     public function handle()
     {
         File::put(storage_path('logs/laravel.log'), '');
-        //DB::table('core_job_queue')->truncate();
-        //DB::table('api_requests_log')->truncate();
-        //DB::table('symbols')->truncate();
-        //DB::table('exchange_symbols')->truncate();
-        //DB::table('rate_limits')->truncate();
+        // DB::table('core_job_queue')->truncate();
+        // DB::table('api_requests_log')->truncate();
+        // DB::table('symbols')->truncate();
+        // DB::table('exchange_symbols')->truncate();
+        // DB::table('rate_limits')->truncate();
 
         $blockUuid = (string) Str::uuid();
 

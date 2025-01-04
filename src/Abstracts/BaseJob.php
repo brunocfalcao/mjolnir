@@ -13,7 +13,9 @@ abstract class BaseJob implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 1;
+    // Max retries for a "always pending" job. Then update to "failed".
+    public int $retries = 3;
 
+    // Laravel job timeout configuration.
     public $timeout = 120;
 }

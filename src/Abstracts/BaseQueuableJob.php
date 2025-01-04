@@ -19,9 +19,6 @@ abstract class BaseQueuableJob extends BaseJob
 
     public ?BaseExceptionHandler $exceptionHandler;
 
-    // Max retries for a "always pending" job. Then update to "failed".
-    public int $retries = 3;
-
     public function handle()
     {
         try {

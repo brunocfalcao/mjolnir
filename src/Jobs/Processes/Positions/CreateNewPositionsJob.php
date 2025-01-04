@@ -8,7 +8,7 @@ use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Position;
 
-class CreateNewAccountPositionsJob extends BaseQueuableJob
+class CreateNewPositionsJob extends BaseQueuableJob
 {
     public Account $account;
 
@@ -26,7 +26,12 @@ class CreateNewAccountPositionsJob extends BaseQueuableJob
 
     public function compute()
     {
-        $data = array_merge($this->extraData, ['account_id' => $this->account->id]);
+        info('[CreateNewPositionsJob] - Creating '.$this->numPositions.' position(s) to '.$this->account->user->name);
+
+        $data = array_merge($this->extraData, [
+            'account_id' => $this->account->id,
+            'exchange_symbol_id' => 8,
+        ]);
 
         // Start syncing position.
         $data['is_syncing'] = true;

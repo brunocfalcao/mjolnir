@@ -7,7 +7,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-use Nidavellir\Mjolnir\Jobs\Processes\Positions\CreateNewAccountPositionsJob;
+use Nidavellir\Mjolnir\Jobs\Processes\Positions\CreateNewPositionsJob;
 use Nidavellir\Mjolnir\Jobs\Processes\Positions\VerifyBalanceConditionsJob;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\CoreJobQueue;
@@ -15,9 +15,9 @@ use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\Symbol;
 
-class DispatchAccountPositionsCommand extends Command
+class DispatchPositionsCommand extends Command
 {
-    protected $signature = 'mjolnir:dispatch-account-positions {--clean : Truncate tables, clear logs, and create testing data before execution}';
+    protected $signature = 'mjolnir:dispatch-positions {--clean : Truncate tables, clear logs, and create testing data before execution}';
 
     protected $description = 'Dispatch all possible remaining to be opened positions, for all possible accounts';
 
@@ -30,6 +30,13 @@ class DispatchAccountPositionsCommand extends Command
             // $this->createTestingData();
         }
 
+        // Do we have exchange symbols?
+        if (! ExchangeSymbol::query()->exists()) {
+            throw new \Exception('There are no exchange symbols available');
+
+            return;
+        }
+
         // The BTC exchange symbol shouldn't be tradeable. Enforce it.
         $btc = ExchangeSymbol::firstWhere('symbol_id', Symbol::firstWhere('token', 'BTC')->id);
 
@@ -37,15 +44,13 @@ class DispatchAccountPositionsCommand extends Command
             $btc->update(['is_tradeable' => false]);
         }
 
-        // Do we have exchange symbols?
-        if (! ExchangeSymbol::query()->exists()) {
-            return;
-        }
-
         // Only process accounts belonging to traders.
         $accounts = Account::whereHas('user', function ($query) {
             $query->where('is_trader', true); // Ensure the user is a trader
-        })->with('user')->active()->get();
+        })->with('user')
+            ->active()
+            ->canTrade()
+            ->get();
 
         foreach ($accounts as $account) {
             // Get open positions for the account.
@@ -54,7 +59,7 @@ class DispatchAccountPositionsCommand extends Command
             // Calculate the delta.
             $delta = $account->max_concurrent_trades - $openPositions->count();
 
-            info('[DispatchAccountPositionsCommand] - Dispatching ' . $delta . ' positions to ' . $account->user->name);
+            info('[DispatchAccountPositionsCommand] - Dispatching '.$delta.' positions to '.$account->user->name);
 
             $blockUuid = (string) Str::uuid();
 
@@ -79,7 +84,7 @@ class DispatchAccountPositionsCommand extends Command
                  * Create as much positions as the delta using this job.
                  */
                 CoreJobQueue::create([
-                    'class' => CreateNewAccountPositionsJob::class,
+                    'class' => CreateNewPositionsJob::class,
                     'queue' => 'positions',
                     'arguments' => [
                         'accountId' => $account->id,

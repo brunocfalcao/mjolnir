@@ -23,6 +23,12 @@ class CreateOrderJob extends BaseApiableJob
 
     public Order $order;
 
+    // Specific configuration to allow more retry flexibility.
+    public int $workerServerBackoffSeconds = 3;
+
+    public int $retries = 10;
+    // -----
+
     public function __construct(int $orderId)
     {
         $this->order = Order::findOrFail($orderId);
@@ -34,28 +40,22 @@ class CreateOrderJob extends BaseApiableJob
         $this->exchangeSymbol = $this->position->exchangeSymbol;
     }
 
-    public function computeApiable()
+    public function authorize()
     {
         /**
-         * Creating an order obliges a specific sequence. If this order is of
-         * type LIMIT, then it can be immediately created. If the order is
-         * MARKET, then it needs to be checked first if all the LIMIT
-         * orders were already created. If it's a PROFIT then it
-         * checks if the MARKET order was created.
+         * First we create the limit orders, then the market order, then the
+         * profit order. We just return the job back on the core job queue
+         * to be processed again in a couple of seconds.
          */
+        return
+            $this->order->type == 'LIMIT' ||
+            ($this->order->type == 'MARKET' && $this->allLimitOrdersCreated()) ||
+            ($this->order->type == 'PROFIT' && $this->marketOrderCreated());
+    }
 
-        // Limit order? Nothing to verify.
-        if ($this->order->type == 'LIMIT') {
-            $this->order->apiPlace();
-        }
-
-        if ($this->order->type == 'MARKET' && $this->allLimitOrdersCreated()) {
-            $this->order->apiPlace();
-        }
-
-        if ($this->order->type == 'PROFIT' && $this->marketOrderCreated()) {
-            $this->order->apiPlace();
-        }
+    public function computeApiable()
+    {
+        $this->order->apiPlace();
     }
 
     protected function allLimitOrdersCreated()
@@ -65,6 +65,7 @@ class CreateOrderJob extends BaseApiableJob
 
     protected function marketOrderCreated()
     {
+        // Retry the job in 3 seconds.
         return false;
     }
 

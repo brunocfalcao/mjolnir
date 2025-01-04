@@ -19,14 +19,14 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
 
     public ApiSystem $apiSystem;
 
-    public function __construct()
+    public function __construct(int $accountId)
     {
         /**
          * Initialize the account and API system for token assignment.
          * This constructor retrieves the first account and its associated API system.
          * It also sets up the exception handler for the current API system.
          */
-        $this->account = Account::first(); // Replace this with appropriate account retrieval logic.
+        $this->account = Account::findOrFail($accountId);
         $this->apiSystem = $this->account->apiSystem;
         $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
     }
@@ -152,7 +152,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
         // dd(Position::opened()->fromAccount($this->account)->get());
 
         foreach (Position::opened()->fromAccount($this->account)->with('account')->get() as $position) {
-            info('Starting Position lifecycle for account ID '.$position->account->id.' and position ID '.$position->id);
+            info('Starting Position lifecycle for account ID '.$position->account->id.' and position ID '.$position->id.' ('.$position->account->user->name.')');
 
             $index = 1;
             $blockUuid = (string) Str::uuid();
@@ -243,6 +243,9 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
         $data['comments'] = $comments;
 
         if (! $exchangeSymbolAlreadySelected) {
+            $position->load('account.user');
+            info('[AssignTokensToPositionsJob] - Assigning '.$exchangeSymbol->symbol->token.' to position ID '.$position->id.' from '.$position->account->user->name);
+
             $position->update($data);
         } else {
             $position->update([

@@ -2,7 +2,6 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
-use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
@@ -60,7 +59,7 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
 
         // Update opening price.
         $this->position->update([
-            'opening_price' => $this->markPrice,
+            'opening_price' => api_format_price($this->markPrice, $this->position->exchangeSymbol),
         ]);
 
         // Calculate the total trade quantity given the notional and mark price.
@@ -73,15 +72,29 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
         foreach ($this->position->order_ratios as $ratio) {
             Order::create([
                 'position_id' => $this->position->id,
-                'uuid' => (string) Str::uuid(),
-                'is_syncing' => true,
                 'type' => 'LIMIT',
-                'status' => 'NEW',
-                'side' => $side['same'], // LONG => Limit BUY orders.
+                'side' => $side['same'],
                 'quantity' => api_format_quantity($this->quantity / $ratio[1], $this->position->exchangeSymbol),
                 'price' => $this->getAveragePrice($ratio[0]),
             ]);
         }
+
+        $totalLimitOrders = count($this->position->order_ratios);
+
+        // Create the market order.
+        Order::create([
+            'position_id' => $this->position->id,
+            'type' => 'MARKET',
+            'side' => $side['same'],
+            'quantity' => api_format_quantity($this->quantity / get_market_order_amount_divider($totalLimitOrders), $this->position->exchangeSymbol),
+        ]);
+
+        // Create the profit order.
+        Order::create([
+            'position_id' => $this->position->id,
+            'type' => 'PROFIT',
+            'side' => $side['opposite'],
+        ]);
     }
 
     protected function getAveragePrice(float $percentage): float

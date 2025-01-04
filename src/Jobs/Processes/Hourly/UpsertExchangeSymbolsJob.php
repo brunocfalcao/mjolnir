@@ -68,7 +68,6 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
                     ],
                     [
                         'trade_configuration_id' => TradeConfiguration::default()->first()->id,
-                        'is_upsertable' => true,
                         'price_precision' => $exchangeTradingPair['pricePrecision'],
                         'quantity_precision' => $exchangeTradingPair['quantityPrecision'],
                         'min_notional' => $exchangeTradingPair['minNotional'],
