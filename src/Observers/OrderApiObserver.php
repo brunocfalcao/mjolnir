@@ -10,7 +10,7 @@ class OrderApiObserver
 {
     public function created(Order $order): void
     {
-        info('['.$order->id.'] Creating '.$order->type.' order for token '.$order->position->exchangeSymbol->symbol->token);
+        info('[OrderApiObserver] - Creating '.$order->type.' order for token '.$order->position->exchangeSymbol->symbol->token) . ', position ID: ' . $order->position->id . ', account from ' . $order->position->account->user->name;
         /*
         CoreJobQueue::create([
             'class' => CreateOrderJob::class,

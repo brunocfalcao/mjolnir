@@ -17,7 +17,7 @@ use Nidavellir\Thor\Models\ExchangeSymbol;
 
 class TestCommand extends Command
 {
-    protected $signature = 'excalibur:test';
+    protected $signature = 'mjolnir:test';
 
     protected $description = 'Does whatever test you want';
 

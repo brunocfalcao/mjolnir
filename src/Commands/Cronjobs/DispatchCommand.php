@@ -7,7 +7,7 @@ use Nidavellir\Thor\Models\CoreJobQueue;
 
 class DispatchCommand extends Command
 {
-    protected $signature = 'excalibur:core-job-queue-dispatch';
+    protected $signature = 'mjolnir:core-job-queue-dispatch';
 
     protected $description = 'Dispatch all pending API jobs';
 

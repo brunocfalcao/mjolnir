@@ -81,12 +81,16 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
         if (count(array_unique($directions)) == 1) {
             $newSide = $directions[0];
-            $this->updateSideAndNotify($newSide);
 
-            $this->exchangeSymbol->update([
-                'indicators' => $indicatorData,
-                'indicators_last_synced_at' => now(),
-            ]);
+            // Upsert the exchange symbol is is upsertable.
+            if ($this->exchangeSymbol->is_upsertable) {
+                $this->updateSideAndNotify($newSide);
+
+                $this->exchangeSymbol->update([
+                    'indicators' => $indicatorData,
+                    'indicators_last_synced_at' => now(),
+                ]);
+            }
         } else {
             // Directions inconclusive. Proceed to next timeframe.
             $this->processNextTimeFrameOrConclude();
@@ -148,6 +152,8 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
             $this->exchangeSymbol->update([
                 'direction' => $newSide,
                 'indicator_timeframe' => $this->timeFrame,
+
+                // Exchange symbol is now tradeable.
                 'is_tradeable' => true,
             ]);
         }

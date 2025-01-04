@@ -17,7 +17,7 @@ use Nidavellir\Thor\Models\Symbol;
 
 class DispatchAccountPositionsCommand extends Command
 {
-    protected $signature = 'excalibur:dispatch-account-positions {--clean : Truncate tables, clear logs, and create testing data before execution}';
+    protected $signature = 'mjolnir:dispatch-account-positions {--clean : Truncate tables, clear logs, and create testing data before execution}';
 
     protected $description = 'Dispatch all possible remaining to be opened positions, for all possible accounts';
 
@@ -45,7 +45,7 @@ class DispatchAccountPositionsCommand extends Command
         // Only process accounts belonging to traders.
         $accounts = Account::whereHas('user', function ($query) {
             $query->where('is_trader', true); // Ensure the user is a trader
-        })->active()->get();
+        })->with('user')->active()->get();
 
         foreach ($accounts as $account) {
             // Get open positions for the account.
@@ -53,6 +53,8 @@ class DispatchAccountPositionsCommand extends Command
 
             // Calculate the delta.
             $delta = $account->max_concurrent_trades - $openPositions->count();
+
+            info('[DispatchAccountPositionsCommand] - Dispatching ' . $delta . ' positions to ' . $account->user->name);
 
             $blockUuid = (string) Str::uuid();
 
