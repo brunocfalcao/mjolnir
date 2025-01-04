@@ -2,14 +2,14 @@
 
 namespace Nidavellir\Mjolnir;
 
-use Nidavellir\Thor\Models\Order;
 use Illuminate\Support\ServiceProvider;
+use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchAccountPositionsCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\HourlyCommand;
+use Nidavellir\Mjolnir\Commands\Debug\GetAccountBalanceCommand;
 use Nidavellir\Mjolnir\Commands\TestCommand;
 use Nidavellir\Mjolnir\Observers\OrderApiObserver;
-use Nidavellir\Mjolnir\Commands\Cronjobs\HourlyCommand;
-use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchCommand;
-use Nidavellir\Mjolnir\Commands\Debug\GetAccountBalanceCommand;
-use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchAccountPositionsCommand;
+use Nidavellir\Thor\Models\Order;
 
 class MjolnirServiceProvider extends ServiceProvider
 {

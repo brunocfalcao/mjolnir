@@ -27,11 +27,11 @@ class DispatchAccountPositionsCommand extends Command
 
         if ($this->option('clean')) {
             $this->cleanData();
-            //$this->createTestingData();
+            // $this->createTestingData();
         }
 
         // The BTC exchange symbol shouldn't be tradeable. Enforce it.
-        $btc = ExchangeSymbol::firstWhere('symbol_id', Symbol::firstWhere('token', 'BTC'));
+        $btc = ExchangeSymbol::firstWhere('symbol_id', Symbol::firstWhere('token', 'BTC')->id);
 
         if ($btc) {
             $btc->update(['is_tradeable' => false]);

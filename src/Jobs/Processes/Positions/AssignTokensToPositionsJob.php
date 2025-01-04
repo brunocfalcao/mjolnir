@@ -148,7 +148,12 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
             }
         }
 
-        foreach (Position::opened()->fromAccount($this->account)->get() as $position) {
+        // info(Position::opened()->fromAccount($this->account)->toRawSql());
+        // dd(Position::opened()->fromAccount($this->account)->get());
+
+        foreach (Position::opened()->fromAccount($this->account)->with('account')->get() as $position) {
+            info('Starting Position lifecycle for account ID '.$position->account->id.' and position ID '.$position->id);
+
             $index = 1;
             $blockUuid = (string) Str::uuid();
 
@@ -291,7 +296,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
          * Filter out symbols already in use for opened positions and not in the ordered list.
          */
         $filteredExchangeSymbols = $fastTradedExchangeSymbols->reject(function ($exchangeSymbol) use ($openPositionExchangeSymbols, $orderedExchangeSymbols) {
-            return $openPositionExchangeSymbols->contains($exchangeSymbol) || !$orderedExchangeSymbols->contains('id', $exchangeSymbol->id);
+            return $openPositionExchangeSymbols->contains($exchangeSymbol) || ! $orderedExchangeSymbols->contains('id', $exchangeSymbol->id);
         });
 
         /**

@@ -26,9 +26,9 @@ trait HasApiFeatures
     public function apiQuery(): array
     {
         $this->apiProperties = $this->apiMapper()->prepareOrderQueryProperties($this);
-        $this->apiResponse = $this->apiAccount()->withApi()->orderQuery($this->apiProperties);
+        $this->apiResponse = $this->apiAccount()->withApi()->placeOrder($this->apiProperties);
 
-        return $this->apiMapper()->resolveOrderQueryResponse($this->apiResponse);
+        return $this->apiMapper()->resolvePlaceOrderResponse($this->apiResponse);
     }
 
     public function apiPlace(): array

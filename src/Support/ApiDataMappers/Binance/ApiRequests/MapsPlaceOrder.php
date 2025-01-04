@@ -3,8 +3,8 @@
 namespace Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests;
 
 use GuzzleHttp\Psr7\Response;
-use Nidavellir\Thor\Models\Order;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
+use Nidavellir\Thor\Models\Order;
 
 trait MapsPlaceOrder
 {
@@ -19,17 +19,15 @@ trait MapsPlaceOrder
         $parsedSymbol = $this->baseWithQuote($symbol, $account->quote->canonical);
 
         $properties->set('options.symbol', $parsedSymbol);
-
-
-        $properties->set('options.side', strtoupper($order->side));
-        $properties->set('options.quantity', $order->initial_quantity);
+        $properties->set('options.side', $this->sideType($order->side));
+        $properties->set('options.quantity', $order->quantity);
 
         switch ($order->type) {
             case 'PROFIT':
             case 'LIMIT':
                 $properties->set('options.timeinforce', 'GTC');
                 $properties->set('options.type', 'LIMIT');
-                $properties->set('options.price', $order->initial_average_price);
+                $properties->set('options.price', $order->price);
                 if ($order->type == 'PROFIT') {
                     $properties->set('options.reduceonly', 'true');
                 }
@@ -44,14 +42,16 @@ trait MapsPlaceOrder
         return $properties;
     }
 
-    public function resolvePlaceOrderResponse(Response $response): ?string
+    public function resolvePlaceOrderResponse(Response $response): array
     {
-        $data = json_decode($response->getBody(), true);
+        $result = json_decode($response->getBody(), true);
 
-        if (array_key_exists('markPrice', $data)) {
-            return $data['markPrice'];
-        }
-
-        return null;
+        return [
+            'order_id' => $result['orderId'],
+            'average_price' => $result['avgPrice'],
+            'price' => $result['price'],
+            'original_quantity' => $result['origQty'],
+            'executed_quantity' => $result['executedQty'],
+        ];
     }
 }

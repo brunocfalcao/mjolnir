@@ -71,8 +71,6 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
          * Limit orders, then market order, then profit order.
          */
         foreach ($this->position->order_ratios as $ratio) {
-            info('Order ratio: ' . json_encode($ratio));
-
             Order::create([
                 'position_id' => $this->position->id,
                 'uuid' => (string) Str::uuid(),

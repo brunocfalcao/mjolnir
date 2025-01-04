@@ -47,7 +47,13 @@ class SelectPositionMarginJob extends BaseApiableJob
         $this->balance = $response->result[$this->account->quote->canonical]['availableBalance'];
 
         // The available balance will then be sliced for this account size percentage.
-        $margin = remove_trailing_zeros(round($this->balance * $this->account->position_size_percentage / 100));
+        $margin = remove_trailing_zeros(
+            round(
+                $this->balance *
+                ($this->account->max_balance_percentage / 100) *
+                $this->account->position_size_percentage / 100
+            )
+        );
 
         // Override?
         if (! $this->position->margin) {

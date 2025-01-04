@@ -2,14 +2,14 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Apiable\Order;
 
-use Nidavellir\Thor\Models\Order;
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\ExchangeSymbol;
+use Nidavellir\Thor\Models\Order;
+use Nidavellir\Thor\Models\Position;
 
 class CreateOrderJob extends BaseApiableJob
 {
@@ -46,15 +46,15 @@ class CreateOrderJob extends BaseApiableJob
 
         // Limit order? Nothing to verify.
         if ($this->order->type == 'LIMIT') {
-            $this->order->apiCreate();
+            $this->order->apiPlace();
         }
 
         if ($this->order->type == 'MARKET' && $this->allLimitOrdersCreated()) {
-            $this->order->apiCreate();
+            $this->order->apiPlace();
         }
 
         if ($this->order->type == 'PROFIT' && $this->marketOrderCreated()) {
-            $this->order->apiCreate();
+            $this->order->apiPlace();
         }
     }
 
@@ -71,16 +71,16 @@ class CreateOrderJob extends BaseApiableJob
     public function resolveException(\Throwable $e)
     {
         // Cancels all open orders (except the market order itself).
-        //$this->order->position->apiCancelAllOrders();
+        // $this->order->position->apiCancelAllOrders();
 
         // Opens an opposite market order with same quantity to close position.
-        //$this->order->position->apiCancelMarketOrder();
+        // $this->order->position->apiCancelMarketOrder();
 
         // Stop the order.
         $this->order->update([
             'status' => 'FAILED',
             'is_syncing' => false,
-            'error_message' => $e->getMessage()
+            'error_message' => $e->getMessage(),
         ]);
     }
 }

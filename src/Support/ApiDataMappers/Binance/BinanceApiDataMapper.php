@@ -3,14 +3,14 @@
 namespace Nidavellir\Mjolnir\Support\ApiDataMappers\Binance;
 
 use Nidavellir\Mjolnir\Abstracts\BaseDataMapper;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsAccountBalanceQuery;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsExchangeInformationQuery;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsLeverageBracketsQuery;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsMarkPriceQuery;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsOrderQuery;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsPlaceOrder;
-use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsMarkPriceQuery;
-use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsSymbolMarginType;
-use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsAccountBalanceQuery;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsSymbolLeverageRatios;
-use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsLeverageBracketsQuery;
-use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsExchangeInformationQuery;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsSymbolMarginType;
 
 class BinanceApiDataMapper extends BaseDataMapper
 {
@@ -19,25 +19,16 @@ class BinanceApiDataMapper extends BaseDataMapper
     use MapsLeverageBracketsQuery;
     use MapsMarkPriceQuery;
     use MapsOrderQuery;
+    use MapsPlaceOrder;
     use MapsSymbolLeverageRatios;
     use MapsSymbolMarginType;
-    use MapsPlaceOrder;
 
-    /**
-     * The BUY canonical for the limit orders. For instance the LIMIT-BUY order
-     * type canonical.
-     */
-    public function buyType()
+    public function sideType(string $canonical)
     {
-        return 'BUY';
-    }
+        if ($canonical == 'BUY') {
+            return 'BUY';
+        }
 
-    /**
-     * The SELL canonical for the limit orders. For instance the LIMIT-SELL order
-     * type canonical.
-     */
-    public function sellType()
-    {
         return 'SELL';
     }
 

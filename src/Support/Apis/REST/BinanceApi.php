@@ -229,7 +229,7 @@ class BinanceApi
         return $this->client->signRequest($apiRequest);
     }
 
-    //https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Modify-Order
+    // https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Modify-Order
     public function modifyOrder(ApiProperties $properties)
     {
         $this->validate($properties, [

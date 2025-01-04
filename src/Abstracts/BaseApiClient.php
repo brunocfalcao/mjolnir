@@ -93,7 +93,7 @@ abstract class BaseApiClient
                 'Accept-Encoding' => 'application/json',
                 'User-Agent' => 'api-client-php',
             ],
-            //'http_errors' => false,
+            // 'http_errors' => false,
         ]);
     }
 
