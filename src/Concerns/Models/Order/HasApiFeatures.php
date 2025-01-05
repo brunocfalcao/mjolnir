@@ -36,7 +36,7 @@ trait HasApiFeatures
     }
 
     // Syncs an order. Gets data from the server and updates de order. Triggers the observer.
-    public function apiSync(): void
+    public function apiSync(): ApiResponse
     {
         info('[apiSync] - Starting sync of Order ID '.$this->id);
 
@@ -54,6 +54,8 @@ trait HasApiFeatures
         ]);
 
         $this->changeToSynced();
+
+        return $apiResponse;
     }
 
     // Places an order.
