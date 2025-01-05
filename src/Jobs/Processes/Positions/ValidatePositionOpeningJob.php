@@ -24,7 +24,21 @@ class ValidatePositionOpeningJob extends BaseQueuableJob
         $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
     }
 
-    public function compute() {}
+    public function compute()
+    {
+
+        /**
+         * Make some last checks:
+         * - All orders synced, and with exchange order id's?
+         * - Change position status to active.
+         */
+        if ($this->position->orders->whereNull('exchange_order_id')->isNotEmpty()) {
+            throw new \Exception('Position has orders that were not synced correctly.');
+        }
+
+        $this->position->changeToActive();
+        $this->position->changeToSynced();
+    }
 
     public function resolveException(\Throwable $e)
     {
