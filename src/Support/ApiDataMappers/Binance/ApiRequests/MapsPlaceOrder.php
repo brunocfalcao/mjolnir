@@ -44,14 +44,6 @@ trait MapsPlaceOrder
 
     public function resolvePlaceOrderResponse(Response $response): array
     {
-        $result = json_decode($response->getBody(), true);
-
-        return [
-            'order_id' => $result['orderId'],
-            'average_price' => $result['avgPrice'],
-            'price' => $result['price'],
-            'original_quantity' => $result['origQty'],
-            'executed_quantity' => $result['executedQty'],
-        ];
+        return json_decode($response->getBody(), true);
     }
 }

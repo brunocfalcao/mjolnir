@@ -23,6 +23,10 @@ class CreateOrderJob extends BaseApiableJob
 
     public Order $order;
 
+    public Order $marketOrder;
+
+    public float $markPrice;
+
     // Specific configuration to allow more retry flexibility.
     public int $workerServerBackoffSeconds = 3;
 
@@ -42,30 +46,74 @@ class CreateOrderJob extends BaseApiableJob
 
     public function authorize()
     {
-        /**
-         * First we create the limit orders, then the market order, then the
-         * profit order. We just return the job back on the core job queue
-         * to be processed again in a couple of seconds.
-         */
-        return
-            $this->order->type == 'LIMIT' ||
-            ($this->order->type == 'MARKET' && $this->allLimitOrdersCreated()) ||
-            ($this->order->type == 'PROFIT' && $this->marketOrderCreated());
+        return $this->order->type == 'MARKET' || $this->marketOrderSynced();
     }
 
     public function computeApiable()
     {
-        $this->order->apiPlace();
+        if ($this->order->type != 'MARKET') {
+            $this->marketOrder = $this->position->orders->firstWhere('type', 'MARKET');
+        }
+
+        switch ($this->order->type) {
+            case 'MARKET':
+                info('[CreateOrderJob] - Order ID: ' . $this->order->id . ' -> Creating Market order on Exchange');
+
+                /**
+                 * is_syncing = true
+                 * Call a Core Job Queue that will do the apiPlace
+                 * Then
+                 * Call another Core Job Queue that will do the apiSync
+                 * Then
+                 * is_syncing = false
+                 *
+                 * This will allow the next limit/profit orders to be
+                 * processed, finally.
+                 */
+                $this->order->apiPlace(); // <- Change this!
+
+                /**
+                 * We can assume the mark price is exactly at this moment the same
+                 * as the one from the market order.
+                 */
+
+                $this->markPrice = $this->position->orders->firstWhere('type', 'MARKET')->price;
+
+                // Create remaining orders: Limit.
+                foreach ($this->position->order_ratios as $ratio) {
+                    Order::create([
+                        'position_id' => $this->position->id,
+                        'type' => 'LIMIT',
+                        'side' => $side['same'],
+                        'price' => $this->getAlignedPriceFromPercentage($this->markPrice, $ratio[0]),
+                        'quantity' => api_format_quantity($this->quantity / $ratio[1], $this->position->exchangeSymbol)
+                    ]);
+                }
+
+                $totalLimitOrders = count($this->position->order_ratios);
+
+                // Create the profit order.
+                Order::create([
+                    'position_id' => $this->position->id,
+                    'type' => 'PROFIT',
+                    'side' => $side['opposite'],
+                    'price' => $this->getAlignedPriceFromPercentage($this->markPrice, $this->position->profit_percentage),
+
+                ]);
+                break;
+
+            case 'LIMIT':
+            case 'PROFIT':
+                // Obtain the price from the market order.
+
+                $this->order->apiPlace();
+                $this->order->apiSync();
+                break;
+        }
     }
 
-    protected function allLimitOrdersCreated()
+    protected function marketOrderSynced()
     {
-        return false;
-    }
-
-    protected function marketOrderCreated()
-    {
-        // Retry the job in 3 seconds.
         return false;
     }
 
@@ -83,5 +131,15 @@ class CreateOrderJob extends BaseApiableJob
             'is_syncing' => false,
             'error_message' => $e->getMessage(),
         ]);
+    }
+
+    private function getAlignedPriceFromPercentage($referencePrice, float $percentage): float
+    {
+        $change = $referencePrice * ($percentage / 100);
+        $newPrice = $this->position->direction == 'LONG'
+            ? $referencePrice + $change
+            : $referencePrice - $change;
+
+        return api_format_price($newPrice, $this->position->exchangeSymbol);
     }
 }

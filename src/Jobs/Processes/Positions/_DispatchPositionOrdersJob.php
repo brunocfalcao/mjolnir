@@ -11,7 +11,7 @@ use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Position;
 
-class DispatchPositionOrdersJob extends BaseQueuableJob
+class _DispatchPositionOrdersJob extends BaseQueuableJob
 {
     public Account $account;
 
@@ -74,8 +74,8 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
                 'position_id' => $this->position->id,
                 'type' => 'LIMIT',
                 'side' => $side['same'],
-                'quantity' => api_format_quantity($this->quantity / $ratio[1], $this->position->exchangeSymbol),
                 'price' => $this->getAveragePrice($ratio[0]),
+                'quantity' => api_format_quantity($this->quantity / $ratio[1], $this->position->exchangeSymbol)
             ]);
         }
 

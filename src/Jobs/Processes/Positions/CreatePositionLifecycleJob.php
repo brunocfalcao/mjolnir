@@ -3,11 +3,12 @@
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
 use Illuminate\Support\Str;
-use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Jobs\Processes\Positions\DispatchMarketOrderJob;
 
 class CreatePositionLifecycleJob extends BaseQueuableJob
 {
@@ -82,8 +83,8 @@ class CreatePositionLifecycleJob extends BaseQueuableJob
         ]);
 
         CoreJobQueue::create([
-            'class' => DispatchPositionOrdersJob::class,
-            'queue' => 'positions',
+            'class' => DispatchMarketOrderJob::class,
+            'queue' => 'orders',
             'arguments' => [
                 'positionId' => $this->position->id,
             ],

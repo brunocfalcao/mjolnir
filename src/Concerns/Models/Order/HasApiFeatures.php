@@ -28,14 +28,39 @@ trait HasApiFeatures
         $this->apiProperties = $this->apiMapper()->prepareOrderQueryProperties($this);
         $this->apiResponse = $this->apiAccount()->withApi()->placeOrder($this->apiProperties);
 
-        return $this->apiMapper()->resolvePlaceOrderResponse($this->apiResponse);
+        return $this->apiMapper()->resolveOrderQueryResponse($this->apiResponse);
     }
 
+    // Syncs an order. Gets data from the server and updates de order. Triggers the observer.
+    public function apiSync(): void
+    {
+        $result = $this->apiQuery();
+
+        $this->update([
+            'exchange_order_id' => $result['order_id'],
+        ]);
+
+        /*
+        return [
+            'order_id' => $result['orderId'],
+            'average_price' => $result['avgPrice'],
+            'price' => $result['price'],
+            'original_quantity' => $result['origQty'],
+            'executed_quantity' => $result['executedQty'],
+        ];
+        */
+    }
+
+    // Places an order.
     public function apiPlace(): array
     {
         $this->apiProperties = $this->apiMapper()->preparePlaceOrderProperties($this);
         $this->apiResponse = $this->apiAccount()->withApi()->placeOrder($this->apiProperties);
 
-        return $this->apiMapper()->resolvePlaceOrderResponse($this->apiResponse);
+        $result = $this->apiMapper()->resolvePlaceOrderResponse($this->apiResponse);
+
+        info($result);
+
+        //$this->updateOrderData($result);
     }
 }

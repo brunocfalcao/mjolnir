@@ -59,7 +59,7 @@ class DispatchPositionsCommand extends Command
             // Calculate the delta.
             $delta = $account->max_concurrent_trades - $openPositions->count();
 
-            info('[DispatchAccountPositionsCommand] - Dispatching '.$delta.' positions to '.$account->user->name);
+            info('[DispatchAccountPositionsCommand] - Dispatching '.$delta.' position(s) to '.$account->user->name);
 
             $blockUuid = (string) Str::uuid();
 
