@@ -55,6 +55,8 @@ trait HasApiFeatures
         $parsedSymbol = $this->apiMapper()->baseWithQuote($this->exchangeSymbol->symbol->token, $this->account->quote->canonical);
 
         if (array_key_exists($parsedSymbol, $positions)) {
+            $this->changeToSyncing();
+
             // We have a position. Lets place a contrary order to close it.
             $positionFromExchange = $positions[$parsedSymbol];
 
@@ -70,14 +72,19 @@ trait HasApiFeatures
             }
 
             $data['quantity'] = abs($positionFromExchange['positionAmt']);
-
             $data['position_id'] = $this->id;
 
             $order = Order::create($data);
+            $apiResponse = $order->apiPlace();
+            $order->apiSync();
 
-            $order->apiPlace();
-        } else {
-            throw new \Exception('There was not a position opened for this position (id='.$this->id.')');
+            $this->update(['closed_at' => now()]);
+
+            $this->changeToSynced();
+
+            return $apiResponse;
         }
+
+        return new ApiResponse(new Response, []);
     }
 }

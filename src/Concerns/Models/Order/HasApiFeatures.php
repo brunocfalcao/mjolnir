@@ -62,9 +62,16 @@ trait HasApiFeatures
         $this->apiProperties = $this->apiMapper()->preparePlaceOrderProperties($this);
         $this->apiResponse = $this->apiAccount()->withApi()->placeOrder($this->apiProperties);
 
-        return new ApiResponse(
+        $finalResponse = new ApiResponse(
             response: $this->apiResponse,
             result: $this->apiMapper()->resolvePlaceOrderResponse($this->apiResponse)
         );
+
+        $this->update([
+            'exchange_order_id' => $finalResponse->result['orderId'],
+            'started_at' => now(),
+        ]);
+
+        return $finalResponse;
     }
 }

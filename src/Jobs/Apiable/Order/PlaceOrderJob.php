@@ -80,11 +80,6 @@ class PlaceOrderJob extends BaseApiableJob
 
         $apiResponse = $this->order->apiPlace();
 
-        $this->order->update([
-            'exchange_order_id' => $apiResponse->result['orderId'],
-            'started_at' => now(),
-        ]);
-
         // Sync order.
         $this->order->apiSync();
 
