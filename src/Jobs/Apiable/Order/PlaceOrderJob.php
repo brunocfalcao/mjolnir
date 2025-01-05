@@ -47,10 +47,6 @@ class PlaceOrderJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        if ($this->order->id == 2) {
-            throw new \Exception('Error no order. Test.');
-        }
-
         info('[PlaceOrderJob] - Order ID: '.$this->order->id.', placing order on API...');
 
         $this->order->changeToSyncing();
