@@ -9,7 +9,7 @@ class QueryOrderCommand extends Command
 {
     protected $signature = 'debug:query-order {exchange_order_id}';
 
-    protected $description = 'Queries an order and dumps its information.';
+    protected $description = 'Queries an order and dumps its information';
 
     public function handle()
     {

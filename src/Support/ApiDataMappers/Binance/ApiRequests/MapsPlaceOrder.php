@@ -20,7 +20,7 @@ trait MapsPlaceOrder
 
         $properties->set('options.symbol', $parsedSymbol);
         $properties->set('options.side', $this->sideType($order->side));
-        $properties->set('options.quantity', $order->quantity);
+        $properties->set('options.quantity', (string) $order->quantity);
 
         switch ($order->type) {
             case 'PROFIT':

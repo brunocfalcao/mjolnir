@@ -12,7 +12,11 @@ class ADXIndicator extends BaseIndicator
 
     public function isValid(): bool
     {
-        // Should be >= 25 to return true.
+        if (! array_key_exists(0, $this->data['value'])) {
+            return 0;
+        }
+
+        // Major number to keep the trend solid (e.g. >= 20).
         return $this->data['value'][0] >= 20;
     }
 }

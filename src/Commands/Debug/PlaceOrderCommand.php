@@ -20,10 +20,10 @@ class PlaceOrderCommand extends Command
         $order = Order::findOrFail($orderId);
 
         // Place order
-        $result = $order->apiPlace();
+        $apiResponse = $order->apiPlace();
 
         // Dump the order information
-        $this->line(print_r($result, true));
+        $this->line(print_r($apiResponse->result, true));
 
         return 0;
     }

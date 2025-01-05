@@ -2,6 +2,7 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
+use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Mjolnir\Jobs\Apiable\Order\PlaceOrderJob;
@@ -87,18 +88,33 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
 
     protected function dispatchOrders()
     {
-        $this->position->orders->each(function ($order) {
+        $blockUuid = (string) Str::uuid();
+
+        $this->position->orders->each(function ($order) use ($blockUuid) {
             info('[DispatchPositionOrdersJob] - Dispatching order ID '.$order->id.' ('.$order->type.')');
 
-            // Market order.
             CoreJobQueue::create([
                 'class' => PlaceOrderJob::class,
                 'queue' => 'orders',
                 'arguments' => [
                     'orderId' => $order->id,
                 ],
+                'index' => 1,
+                'block_uuid' => $blockUuid,
             ]);
         });
+
+        /*
+        CoreJobQueue::create([
+            'class' => ValidatePositionOpeningJob::class,
+            'queue' => 'positions',
+            'arguments' => [
+                'positionId' => $order->id,
+            ],
+            'index' => 2,
+            'block_uuid' => $blockUuid
+        ]);
+        */
     }
 
     protected function getAveragePrice(float $percentage): float

@@ -56,6 +56,17 @@ trait HasApiFeatures
         );
     }
 
+    public function apiQueryPositions(): ApiResponse
+    {
+        $this->apiProperties = $this->apiMapper()->prepareQueryPositionsProperties();
+        $this->apiResponse = $this->withApi()->getPositions($this->apiProperties);
+
+        return new ApiResponse(
+            response: $this->apiResponse,
+            result: $this->apiMapper()->resolveQueryPositionsResponse($this->apiResponse)
+        );
+    }
+
     public function apiQueryBalance(): ApiResponse
     {
         $this->apiProperties = $this->apiMapper()->prepareGetBalanceProperties($this);

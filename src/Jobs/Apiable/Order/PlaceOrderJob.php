@@ -78,10 +78,10 @@ class PlaceOrderJob extends BaseApiableJob
             ]);
         }
 
-        $result = $this->order->apiPlace();
+        $apiResponse = $this->order->apiPlace();
 
         $this->order->update([
-            'exchange_order_id' => $result['orderId'],
+            'exchange_order_id' => $apiResponse->result['orderId'],
             'started_at' => now(),
         ]);
 
@@ -92,7 +92,7 @@ class PlaceOrderJob extends BaseApiableJob
 
         info('[PlaceOrderJob] - Order ID: '.$this->order->id.', order placed and synced with exchange id '.$this->order->exchange_order_id);
 
-        return $result;
+        return $apiResponse->response;
     }
 
     public function marketOrderSynced()

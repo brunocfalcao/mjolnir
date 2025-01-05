@@ -5,6 +5,7 @@ namespace Nidavellir\Mjolnir\Concerns\Models\Order;
 use GuzzleHttp\Psr7\Response;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
+use Nidavellir\Mjolnir\Support\ValueObjects\ApiResponse;
 
 trait HasApiFeatures
 {
@@ -23,12 +24,15 @@ trait HasApiFeatures
     }
 
     // Queries an order.
-    public function apiQuery(): array
+    public function apiQuery(): ApiResponse
     {
         $this->apiProperties = $this->apiMapper()->prepareOrderQueryProperties($this);
         $this->apiResponse = $this->apiAccount()->withApi()->orderQuery($this->apiProperties);
 
-        return $this->apiMapper()->resolveOrderQueryResponse($this->apiResponse);
+        return new ApiResponse(
+            response: $this->apiResponse,
+            result: $this->apiMapper()->resolveOrderQueryResponse($this->apiResponse)
+        );
     }
 
     // Syncs an order. Gets data from the server and updates de order. Triggers the observer.
@@ -36,28 +40,31 @@ trait HasApiFeatures
     {
         info('[apiSync] - Starting sync of Order ID '.$this->id);
 
-        $result = $this->apiQuery();
+        $apiResponse = $this->apiQuery();
 
-        info('[apiSync] - Order ID '.$this->id.', Result: '.json_encode($result));
+        info('[apiSync] - Order ID '.$this->id.', Result: '.json_encode($apiResponse->result));
 
         $this->changeToSyncing();
 
         $this->update([
-            'status' => $result['status'],
-            'quantity' => $result['quantity'],
-            'price' => $result['price'],
-            'api_result' => $result,
+            'status' => $apiResponse->result['status'],
+            'quantity' => $apiResponse->result['quantity'],
+            'price' => $apiResponse->result['price'],
+            'api_result' => $apiResponse->result,
         ]);
 
         $this->changeToSynced();
     }
 
     // Places an order.
-    public function apiPlace(): array
+    public function apiPlace(): ApiResponse
     {
         $this->apiProperties = $this->apiMapper()->preparePlaceOrderProperties($this);
         $this->apiResponse = $this->apiAccount()->withApi()->placeOrder($this->apiProperties);
 
-        return $this->apiMapper()->resolvePlaceOrderResponse($this->apiResponse);
+        return new ApiResponse(
+            response: $this->apiResponse,
+            result: $this->apiMapper()->resolvePlaceOrderResponse($this->apiResponse)
+        );
     }
 }

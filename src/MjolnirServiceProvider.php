@@ -6,9 +6,11 @@ use Illuminate\Support\ServiceProvider;
 use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchCoreJobsQueueCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchPositionsCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\RefreshBaseDataCommand;
+use Nidavellir\Mjolnir\Commands\Debug\ClosePositionCommand;
 use Nidavellir\Mjolnir\Commands\Debug\GetAccountBalanceCommand;
 use Nidavellir\Mjolnir\Commands\Debug\PlaceOrderCommand;
 use Nidavellir\Mjolnir\Commands\Debug\QueryOrderCommand;
+use Nidavellir\Mjolnir\Commands\Debug\QueryPositionsCommand;
 use Nidavellir\Mjolnir\Commands\TestCommand;
 use Nidavellir\Mjolnir\Observers\OrderApiObserver;
 use Nidavellir\Thor\Models\Order;
@@ -35,9 +37,11 @@ class MjolnirServiceProvider extends ServiceProvider
                 DispatchPositionsCommand::class,
 
                 // Debug
+                ClosePositionCommand::class,
                 TestCommand::class,
                 GetAccountBalanceCommand::class,
                 QueryOrderCommand::class,
+                QueryPositionsCommand::class,
                 PlaceOrderCommand::class,
             ]);
         }
