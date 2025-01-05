@@ -2,14 +2,14 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
-use Nidavellir\Thor\Models\Order;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
+use Nidavellir\Mjolnir\Jobs\Apiable\Order\PlaceOrderJob;
 use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
-use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Jobs\Apiable\Order\PlaceOrderJob;
+use Nidavellir\Thor\Models\Order;
+use Nidavellir\Thor\Models\Position;
 
 class DispatchPositionOrdersJob extends BaseQueuableJob
 {
@@ -87,18 +87,18 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
 
     protected function dispatchOrders()
     {
-        $marketOrder = $this->position->orders->firstWhere('type', 'MARKET');
+        $this->position->orders->each(function ($order) {
+            info('[DispatchPositionOrdersJob] - Dispatching order ID '.$order->id.' ('.$order->type.')');
 
-        info('[DispatchPositionOrdersJob] - Dispatching order ID ' . $marketOrder->id);
-
-        // For now, just the market order.
-        CoreJobQueue::create([
-            'class' => PlaceOrderJob::class,
-            'queue' => 'orders',
-            'arguments' => [
-                'orderId' => $marketOrder->id,
-            ]
-        ]);
+            // Market order.
+            CoreJobQueue::create([
+                'class' => PlaceOrderJob::class,
+                'queue' => 'orders',
+                'arguments' => [
+                    'orderId' => $order->id,
+                ],
+            ]);
+        });
     }
 
     protected function getAveragePrice(float $percentage): float

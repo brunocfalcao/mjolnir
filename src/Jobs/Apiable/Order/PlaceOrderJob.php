@@ -38,7 +38,7 @@ class PlaceOrderJob extends BaseApiableJob
 
     public function authorize()
     {
-        // In case the order is not market, we need to verify if the market is created first.
+        // First the market order, then the others.
         return $this->order->type == 'MARKET' || $this->marketOrderSynced();
     }
 
@@ -48,10 +48,41 @@ class PlaceOrderJob extends BaseApiableJob
 
         $this->order->changeToSyncing();
 
+        /**
+         * Small exception for the profit order. If the quantity is null then
+         * we get the profit order quantity from the market order.
+         */
+        if ($this->order->type == 'PROFIT') {
+            if (! $this->order->quantity) {
+                $marketOrder = $this->order->position->orders->firstWhere('type', 'MARKET');
+
+                if (! $marketOrder) {
+                    throw new \Exception('Cannot place Profit order because the market order doesnt exist. Aborting');
+                }
+
+                $this->order->update([
+                    'quantity' => $marketOrder->quantity,
+                ]);
+            }
+
+            if (! $this->order->price) {
+                $marketOrder = $this->order->position->orders->firstWhere('type', 'MARKET');
+
+                if (! $marketOrder) {
+                    throw new \Exception('Cannot place Profit order because the market order doesnt exist. Aborting');
+                }
+            }
+
+            $this->order->update([
+                'price' => $this->getNewPriceFromPercentage($marketOrder->price, $this->position->profit_percentage),
+            ]);
+        }
+
         $result = $this->order->apiPlace();
 
         $this->order->update([
             'exchange_order_id' => $result['orderId'],
+            'started_at' => now(),
         ]);
 
         // Sync order.
@@ -71,6 +102,16 @@ class PlaceOrderJob extends BaseApiableJob
             ->where('type', 'MARKET')
             ->where('status', 'FILLED')
             ->exists();
+    }
+
+    private function getNewPriceFromPercentage(float $referencePrice, float $percentage): float
+    {
+        $change = $referencePrice * ($percentage / 100);
+        $newPrice = $this->position->direction == 'LONG'
+            ? $referencePrice + $change
+            : $referencePrice - $change;
+
+        return api_format_price($newPrice, $this->position->exchangeSymbol);
     }
 
     public function resolveException(\Throwable $e)

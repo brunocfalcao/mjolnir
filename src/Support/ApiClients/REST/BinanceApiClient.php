@@ -35,15 +35,15 @@ class BinanceApiClient extends BaseApiClient
 
     public function signRequest(ApiRequest $apiRequest)
     {
-        $apiRequest->properties->set(
-            'options.timestamp',
-            round(microtime(true) * 1000)
-        );
-
         // Set the recvwindow
         $apiRequest->properties->set(
             'options.recvWindow',
             ApiSystem::firstWhere('canonical', 'binance')->recvwindow_margin
+        );
+
+        $apiRequest->properties->set(
+            'options.timestamp',
+            round(microtime(true) * 1000)
         );
 
         $query = Url::buildQuery($apiRequest->properties->getOr('options', []));

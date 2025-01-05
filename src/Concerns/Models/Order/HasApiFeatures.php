@@ -26,7 +26,7 @@ trait HasApiFeatures
     public function apiQuery(): array
     {
         $this->apiProperties = $this->apiMapper()->prepareOrderQueryProperties($this);
-        $this->apiResponse = $this->apiAccount()->withApi()->placeOrder($this->apiProperties);
+        $this->apiResponse = $this->apiAccount()->withApi()->orderQuery($this->apiProperties);
 
         return $this->apiMapper()->resolveOrderQueryResponse($this->apiResponse);
     }
@@ -34,11 +34,11 @@ trait HasApiFeatures
     // Syncs an order. Gets data from the server and updates de order. Triggers the observer.
     public function apiSync(): void
     {
-        info('[apiSync] - Starting sync of Order ID ' . $this->id);
+        info('[apiSync] - Starting sync of Order ID '.$this->id);
 
         $result = $this->apiQuery();
 
-        info('[apiSync] - Order ID ' . $this->id . ', Result: ' . json_encode($result));
+        info('[apiSync] - Order ID '.$this->id.', Result: '.json_encode($result));
 
         $this->changeToSyncing();
 
@@ -46,20 +46,10 @@ trait HasApiFeatures
             'status' => $result['status'],
             'quantity' => $result['quantity'],
             'price' => $result['price'],
-            'api_result' => $result
+            'api_result' => $result,
         ]);
 
         $this->changeToSynced();
-
-        /*
-        return [
-            'order_id' => $result['orderId'],
-            'average_price' => $result['avgPrice'],
-            'price' => $result['price'],
-            'original_quantity' => $result['origQty'],
-            'executed_quantity' => $result['executedQty'],
-        ];
-        */
     }
 
     // Places an order.
