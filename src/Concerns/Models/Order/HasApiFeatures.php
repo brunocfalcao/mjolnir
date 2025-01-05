@@ -34,11 +34,22 @@ trait HasApiFeatures
     // Syncs an order. Gets data from the server and updates de order. Triggers the observer.
     public function apiSync(): void
     {
+        info('[apiSync] - Starting sync of Order ID ' . $this->id);
+
         $result = $this->apiQuery();
 
+        info('[apiSync] - Order ID ' . $this->id . ', Result: ' . json_encode($result));
+
+        $this->changeToSyncing();
+
         $this->update([
-            'exchange_order_id' => $result['order_id'],
+            'status' => $result['status'],
+            'quantity' => $result['quantity'],
+            'price' => $result['price'],
+            'api_result' => $result
         ]);
+
+        $this->changeToSynced();
 
         /*
         return [

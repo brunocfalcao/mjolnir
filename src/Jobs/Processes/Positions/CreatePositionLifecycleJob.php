@@ -82,7 +82,7 @@ class CreatePositionLifecycleJob extends BaseQueuableJob
         ]);
 
         CoreJobQueue::create([
-            'class' => CreatePositionOrdersJob::class,
+            'class' => DispatchPositionOrdersJob::class,
             'queue' => 'orders',
             'arguments' => [
                 'positionId' => $this->position->id,

@@ -47,13 +47,19 @@ class PlaceOrderJob extends BaseApiableJob
         info('[PlaceOrderJob] - Order ID: '.$this->order->id.', placing order on API...');
 
         $this->order->changeToSyncing();
+
         $result = $this->order->apiPlace();
+
         $this->order->update([
             'exchange_order_id' => $result['orderId'],
         ]);
+
+        // Sync order.
+        $this->order->apiSync();
+
         $this->order->changeToSynced();
 
-        info('[PlaceOrderJob] - Order ID: '.$this->order->id.', order placed with exchnage id '.$this->order->exchange_order_id);
+        info('[PlaceOrderJob] - Order ID: '.$this->order->id.', order placed and synced with exchange id '.$this->order->exchange_order_id);
 
         return $result;
     }

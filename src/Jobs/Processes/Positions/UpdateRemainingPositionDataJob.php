@@ -29,15 +29,23 @@ class UpdateRemainingPositionDataJob extends BaseQueuableJob
 
     public function compute()
     {
-        if (! $this->position->order_ratios) {
-            $tradeConfig = TradeConfiguration::default()->first();
+        $data = [];
 
-            $this->position->update([
-                'started_at' => now(),
-                'order_ratios' => $tradeConfig->order_ratios,
-                'profit_percentage' => $tradeConfig->profit_percentage,
-            ]);
+        if (! $this->position->order_ratios) {
+            $data['order_ratios'] = TradeConfiguration::default()->first()->order_ratios;
         }
+
+        if (! $this->position->profit_percentage) {
+            $data['profit_percentage'] = TradeConfiguration::default()->first()->profit_percentage;
+        }
+
+        if (! $this->position->direction) {
+            $data['direction'] = $this->position->exchangeSymbol->direction;
+        }
+
+        $data['started_at'] = now();
+
+        $this->position->update($data);
     }
 
     public function resolveException(\Throwable $e)

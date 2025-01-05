@@ -233,11 +233,6 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
 
         $data = [];
 
-        // Check if we can override the direction.
-        if (! $position->direction) {
-            $data['direction'] = $exchangeSymbol->direction;
-        }
-
         // Load remaining data.
         $data['exchange_symbol_id'] = $exchangeSymbol->id;
         $data['comments'] = $comments;

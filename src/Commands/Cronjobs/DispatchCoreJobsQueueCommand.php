@@ -5,7 +5,7 @@ namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 use Illuminate\Console\Command;
 use Nidavellir\Thor\Models\CoreJobQueue;
 
-class DispatchCommand extends Command
+class DispatchCoreJobsQueueCommand extends Command
 {
     protected $signature = 'mjolnir:core-job-queue-dispatch';
 

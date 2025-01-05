@@ -49,25 +49,6 @@ trait MapsOrderQuery
             'side' => $result['side'],
         ];
 
-        $this->validateOrderQuery($data);
-
         return $data;
-    }
-
-    public function validateOrderQuery(array $data)
-    {
-        $rules = [
-            'order_id' => 'required|integer',
-            'symbol' => 'required|array|size:2',
-            'symbol.0' => 'required|string',
-            'symbol.1' => 'required|string',
-            'status' => 'required|string|in:NEW,FILLED,PARTIALLY_FILLED,CANCELLED',
-            'price' => 'required|numeric|min:0',
-            'quantity' => 'required|numeric',
-            'type' => 'required|string|in:LIMIT,MARKET',
-            'side' => 'required|string|in:SELL,BUY',
-        ];
-
-        $this->validate($data, $rules);
     }
 }
