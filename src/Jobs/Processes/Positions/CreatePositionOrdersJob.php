@@ -4,14 +4,13 @@ namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
-use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Position;
 
-class DispatchMarketOrderJob extends BaseQueuableJob
+class CreatePositionOrdersJob extends BaseQueuableJob
 {
     public Account $account;
 
@@ -34,14 +33,12 @@ class DispatchMarketOrderJob extends BaseQueuableJob
 
     public function compute()
     {
-        /**
-         * Dispatching orders are the start of the lifecycle integration. The
-         * dispatch occurs using the observers of the order. We will create the
-         * orders and then the system will trigger the api requests for each
-         * of the order. We will not use the dispatch multiple positions at
-         * once.
-         */
-        $dataMapper = new ApiDataMapperProxy($this->position->account->apiSystem->canonical);
+        // Compute sides.
+        $isLong = $this->position->direction == 'LONG';
+        $side = [
+            'same' => $isLong ? 'BUY' : 'SELL',
+            'opposite' => $isLong ? 'SELL' : 'BUY',
+        ];
 
         // Obtain the current mark price.
         $this->markPrice = $this->position->exchangeSymbol->apiQueryMarkPrice($this->account);
@@ -53,12 +50,19 @@ class DispatchMarketOrderJob extends BaseQueuableJob
         // Calculate the total trade quantity given the notional and mark price.
         $this->quantity = $this->getTotalTradeQuantity();
 
-        // Compute sides.
-        $isLong = $this->position->direction == 'LONG';
-        $side = [
-            'same' => $isLong ? 'BUY' : 'SELL',
-            'opposite' => $isLong ? 'SELL' : 'BUY',
-        ];
+        /**
+         * Create orders.
+         * Limit orders, then market order, then profit order.
+         */
+        foreach ($this->position->order_ratios as $ratio) {
+            Order::create([
+                'position_id' => $this->position->id,
+                'type' => 'LIMIT',
+                'side' => $side['same'],
+                'price' => $this->getAveragePrice($ratio[0]),
+                'quantity' => api_format_quantity($this->quantity / $ratio[1], $this->position->exchangeSymbol),
+            ]);
+        }
 
         $totalLimitOrders = count($this->position->order_ratios);
 
@@ -69,6 +73,23 @@ class DispatchMarketOrderJob extends BaseQueuableJob
             'side' => $side['same'],
             'quantity' => api_format_quantity($this->quantity / get_market_order_amount_divider($totalLimitOrders), $this->position->exchangeSymbol),
         ]);
+
+        // Create the profit order.
+        Order::create([
+            'position_id' => $this->position->id,
+            'type' => 'PROFIT',
+            'side' => $side['opposite'],
+        ]);
+    }
+
+    protected function getAveragePrice(float $percentage): float
+    {
+        $change = $this->markPrice * ($percentage / 100);
+        $newPrice = $this->position->direction == 'LONG'
+            ? $this->markPrice + $change
+            : $this->markPrice - $change;
+
+        return api_format_price($newPrice, $this->position->exchangeSymbol);
     }
 
     protected function getTotalTradeQuantity(): float
@@ -83,7 +104,5 @@ class DispatchMarketOrderJob extends BaseQueuableJob
             'is_syncing' => false,
             'error_message' => $e->getMessage(),
         ]);
-
-        $this->position->orders->each->update(['status' => 'failed', 'error_message' => 'Position error: '.$e->getMessage()]);
     }
 }

@@ -57,10 +57,6 @@ trait HasApiFeatures
         $this->apiProperties = $this->apiMapper()->preparePlaceOrderProperties($this);
         $this->apiResponse = $this->apiAccount()->withApi()->placeOrder($this->apiProperties);
 
-        $result = $this->apiMapper()->resolvePlaceOrderResponse($this->apiResponse);
-
-        info($result);
-
-        //$this->updateOrderData($result);
+        return $this->apiMapper()->resolvePlaceOrderResponse($this->apiResponse);
     }
 }

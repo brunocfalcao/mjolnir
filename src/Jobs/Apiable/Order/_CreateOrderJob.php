@@ -11,7 +11,7 @@ use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Position;
 
-class CreateOrderJob extends BaseApiableJob
+class _CreateOrderJob extends BaseApiableJob
 {
     public Account $account;
 
@@ -57,7 +57,7 @@ class CreateOrderJob extends BaseApiableJob
 
         switch ($this->order->type) {
             case 'MARKET':
-                info('[CreateOrderJob] - Order ID: ' . $this->order->id . ' -> Creating Market order on Exchange');
+                info('[CreateOrderJob] - Order ID: '.$this->order->id.' -> Creating Market order on Exchange');
 
                 /**
                  * is_syncing = true
@@ -76,7 +76,6 @@ class CreateOrderJob extends BaseApiableJob
                  * We can assume the mark price is exactly at this moment the same
                  * as the one from the market order.
                  */
-
                 $this->markPrice = $this->position->orders->firstWhere('type', 'MARKET')->price;
 
                 // Create remaining orders: Limit.
@@ -86,7 +85,7 @@ class CreateOrderJob extends BaseApiableJob
                         'type' => 'LIMIT',
                         'side' => $side['same'],
                         'price' => $this->getAlignedPriceFromPercentage($this->markPrice, $ratio[0]),
-                        'quantity' => api_format_quantity($this->quantity / $ratio[1], $this->position->exchangeSymbol)
+                        'quantity' => api_format_quantity($this->quantity / $ratio[1], $this->position->exchangeSymbol),
                     ]);
                 }
 

@@ -75,7 +75,7 @@ class _DispatchPositionOrdersJob extends BaseQueuableJob
                 'type' => 'LIMIT',
                 'side' => $side['same'],
                 'price' => $this->getAveragePrice($ratio[0]),
-                'quantity' => api_format_quantity($this->quantity / $ratio[1], $this->position->exchangeSymbol)
+                'quantity' => api_format_quantity($this->quantity / $ratio[1], $this->position->exchangeSymbol),
             ]);
         }
 
