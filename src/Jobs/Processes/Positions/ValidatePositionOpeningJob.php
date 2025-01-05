@@ -26,7 +26,6 @@ class ValidatePositionOpeningJob extends BaseQueuableJob
 
     public function compute()
     {
-
         /**
          * Make some last checks:
          * - All orders synced, and with exchange order id's?
@@ -35,6 +34,11 @@ class ValidatePositionOpeningJob extends BaseQueuableJob
         if ($this->position->orders->whereNull('exchange_order_id')->isNotEmpty()) {
             throw new \Exception('Position has orders that were not synced correctly.');
         }
+
+        // Update opening price.
+        $this->position->update([
+            'opening_price' => $this->position->orders->firstWhere('type', 'MARKET')->price
+        ]);
 
         $this->position->changeToActive();
         $this->position->changeToSynced();

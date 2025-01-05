@@ -9,7 +9,7 @@ use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\Position;
 
-class ClosePositionJob extends BaseApiableJob
+class ForceClosePositionJob extends BaseApiableJob
 {
     public Account $account;
 
@@ -31,7 +31,7 @@ class ClosePositionJob extends BaseApiableJob
         $apiResponse = $this->position->apiClose();
 
         $this->position->update([
-            'status' => 'closed-error',
+            'status' => 'forced-closed',
             'error_message' => 'Position forcefully closed due to a possible order error. Please check the logs',
         ]);
 

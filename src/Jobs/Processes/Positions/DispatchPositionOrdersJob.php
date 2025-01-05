@@ -3,14 +3,15 @@
 namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
 
 use Illuminate\Support\Str;
-use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
-use Nidavellir\Mjolnir\Jobs\Apiable\Order\PlaceOrderJob;
+use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Thor\Models\Order;
-use Nidavellir\Thor\Models\Position;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Jobs\Apiable\Order\PlaceOrderJob;
+use Nidavellir\Mjolnir\Jobs\Processes\Positions\ValidatePositionOpeningJob;
 
 class DispatchPositionOrdersJob extends BaseQueuableJob
 {
@@ -104,17 +105,15 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
             ]);
         });
 
-        /*
         CoreJobQueue::create([
             'class' => ValidatePositionOpeningJob::class,
             'queue' => 'positions',
             'arguments' => [
-                'positionId' => $order->id,
+                'positionId' => $this->position->id,
             ],
             'index' => 2,
             'block_uuid' => $blockUuid
         ]);
-        */
     }
 
     protected function getAveragePrice(float $percentage): float
