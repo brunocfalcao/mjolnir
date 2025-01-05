@@ -2,13 +2,16 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Apiable\Order;
 
+use Nidavellir\Thor\Models\Order;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\Order;
-use Nidavellir\Thor\Models\Position;
+use Nidavellir\Mjolnir\Jobs\Apiable\Position\ClosePositionJob;
+use Nidavellir\Mjolnir\Jobs\Apiable\Position\CancelOpenOrdersFromPositionJob;
 
 class PlaceOrderJob extends BaseApiableJob
 {
@@ -44,6 +47,10 @@ class PlaceOrderJob extends BaseApiableJob
 
     public function computeApiable()
     {
+        if ($this->order->id == 2) {
+            throw new \Exception('Error no order. Test.');
+        }
+
         info('[PlaceOrderJob] - Order ID: '.$this->order->id.', placing order on API...');
 
         $this->order->changeToSyncing();
@@ -111,17 +118,22 @@ class PlaceOrderJob extends BaseApiableJob
 
     public function resolveException(\Throwable $e)
     {
-        // Cancels all open orders (except the market order itself).
-        // $this->order->position->apiCancelAllOrders();
+        info('[PlaceOrderJob] - EXCEPTION or Order ID ' . $this->order->id);
 
-        // Opens an opposite market order with same quantity to close position.
-        // $this->order->position->apiCancelMarketOrder();
+        CoreJobQueue::create([
+            'class' => CancelOpenOrdersFromPositionJob::class,
+            'queue' => 'orders',
+            'arguments' => [
+                'positionId' => $this->order->position->id,
+            ],
+        ]);
 
-        // Stop the order.
-        $this->order->update([
-            'status' => 'FAILED',
-            'is_syncing' => false,
-            'error_message' => $e->getMessage(),
+        CoreJobQueue::create([
+            'class' => ClosePositionJob::class,
+            'queue' => 'positions',
+            'arguments' => [
+                'positionId' => $this->order->position->id,
+            ],
         ]);
     }
 }

@@ -30,6 +30,13 @@ class ClosePositionJob extends BaseApiableJob
     {
         $apiResponse = $this->position->apiClose();
 
+        $this->position->update([
+            'status' => 'closed-error',
+            'error_message' => 'Position forcefully closed due to a possible order error. Please check the logs'
+        ]);
+
+        $this->position->changeToSynced();
+
         return $apiResponse->response;
     }
 }
