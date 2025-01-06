@@ -4,6 +4,8 @@ namespace Nidavellir\Mjolnir\Observers;
 
 use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Jobs\Apiable\Order\ModifyOrderJob;
+use Nidavellir\Mjolnir\Jobs\Apiable\Order\PlaceOrderJob;
+use Nidavellir\Mjolnir\Jobs\Processes\ClosePosition\ClosePositionLifecycleJob;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Order;
 
@@ -39,6 +41,7 @@ class OrderApiObserver
         // Get profit order.
         $profitOrder = $order->position->orders->firstWhere('type', 'PROFIT');
 
+        // Price or quantity changed? Resettle order quantity and price.
         if ($priceChanged || $quantityChanged) {
             CoreJobQueue::create([
                 'class' => ModifyOrderJob::class,
@@ -47,6 +50,28 @@ class OrderApiObserver
                     'orderId' => $order->id,
                     'quantity' => $order->getOriginal('quantity'),
                     'price' => $order->getOriginal('price'),
+                ],
+            ]);
+        }
+
+        // Profit order status filled? -- Close position.
+        if ($order->type == 'PROFIT' && $order->status == 'FILLED') {
+            CoreJobQueue::create([
+                'class' => ClosePositionLifecycleJob::class,
+                'queue' => 'positions',
+                'arguments' => [
+                    'positionId' => $order->position->id,
+                ],
+            ]);
+        }
+
+        // Order cancelled by mistake? Re-place the order.
+        if ($order->status == 'CANCELLED' && $order->getOriginal('status') != 'CANCELLED') {
+            CoreJobQueue::create([
+                'class' => PlaceOrderJob::class,
+                'queue' => 'orders',
+                'arguments' => [
+                    'orderId' => $order->id,
                 ],
             ]);
         }
