@@ -3,11 +3,12 @@
 namespace Nidavellir\Mjolnir\Observers;
 
 use Illuminate\Support\Str;
-use Nidavellir\Mjolnir\Jobs\Apiable\Order\ModifyOrderJob;
-use Nidavellir\Mjolnir\Jobs\Apiable\Order\PlaceOrderJob;
-use Nidavellir\Mjolnir\Jobs\Processes\ClosePosition\ClosePositionLifecycleJob;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Order;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Mjolnir\Jobs\Apiable\Order\PlaceOrderJob;
+use Nidavellir\Mjolnir\Jobs\Apiable\Order\ModifyOrderJob;
+use Nidavellir\Mjolnir\Jobs\Apiable\Order\CalculateWAPAndAdjustProfitOrderJob;
+use Nidavellir\Mjolnir\Jobs\Processes\ClosePosition\ClosePositionLifecycleJob;
 
 class OrderApiObserver
 {
@@ -72,6 +73,18 @@ class OrderApiObserver
                 'queue' => 'orders',
                 'arguments' => [
                     'orderId' => $order->id,
+                ],
+            ]);
+        }
+
+        // Limit order filled?
+        if ($order->status == 'FILLED' && $order->getOriginal('status') != 'FILLED' && $order->type == 'LIMIT') {
+            // WAP calculation.
+            CoreJobQueue::create([
+                'class' => CalculateWAPAndAdjustProfitOrderJob::class,
+                'queue' => 'orders',
+                'arguments' => [
+                    'orderId' => $profitOrder->id,
                 ],
             ]);
         }
