@@ -3,12 +3,12 @@
 namespace Nidavellir\Mjolnir\Observers;
 
 use Illuminate\Support\Str;
-use Nidavellir\Thor\Models\Order;
-use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Mjolnir\Jobs\Apiable\Order\PlaceOrderJob;
-use Nidavellir\Mjolnir\Jobs\Apiable\Order\ModifyOrderJob;
 use Nidavellir\Mjolnir\Jobs\Apiable\Order\CalculateWAPAndAdjustProfitOrderJob;
+use Nidavellir\Mjolnir\Jobs\Apiable\Order\ModifyOrderJob;
+use Nidavellir\Mjolnir\Jobs\Apiable\Order\PlaceOrderJob;
 use Nidavellir\Mjolnir\Jobs\Processes\ClosePosition\ClosePositionLifecycleJob;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\Order;
 
 class OrderApiObserver
 {
@@ -42,17 +42,41 @@ class OrderApiObserver
         // Get profit order.
         $profitOrder = $order->position->orders->firstWhere('type', 'PROFIT');
 
-        // Price or quantity changed? Resettle order quantity and price.
+        // Non-Profit order price or quantity changed? Resettle order quantity and price.
         if ($priceChanged || $quantityChanged) {
-            CoreJobQueue::create([
-                'class' => ModifyOrderJob::class,
-                'queue' => 'orders',
-                'arguments' => [
-                    'orderId' => $order->id,
-                    'quantity' => $order->getOriginal('quantity'),
-                    'price' => $order->getOriginal('price'),
-                ],
-            ]);
+            if ($order->type != 'PROFIT') {
+                // Put back the market/limit order back where it was.
+                CoreJobQueue::create([
+                    'class' => ModifyOrderJob::class,
+                    'queue' => 'orders',
+                    'arguments' => [
+                        'orderId' => $order->id,
+                        'quantity' => $order->getOriginal('quantity'),
+                        'price' => $order->getOriginal('price'),
+                    ],
+                ]);
+            }
+
+            // For a profit order we need to verify if it was due to a WAP.
+            if ($order->type == 'PROFIT') {
+                if (! $order->position->wap_triggered) {
+                    // The PROFIT order was manually changed, not due to a WAP.
+                    CoreJobQueue::create([
+                        'class' => ModifyOrderJob::class,
+                        'queue' => 'orders',
+                        'arguments' => [
+                            'orderId' => $order->id,
+                            'quantity' => $order->getOriginal('quantity'),
+                            'price' => $order->getOriginal('price'),
+                        ],
+                    ]);
+                } else {
+                    // Reset WAP trigger. Do not modify the PROFIT order.
+                    $order->position->update([
+                        'wap_triggered' => false,
+                    ]);
+                }
+            }
         }
 
         // Profit order status filled? -- Close position.
@@ -80,6 +104,7 @@ class OrderApiObserver
         // Limit order filled?
         if ($order->status == 'FILLED' && $order->getOriginal('status') != 'FILLED' && $order->type == 'LIMIT') {
             // WAP calculation.
+            info('WAP calculation triggered');
             CoreJobQueue::create([
                 'class' => CalculateWAPAndAdjustProfitOrderJob::class,
                 'queue' => 'orders',

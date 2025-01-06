@@ -13,7 +13,7 @@ class TestCommand extends Command
 
     public function handle()
     {
-        dd(Position::find(1)->parsedTradingPair);
+        dd(Position::find(1)->calculateWAP());
 
         return 0;
     }

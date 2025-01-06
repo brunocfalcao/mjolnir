@@ -29,7 +29,7 @@ class CreateNewPositionsJob extends BaseQueuableJob
     {
         info('[CreateNewPositionsJob] - Creating '.$this->numPositions.' position(s) to '.$this->account->user->name);
 
-        $testExchangeSymbol = ExchangeSymbol::find(11);
+        $testExchangeSymbol = ExchangeSymbol::find(5);
 
         $data = array_merge($this->extraData, [
             'account_id' => $this->account->id,

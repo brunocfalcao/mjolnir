@@ -15,6 +15,8 @@ trait HasApiFeatures
 
     public function apiAccount()
     {
+        $this->load('position.account');
+
         return $this->position->account;
     }
 

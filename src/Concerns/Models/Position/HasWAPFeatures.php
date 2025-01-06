@@ -9,7 +9,7 @@ trait HasWAPFeatures
         // Fetch all FILLED LIMIT orders for this position
         $orders = $this->orders()
             ->where('status', 'FILLED')
-            ->where('type', 'LIMIT')
+            ->whereIn('type', ['MARKET', 'LIMIT'])
             ->get();
 
         // Ensure there are orders to calculate WAP

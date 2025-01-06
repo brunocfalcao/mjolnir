@@ -14,7 +14,9 @@ use Nidavellir\Mjolnir\Commands\Debug\QueryOrderCommand;
 use Nidavellir\Mjolnir\Commands\Debug\QueryPositionsCommand;
 use Nidavellir\Mjolnir\Commands\TestCommand;
 use Nidavellir\Mjolnir\Observers\OrderApiObserver;
+use Nidavellir\Mjolnir\Observers\PositionApiObserver;
 use Nidavellir\Thor\Models\Order;
+use Nidavellir\Thor\Models\Position;
 
 class MjolnirServiceProvider extends ServiceProvider
 {
@@ -27,6 +29,7 @@ class MjolnirServiceProvider extends ServiceProvider
     protected function registerApiObservers()
     {
         Order::observe(OrderApiObserver::class);
+        Position::observe(PositionApiObserver::class);
     }
 
     protected function registerCommands()

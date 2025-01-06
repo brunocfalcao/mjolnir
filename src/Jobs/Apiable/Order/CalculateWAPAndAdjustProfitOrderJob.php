@@ -32,16 +32,15 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        /**
-         * Returns a WAP calculation array:
-         * ['price' => , 'quantity' => ]
-         */
         $wap = $this->position->calculateWAP();
 
         if ($wap['quantity'] != null && $wap['price'] != null) {
-            return $this->position->orders->firstWhere('type', 'PROFIT')->apiModify($wap['quantity'], $wap['price']);
+            $apiResponse = $this->position->orders->firstWhere('type', 'PROFIT')->apiModify($wap['quantity'], $wap['price']);
+
+            // Inform the order observer not to put the PROFIT order back on its original values.
+            $this->position->update(['wap_triggered' => true]);
         } else {
-            throw new \Exception('A WAP calculation was requested but there were no limit orders to process');
+            throw new \Exception('A WAP calculation was requested but there was an error. Position ID: '.$this->position->id);
         }
     }
 }
