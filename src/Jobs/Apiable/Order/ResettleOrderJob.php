@@ -10,7 +10,7 @@ use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Position;
 
-class SyncOrderJob extends BaseApiableJob
+class ResettleOrderJob extends BaseApiableJob
 {
     public Account $account;
 
@@ -32,7 +32,7 @@ class SyncOrderJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        $apiResponse = $this->order->apiSync();
+        $apiResponse = $this->order->apiModify();
 
         return $apiResponse->response;
     }

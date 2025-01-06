@@ -1,6 +1,6 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Jobs\Processes\Hourly;
+namespace Nidavellir\Mjolnir\Jobs\Processes\BaseDataRefresh;
 
 use GuzzleHttp\Psr7\Response;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;

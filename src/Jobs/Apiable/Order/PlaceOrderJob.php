@@ -2,17 +2,16 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Apiable\Order;
 
-use Nidavellir\Thor\Models\Order;
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
-use Nidavellir\Mjolnir\Jobs\Apiable\Position\ClosePositionJob;
-use Nidavellir\Mjolnir\Jobs\Apiable\Position\ForceClosePositionJob;
 use Nidavellir\Mjolnir\Jobs\Apiable\Position\CancelOpenOrdersFromPositionJob;
+use Nidavellir\Mjolnir\Jobs\Apiable\Position\ClosePositionJob;
+use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\Order;
+use Nidavellir\Thor\Models\Position;
 
 class PlaceOrderJob extends BaseApiableJob
 {
@@ -57,9 +56,9 @@ class PlaceOrderJob extends BaseApiableJob
          * we get the profit order quantity from the market order.
          */
         if ($this->order->type == 'PROFIT') {
-            if (! $this->order->quantity) {
-                $marketOrder = $this->order->position->orders->firstWhere('type', 'MARKET');
+            $marketOrder = $this->order->position->orders->firstWhere('type', 'MARKET');
 
+            if (! $this->order->quantity) {
                 if (! $marketOrder) {
                     throw new \Exception('Cannot place Profit order because the market order doesnt exist. Aborting');
                 }
@@ -70,8 +69,6 @@ class PlaceOrderJob extends BaseApiableJob
             }
 
             if (! $this->order->price) {
-                $marketOrder = $this->order->position->orders->firstWhere('type', 'MARKET');
-
                 if (! $marketOrder) {
                     throw new \Exception('Cannot place Profit order because the market order doesnt exist. Aborting');
                 }
@@ -124,7 +121,7 @@ class PlaceOrderJob extends BaseApiableJob
         ]);
 
         CoreJobQueue::create([
-            'class' => ForceClosePositionJob::class,
+            'class' => ClosePositionJob::class,
             'queue' => 'positions',
             'arguments' => [
                 'positionId' => $this->order->position->id,

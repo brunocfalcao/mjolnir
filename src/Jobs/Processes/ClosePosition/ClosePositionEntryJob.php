@@ -1,21 +1,26 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
+namespace Nidavellir\Mjolnir\Jobs\Processes\ClosePosition;
 
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\Position;
 
-class UpdateTokenLeverageRatioJob extends BaseApiableJob
+class ClosePositionEntryJob extends BaseApiableJob
 {
     public Account $account;
 
     public ApiSystem $apiSystem;
 
     public Position $position;
+
+    public ExchangeSymbol $exchangeSymbol;
+
+    public float $balance;
 
     public function __construct(int $positionId)
     {
@@ -24,11 +29,12 @@ class UpdateTokenLeverageRatioJob extends BaseApiableJob
         $this->apiSystem = $this->account->apiSystem;
         $this->rateLimiter = RateLimitProxy::make($this->apiSystem->canonical)->withAccount($this->account);
         $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
+        $this->exchangeSymbol = $this->position->exchangeSymbol;
     }
 
     public function computeApiable()
     {
-        return $this->position->exchangeSymbol->symbol->apiUpdateLeverageRatio($this->account, $this->position->leverage);
+        $positions = $this->account->apiQueryPositions();
     }
 
     public function resolveException(\Throwable $e)

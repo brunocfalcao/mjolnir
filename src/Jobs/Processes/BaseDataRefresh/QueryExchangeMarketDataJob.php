@@ -1,6 +1,6 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Jobs\Processes\Hourly;
+namespace Nidavellir\Mjolnir\Jobs\Processes\BaseDataRefresh;
 
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
@@ -8,7 +8,7 @@ use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 
-class QueryExchangeLeverageBracketsJob extends BaseApiableJob
+class QueryExchangeMarketDataJob extends BaseApiableJob
 {
     public int $apiSystemId;
 
@@ -27,7 +27,7 @@ class QueryExchangeLeverageBracketsJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        $apiResponse = $this->apiSystem->apiQueryLeverageBracketsData();
+        $apiResponse = $this->apiSystem->apiQueryMarketData();
         $this->coreJobQueue->update(['response' => $apiResponse->result]);
 
         return $apiResponse->response;

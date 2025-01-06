@@ -1,6 +1,6 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
+namespace Nidavellir\Mjolnir\Jobs\Processes\CreatePosition;
 
 use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;

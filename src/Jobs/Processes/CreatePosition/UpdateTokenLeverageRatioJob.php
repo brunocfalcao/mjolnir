@@ -1,6 +1,6 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
+namespace Nidavellir\Mjolnir\Jobs\Processes\CreatePosition;
 
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
@@ -9,7 +9,7 @@ use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\Position;
 
-class UpdatePositionMarginTypeToCrossedJob extends BaseApiableJob
+class UpdateTokenLeverageRatioJob extends BaseApiableJob
 {
     public Account $account;
 
@@ -28,7 +28,7 @@ class UpdatePositionMarginTypeToCrossedJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        return $this->position->exchangeSymbol->symbol->apiUpdateMarginTypeToCrossed($this->account);
+        return $this->position->exchangeSymbol->symbol->apiUpdateLeverageRatio($this->account, $this->position->leverage);
     }
 
     public function resolveException(\Throwable $e)

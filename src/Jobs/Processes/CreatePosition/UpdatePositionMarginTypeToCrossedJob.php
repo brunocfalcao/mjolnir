@@ -1,6 +1,6 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Jobs\Apiable\Position;
+namespace Nidavellir\Mjolnir\Jobs\Processes\CreatePosition;
 
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
@@ -9,7 +9,7 @@ use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\Position;
 
-class ForceClosePositionJob extends BaseApiableJob
+class UpdatePositionMarginTypeToCrossedJob extends BaseApiableJob
 {
     public Account $account;
 
@@ -28,15 +28,15 @@ class ForceClosePositionJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        $apiResponse = $this->position->apiClose();
+        return $this->position->exchangeSymbol->symbol->apiUpdateMarginTypeToCrossed($this->account);
+    }
 
+    public function resolveException(\Throwable $e)
+    {
         $this->position->update([
-            'status' => 'forced-closed',
-            'error_message' => 'Position forcefully closed due to a possible order error. Please check the logs',
+            'status' => 'failed',
+            'is_syncing' => false,
+            'error_message' => $e->getMessage(),
         ]);
-
-        $this->position->changeToSynced();
-
-        return $apiResponse->response;
     }
 }

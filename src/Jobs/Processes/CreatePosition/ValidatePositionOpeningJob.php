@@ -1,6 +1,6 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
+namespace Nidavellir\Mjolnir\Jobs\Processes\CreatePosition;
 
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
@@ -37,7 +37,7 @@ class ValidatePositionOpeningJob extends BaseQueuableJob
 
         // Update opening price.
         $this->position->update([
-            'opening_price' => $this->position->orders->firstWhere('type', 'MARKET')->price
+            'opening_price' => $this->position->orders->firstWhere('type', 'MARKET')->price,
         ]);
 
         $this->position->changeToActive();

@@ -6,7 +6,7 @@ use Nidavellir\Thor\Models\TradingPair;
 
 function adjust_price_with_tick_size(float $price, float $pricePrecision, float $tickSize): float
 {
-    return round(floor($price / $tickSize) * $tickSize, $pricePrecision);
+    return remove_trailing_zeros(round(floor($price / $tickSize) * $tickSize, $pricePrecision));
 }
 
 function get_base_token_for_exchange(string $token, string $exchangeCanonical)
@@ -33,12 +33,12 @@ function get_market_order_amount_divider($totalLimitOrders)
 
 function api_format_quantity($quantity, ExchangeSymbol $exchangeSymbol)
 {
-    return round($quantity, $exchangeSymbol->quantity_precision);
+    return remove_trailing_zeros(round($quantity, $exchangeSymbol->quantity_precision));
 }
 
 function api_format_price($price, ExchangeSymbol $exchangeSymbol)
 {
-    return round(floor($price / $exchangeSymbol->tick_size) * $exchangeSymbol->tick_size, $exchangeSymbol->price_precision);
+    return remove_trailing_zeros(round(floor($price / $exchangeSymbol->tick_size) * $exchangeSymbol->tick_size, $exchangeSymbol->price_precision));
 }
 
 function notional(Position $position)

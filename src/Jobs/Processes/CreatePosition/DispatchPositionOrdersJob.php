@@ -1,17 +1,16 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Jobs\Processes\Positions;
+namespace Nidavellir\Mjolnir\Jobs\Processes\CreatePosition;
 
 use Illuminate\Support\Str;
-use Nidavellir\Thor\Models\Order;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
+use Nidavellir\Mjolnir\Jobs\Apiable\Order\PlaceOrderJob;
 use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
-use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Jobs\Apiable\Order\PlaceOrderJob;
-use Nidavellir\Mjolnir\Jobs\Processes\Positions\ValidatePositionOpeningJob;
+use Nidavellir\Thor\Models\Order;
+use Nidavellir\Thor\Models\Position;
 
 class DispatchPositionOrdersJob extends BaseQueuableJob
 {
@@ -112,7 +111,7 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
                 'positionId' => $this->position->id,
             ],
             'index' => 2,
-            'block_uuid' => $blockUuid
+            'block_uuid' => $blockUuid,
         ]);
     }
 

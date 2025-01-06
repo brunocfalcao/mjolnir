@@ -2,18 +2,18 @@
 
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
-use Illuminate\Console\Command;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-use Nidavellir\Mjolnir\Jobs\Processes\Positions\CreateNewPositionsJob;
-use Nidavellir\Mjolnir\Jobs\Processes\Positions\VerifyBalanceConditionsJob;
+use Illuminate\Support\Carbon;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use Nidavellir\Thor\Models\Symbol;
 use Nidavellir\Thor\Models\Account;
+use Illuminate\Support\Facades\File;
+use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\ExchangeSymbol;
-use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\Symbol;
+use Nidavellir\Mjolnir\Jobs\Processes\CreatePosition\CreateNewPositionsJob;
+use Nidavellir\Mjolnir\Jobs\Processes\CreatePosition\VerifyBalanceConditionsJob;
 
 class DispatchPositionsCommand extends Command
 {
