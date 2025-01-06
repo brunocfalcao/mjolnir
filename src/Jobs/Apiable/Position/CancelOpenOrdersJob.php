@@ -1,6 +1,6 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Jobs\Processes\CreatePosition;
+namespace Nidavellir\Mjolnir\Jobs\Apiable\Position;
 
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
@@ -9,7 +9,7 @@ use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\Position;
 
-class CancelOpenOrdersFromPositionJob extends BaseApiableJob
+class CancelOpenOrdersJob extends BaseApiableJob
 {
     public Account $account;
 
@@ -28,8 +28,6 @@ class CancelOpenOrdersFromPositionJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        $apiResponse = $this->position->apiCancelOrders();
-
-        return $apiResponse->response;
+        return $this->position->apiCancelOrders()->response;
     }
 }

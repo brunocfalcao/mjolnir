@@ -6,6 +6,7 @@ use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\Position;
 
 class CreateNewPositionsJob extends BaseQueuableJob
@@ -28,9 +29,14 @@ class CreateNewPositionsJob extends BaseQueuableJob
     {
         info('[CreateNewPositionsJob] - Creating '.$this->numPositions.' position(s) to '.$this->account->user->name);
 
+        $testExchangeSymbol = ExchangeSymbol::find(11);
+
         $data = array_merge($this->extraData, [
             'account_id' => $this->account->id,
-            'exchange_symbol_id' => 8,
+
+            // Testing reasons.
+            'exchange_symbol_id' => $testExchangeSymbol->id,
+            'direction' => $testExchangeSymbol->direction,
         ]);
 
         // Start syncing position.

@@ -23,6 +23,25 @@ trait HasApiFeatures
         return new ApiDataMapperProxy($this->apiAccount()->apiSystem->canonical);
     }
 
+    public function apiModify(?float $quantity = null, ?float $price = null)
+    {
+        if (! $quantity) {
+            $quantity = $this->quantity;
+        }
+
+        if (! $price) {
+            $price = $this->price;
+        }
+
+        $this->apiProperties = $this->apiMapper()->prepareOrderModifyProperties($this, $quantity, $price);
+        $this->apiResponse = $this->apiAccount()->withApi()->modifyOrder($this->apiProperties);
+
+        return new ApiResponse(
+            response: $this->apiResponse,
+            result: $this->apiMapper()->resolveOrderModifyResponse($this->apiResponse)
+        );
+    }
+
     // Queries an order.
     public function apiQuery(): ApiResponse
     {

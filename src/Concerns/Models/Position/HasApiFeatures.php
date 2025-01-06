@@ -44,21 +44,17 @@ trait HasApiFeatures
     // Closes the position (opens a contrary order compared to the position).
     public function apiClose()
     {
+        $this->changeToSyncing();
+
         // Get all positions for this position account.
         $apiResponse = $this->account->apiQueryPositions();
 
         // Get sanitized positions, key = pair.
         $positions = $apiResponse->result;
 
-        // Construct compatible trading pair for Exchange.
-        $symbol = get_base_token_for_exchange($this->exchangeSymbol->symbol->token, $this->account->apiSystem->canonical);
-        $parsedSymbol = $this->apiMapper()->baseWithQuote($this->exchangeSymbol->symbol->token, $this->account->quote->canonical);
-
-        if (array_key_exists($parsedSymbol, $positions)) {
-            $this->changeToSyncing();
-
+        if (array_key_exists($this->parsedTradingPair, $positions)) {
             // We have a position. Lets place a contrary order to close it.
-            $positionFromExchange = $positions[$parsedSymbol];
+            $positionFromExchange = $positions[$this->parsedTradingPair];
 
             $data = [
                 'type' => 'MARKET-CANCEL',
@@ -77,14 +73,12 @@ trait HasApiFeatures
             $order = Order::create($data);
             $apiResponse = $order->apiPlace();
             $order->apiSync();
-
-            $this->update(['closed_at' => now()]);
-
-            $this->changeToSynced();
-
-            return $apiResponse;
         }
 
-        return new ApiResponse(new Response, []);
+        $this->update(['closed_at' => now()]);
+        $this->changeToClosed();
+        $this->changeToSynced();
+
+        return $apiResponse->response;
     }
 }

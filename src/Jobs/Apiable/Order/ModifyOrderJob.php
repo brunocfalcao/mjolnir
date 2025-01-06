@@ -1,16 +1,16 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Jobs\Processes\ClosePosition;
+namespace Nidavellir\Mjolnir\Jobs\Apiable\Order;
 
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\ExchangeSymbol;
+use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Position;
 
-class ClosePositionEntryJob extends BaseApiableJob
+class ModifyOrderJob extends BaseApiableJob
 {
     public Account $account;
 
@@ -18,31 +18,29 @@ class ClosePositionEntryJob extends BaseApiableJob
 
     public Position $position;
 
-    public ExchangeSymbol $exchangeSymbol;
+    public Order $order;
 
-    public float $balance;
+    public float $price;
 
-    public function __construct(int $positionId)
+    public float $quantity;
+
+    public function __construct(int $orderId, ?float $quantity = null, ?float $price = null)
     {
-        $this->position = Position::findOrFail($positionId);
+        $this->order = Order::with(['position.account.apiSystem'])->findOrFail($orderId);
+
+        $this->price = $price;
+        $this->quantity = $quantity;
+
+        $this->position = $this->order->position;
         $this->account = $this->position->account;
         $this->apiSystem = $this->account->apiSystem;
         $this->rateLimiter = RateLimitProxy::make($this->apiSystem->canonical)->withAccount($this->account);
         $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
-        $this->exchangeSymbol = $this->position->exchangeSymbol;
     }
 
     public function computeApiable()
     {
-        $positions = $this->account->apiQueryPositions();
-    }
-
-    public function resolveException(\Throwable $e)
-    {
-        $this->position->update([
-            'status' => 'failed',
-            'is_syncing' => false,
-            'error_message' => $e->getMessage(),
-        ]);
+        // Resettle order, with the same price and quantity.
+        return $this->order->apiModify($this->quantity, $this->price)->response;
     }
 }

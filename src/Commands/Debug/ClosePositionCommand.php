@@ -3,7 +3,8 @@
 namespace Nidavellir\Mjolnir\Commands\Debug;
 
 use Illuminate\Console\Command;
-use Nidavellir\Thor\Models\Position;
+use Nidavellir\Mjolnir\Jobs\Processes\ClosePosition\ClosePositionLifecycleJob;
+use Nidavellir\Thor\Models\CoreJobQueue;
 
 class ClosePositionCommand extends Command
 {
@@ -13,12 +14,15 @@ class ClosePositionCommand extends Command
 
     public function handle()
     {
-        $position = Position::findOrFail($this->argument('position_id'));
+        $positionId = $this->argument('position_id');
 
-        $apiResponseCancelOrders = $position->apiCancelOrders();
-        $apiResponseClose = $position->apiClose();
-
-        dd($apiResponseCancelOrders->result, $apiResponseClose->result);
+        CoreJobQueue::create([
+            'class' => ClosePositionLifecycleJob::class,
+            'queue' => 'positions',
+            'arguments' => [
+                'positionId' => $positionId,
+            ],
+        ]);
 
         return 0;
     }

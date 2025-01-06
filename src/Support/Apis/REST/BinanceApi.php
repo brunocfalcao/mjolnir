@@ -233,11 +233,9 @@ class BinanceApi
     public function modifyOrder(ApiProperties $properties)
     {
         $this->validate($properties, [
-            'options.symbol' => 'required|string',
-            'options.orderId' => 'required|string',
-            'options.side' => 'required|string',
-            'options.quantity' => 'required|string',
-            'options.price' => 'required|string',
+            'options.symbol' => 'required',
+            'options.quantity' => 'required',
+            'options.price' => 'required',
         ]);
 
         $apiRequest = ApiRequest::make(

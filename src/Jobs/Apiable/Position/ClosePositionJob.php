@@ -1,6 +1,6 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Jobs\Processes\CreatePosition;
+namespace Nidavellir\Mjolnir\Jobs\Apiable\Position;
 
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
@@ -28,19 +28,6 @@ class ClosePositionJob extends BaseApiableJob
 
     public function computeApiable()
     {
-
-        $this->position->apiCancelOrders();
-
-        // Do we still have this position open?
         $this->position->apiClose();
-
-        $this->position->update([
-            'status' => 'closed',
-            'error_message' => 'Position forcefully closed due to a possible order error. Please check the logs',
-        ]);
-
-        $this->position->changeToSynced();
-
-        return $apiResponse->response;
     }
 }

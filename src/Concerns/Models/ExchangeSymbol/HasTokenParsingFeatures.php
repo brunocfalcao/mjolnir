@@ -1,6 +1,6 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Concerns\Models\Position;
+namespace Nidavellir\Mjolnir\Concerns\Models\ExchangeSymbol;
 
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
 

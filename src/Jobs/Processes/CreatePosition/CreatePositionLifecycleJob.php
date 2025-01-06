@@ -27,6 +27,10 @@ class CreatePositionLifecycleJob extends BaseQueuableJob
         $blockUuid = (string) Str::uuid();
         $index = 1;
 
+        if (! $this->position->direction || ! $this->position->exchangeSymbol) {
+            throw new \Exception('Position without a direction or without an exchange symbol');
+        }
+
         if (! $this->position->margin) {
             CoreJobQueue::create([
                 'class' => SelectPositionMarginJob::class,
