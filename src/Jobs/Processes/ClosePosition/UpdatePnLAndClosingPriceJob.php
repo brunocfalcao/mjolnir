@@ -2,17 +2,14 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\ClosePosition;
 
+use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
-use Nidavellir\Mjolnir\Jobs\Apiable\Position\CancelOpenOrdersJob;
-use Nidavellir\Mjolnir\Jobs\Apiable\Position\ClosePositionJob;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Position;
 
-class ClosePositionLifecycleJob extends BaseQueuableJob
+class UpdatePnLAndClosingPriceJob extends BaseApiableJob
 {
     public Account $account;
 
@@ -29,32 +26,21 @@ class ClosePositionLifecycleJob extends BaseQueuableJob
         $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
     }
 
-    public function compute()
+    public function computeApiable()
     {
-        CoreJobQueue::create([
-            'class' => CancelOpenOrdersJob::class,
-            'queue' => 'positions',
-            'arguments' => [
-                'positionId' => $this->position->id,
-            ],
+        /**
+         * Get the PnL and update the position.
+         */
+        $apiResponse = $this->position->apiQueryTrade();
+        $pnl = $apiResponse->result[0]['realizedPnl'];
+        $closingPrice = $apiResponse->result[0]['price'];
+
+        $this->position->update([
+            'realized_pnl' => $pnl,
+            'closing_price' => $closingPrice,
         ]);
 
-        CoreJobQueue::create([
-            'class' => ClosePositionJob::class,
-            'queue' => 'positions',
-            'arguments' => [
-                'positionId' => $this->position->id,
-            ],
-        ]);
-
-        CoreJobQueue::create([
-            'class' => UpdatePnLAndClosingPriceJob::class,
-            'queue' => 'positions',
-            'arguments' => [
-                'positionId' => $this->position->id,
-            ],
-            'dispatch_after' => now()->addSeconds(30),
-        ]);
+        return $apiResponse->response;
     }
 
     public function resolveException(\Throwable $e)

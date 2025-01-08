@@ -27,9 +27,7 @@ trait HasApiFeatures
     // Cancels all open orders (but not the position if it's open).
     public function apiCancelOrders(): ApiResponse
     {
-        // Construct compatible trading pair for Exchange.
-        $symbol = get_base_token_for_exchange($this->exchangeSymbol->symbol->token, $this->account->apiSystem->canonical);
-        $parsedSymbol = $this->apiMapper($this->account->apiSystem->canonical)->baseWithQuote($this->exchangeSymbol->symbol->token, $this->account->quote->canonical);
+        $parsedSymbol = $this->parsedTradingPair;
 
         $this->apiProperties = $this->apiMapper()->prepareCancelOrdersProperties($parsedSymbol);
 
@@ -38,6 +36,22 @@ trait HasApiFeatures
         return new ApiResponse(
             response: $this->apiResponse,
             result: $this->apiMapper()->resolveCancelOrdersResponse($this->apiResponse)
+        );
+    }
+
+    // Queries the trade data for this position.
+    public function apiQueryTrade()
+    {
+        $parsedSymbol = $this->parsedTradingPair;
+        $orderId = $this->orders->firstWhere('type', 'PROFIT')->exchange_order_id;
+
+        $this->apiProperties = $this->apiMapper()->prepareQueryTradeProperties($parsedSymbol, $orderId);
+
+        $this->apiResponse = $this->apiAccount()->withApi()->trade($this->apiProperties);
+
+        return new ApiResponse(
+            response: $this->apiResponse,
+            result: $this->apiMapper()->resolveQueryTradeResponse($this->apiResponse)
         );
     }
 

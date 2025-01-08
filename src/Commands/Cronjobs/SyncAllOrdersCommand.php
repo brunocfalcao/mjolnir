@@ -32,7 +32,10 @@ class SyncAllOrdersCommand extends Command
 
     private function syncOrdersForPosition(Position $position)
     {
-        foreach ($position->orders->whereNotNull('exchange_order_id') as $order) {
+        foreach ($position
+            ->orders
+            ->whereNotNull('exchange_order_id')
+            ->where('status', '<>', 'FILLED') as $order) {
             CoreJobQueue::create([
                 'class' => SyncOrderJob::class,
                 'queue' => 'cronjobs',

@@ -248,11 +248,11 @@ class BinanceApi
     }
 
     // https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Account-Trade-List
-    public function trades(ApiProperties $properties)
+    public function trade(ApiProperties $properties)
     {
         $this->validate($properties, [
             'options.symbol' => 'required|string',
-            'options.orderId' => 'required|string',
+            'options.orderId' => 'required|string', // Profit order.
         ]);
 
         $apiRequest = ApiRequest::make(

@@ -79,8 +79,8 @@ class OrderApiObserver
             }
         }
 
-        // Profit order status filled? -- Close position.
-        if ($order->type == 'PROFIT' && $order->status == 'FILLED') {
+        // Profit order status filled or expired? -- Close position. All done.
+        if ($order->type == 'PROFIT' && ($order->status == 'FILLED' || $order->status == 'EXPIRED')) {
             CoreJobQueue::create([
                 'class' => ClosePositionLifecycleJob::class,
                 'queue' => 'positions',

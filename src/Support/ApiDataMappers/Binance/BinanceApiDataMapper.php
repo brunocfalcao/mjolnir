@@ -12,6 +12,7 @@ use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsOrderModif
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsOrderQuery;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsPlaceOrder;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsPositionsQuery;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsQueryTrade;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsSymbolLeverageRatios;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsSymbolMarginType;
 
@@ -26,6 +27,7 @@ class BinanceApiDataMapper extends BaseDataMapper
     use MapsOrderQuery;
     use MapsPlaceOrder;
     use MapsPositionsQuery;
+    use MapsQueryTrade;
     use MapsSymbolLeverageRatios;
     use MapsSymbolMarginType;
 

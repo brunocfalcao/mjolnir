@@ -12,6 +12,7 @@ use Nidavellir\Mjolnir\Commands\Debug\GetAccountBalanceCommand;
 use Nidavellir\Mjolnir\Commands\Debug\PlaceOrderCommand;
 use Nidavellir\Mjolnir\Commands\Debug\QueryOrderCommand;
 use Nidavellir\Mjolnir\Commands\Debug\QueryPositionsCommand;
+use Nidavellir\Mjolnir\Commands\Debug\QueryTradeCommand;
 use Nidavellir\Mjolnir\Commands\TestCommand;
 use Nidavellir\Mjolnir\Observers\OrderApiObserver;
 use Nidavellir\Mjolnir\Observers\PositionApiObserver;
@@ -43,6 +44,7 @@ class MjolnirServiceProvider extends ServiceProvider
                 SyncAllOrdersCommand::class,
 
                 // Debug.
+                QueryTradeCommand::class,
                 ClosePositionCommand::class,
                 TestCommand::class,
                 GetAccountBalanceCommand::class,
