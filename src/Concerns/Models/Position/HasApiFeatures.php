@@ -67,26 +67,31 @@ trait HasApiFeatures
         $positions = $apiResponse->result;
 
         if (array_key_exists($this->parsedTradingPair, $positions)) {
+            info('Position to close found (test): ', $positions[$this->parsedTradingPair]);
+
             // We have a position. Lets place a contrary order to close it.
             $positionFromExchange = $positions[$this->parsedTradingPair];
 
-            $data = [
-                'type' => 'MARKET-CANCEL',
-            ];
+            // Place contrary order if amount > 0.
+            if ($positionFromExchange['positionAmt'] != 0) {
+                $data = [
+                    'type' => 'MARKET-CANCEL',
+                ];
 
-            // Side is the contrary of the current position side (we check the amount).
-            if ($positionFromExchange['positionAmt'] < 0) {
-                $data['side'] = $this->apiMapper()->sideType('BUY');
-            } else {
-                $data['side'] = $this->apiMapper()->sideType('SELL');
+                // Side is the contrary of the current position side (we check the amount).
+                if ($positionFromExchange['positionAmt'] < 0) {
+                    $data['side'] = $this->apiMapper()->sideType('BUY');
+                } else {
+                    $data['side'] = $this->apiMapper()->sideType('SELL');
+                }
+
+                $data['quantity'] = abs($positionFromExchange['positionAmt']);
+                $data['position_id'] = $this->id;
+
+                $order = Order::create($data);
+                $apiResponse = $order->apiPlace();
+                $order->apiSync();
             }
-
-            $data['quantity'] = abs($positionFromExchange['positionAmt']);
-            $data['position_id'] = $this->id;
-
-            $order = Order::create($data);
-            $apiResponse = $order->apiPlace();
-            $order->apiSync();
         }
 
         $this->update(['closed_at' => now()]);

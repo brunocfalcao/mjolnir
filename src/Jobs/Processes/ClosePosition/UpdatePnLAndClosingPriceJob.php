@@ -28,17 +28,18 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        /**
-         * Get the PnL and update the position.
-         */
         $apiResponse = $this->position->apiQueryTrade();
-        $pnl = $apiResponse->result[0]['realizedPnl'];
-        $closingPrice = $apiResponse->result[0]['price'];
 
-        $this->position->update([
-            'realized_pnl' => $pnl,
-            'closing_price' => $closingPrice,
-        ]);
+        if (isset($apiResponse->result[0])) {
+            // Fetch PnL and closing price.
+            $pnl = $apiResponse->result[0]['realizedPnl'];
+            $closingPrice = $apiResponse->result[0]['price'];
+
+            $this->position->update([
+                'realized_pnl' => $pnl,
+                'closing_price' => $closingPrice,
+            ]);
+        }
 
         return $apiResponse->response;
     }

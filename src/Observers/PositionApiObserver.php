@@ -12,4 +12,11 @@ class PositionApiObserver
         // Assign a UUID before creating the order
         $position->uuid = (string) Str::uuid();
     }
+
+    public function updated(Position $position)
+    {
+        if ($position->wasChanged('realized_pnl')) {
+            // Send a notification.
+        }
+    }
 }

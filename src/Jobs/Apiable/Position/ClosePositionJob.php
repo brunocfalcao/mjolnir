@@ -29,5 +29,17 @@ class ClosePositionJob extends BaseApiableJob
     public function computeApiable()
     {
         $this->position->apiClose();
+
+        // Verify if the profit order was expired.
+        $this->position->load('orders');
+
+        $profitOrder = $this->position->orders->firstWhere('type', 'PROFIT');
+
+        if ($profitOrder->status == 'EXPIRED') {
+            $this->position->update([
+                'error_message' => 'Profit order was expired, no PnL calculated. Maybe it was a manual close?',
+                'closing_price' => $profitOrder->price,
+            ]);
+        }
     }
 }

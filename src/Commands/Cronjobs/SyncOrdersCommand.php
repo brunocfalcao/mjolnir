@@ -9,9 +9,9 @@ use Nidavellir\Mjolnir\Jobs\Apiable\Order\SyncOrderJob;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Position;
 
-class SyncAllOrdersCommand extends Command
+class SyncOrdersCommand extends Command
 {
-    protected $signature = 'mjolnir:sync-all-orders';
+    protected $signature = 'mjolnir:sync-orders';
 
     protected $description = 'Syncs all orders, and accordingly to the changes, triggers WAP, Close positions, etc';
 
@@ -36,6 +36,8 @@ class SyncAllOrdersCommand extends Command
             ->orders
             ->whereNotNull('exchange_order_id')
             ->where('status', '<>', 'FILLED') as $order) {
+            info('[SyncOrdersCommand] - Order ID '.$order->id.', syncing (can observe)');
+
             CoreJobQueue::create([
                 'class' => SyncOrderJob::class,
                 'queue' => 'cronjobs',

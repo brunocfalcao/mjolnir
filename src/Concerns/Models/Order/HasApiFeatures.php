@@ -61,16 +61,12 @@ trait HasApiFeatures
     {
         $apiResponse = $this->apiQuery();
 
-        $this->changeToSyncing();
-
         $this->update([
             'status' => $apiResponse->result['status'],
             'quantity' => $apiResponse->result['quantity'],
             'price' => $apiResponse->result['price'],
             'api_result' => $apiResponse->result,
         ]);
-
-        $this->changeToSynced();
 
         return $apiResponse;
     }

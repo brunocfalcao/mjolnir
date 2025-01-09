@@ -20,6 +20,13 @@ class OrderApiObserver
 
     public function updated(Order $order): void
     {
+        $order->load('position.orders');
+
+        // We just api observe for active orders.
+        if ($order->position->status != 'active') {
+            return;
+        }
+
         /**
          * Get all status variables.
          */
@@ -45,6 +52,7 @@ class OrderApiObserver
         // Non-Profit order price or quantity changed? Resettle order quantity and price.
         if ($priceChanged || $quantityChanged) {
             if ($order->type != 'PROFIT') {
+                info('[OrderApiObserver] - Order ID: '.$order->id.' - Order had a price and/or quantity changed. Resettling order');
                 // Put back the market/limit order back where it was.
                 CoreJobQueue::create([
                     'class' => ModifyOrderJob::class,
@@ -60,6 +68,7 @@ class OrderApiObserver
             // For a profit order we need to verify if it was due to a WAP.
             if ($order->type == 'PROFIT') {
                 if (! $order->position->wap_triggered) {
+                    info('[OrderApiObserver] - Order ID: '.$order->id.' - Profit order changed and it was not due to WAP. Resettling order');
                     // The PROFIT order was manually changed, not due to a WAP.
                     CoreJobQueue::create([
                         'class' => ModifyOrderJob::class,
@@ -72,6 +81,7 @@ class OrderApiObserver
                     ]);
                 } else {
                     // Reset WAP trigger. Do not modify the PROFIT order.
+                    info('[OrderApiObserver] - Order ID: '.$order->id.' - Setting wap_triggered back to false');
                     $order->position->update([
                         'wap_triggered' => false,
                     ]);
@@ -81,6 +91,7 @@ class OrderApiObserver
 
         // Profit order status filled or expired? -- Close position. All done.
         if ($order->type == 'PROFIT' && ($order->status == 'FILLED' || $order->status == 'EXPIRED')) {
+            info('[OrderApiObserver] - Order ID: '.$order->id.' - Profit order is filled or expired. We can close the position');
             CoreJobQueue::create([
                 'class' => ClosePositionLifecycleJob::class,
                 'queue' => 'positions',
@@ -92,6 +103,7 @@ class OrderApiObserver
 
         // Order cancelled by mistake? Re-place the order.
         if ($order->status == 'CANCELLED' && $order->getOriginal('status') != 'CANCELLED') {
+            info('[OrderApiObserver] - Order ID: '.$order->id.' - Order canceled by mistake. Recreating order');
             CoreJobQueue::create([
                 'class' => PlaceOrderJob::class,
                 'queue' => 'orders',
@@ -104,7 +116,7 @@ class OrderApiObserver
         // Limit order filled?
         if ($order->status == 'FILLED' && $order->getOriginal('status') != 'FILLED' && $order->type == 'LIMIT') {
             // WAP calculation.
-            info('WAP calculation triggered');
+            info('[OrderApiObserver] - Order ID: '.$order->id.' - Limit order filled, recalculating WAP and readjusting Profit order');
             CoreJobQueue::create([
                 'class' => CalculateWAPAndAdjustProfitOrderJob::class,
                 'queue' => 'orders',

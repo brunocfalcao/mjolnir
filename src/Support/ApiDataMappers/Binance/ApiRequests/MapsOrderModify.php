@@ -21,7 +21,7 @@ trait MapsOrderModify
         return $properties;
     }
 
-    public function resolveModifyOrderData(Response $response): array
+    public function resolveOrderModifyResponse(Response $response): array
     {
         $result = json_decode($response->getBody(), true);
 

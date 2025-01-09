@@ -18,24 +18,31 @@ use Nidavellir\Thor\Models\TradingPair;
 
 class RefreshBaseDataCommand extends Command
 {
-    protected $signature = 'mjolnir:refresh-base-data';
+    protected $signature = 'mjolnir:refresh-base-data {--clean : Truncate base data tables before running}';
 
-    protected $description = 'Executes the hourly refresh cronjobs (symbols, exchange symbols, delisting, etc)';
+    protected $description = 'Executes the hourly refresh cronjobs (symbols, exchange symbols, delisting, etc).';
 
     public function handle()
     {
+        // Always truncate the log file
         File::put(storage_path('logs/laravel.log'), '');
-        // DB::table('core_job_queue')->truncate();
-        // DB::table('api_requests_log')->truncate();
-        // DB::table('symbols')->truncate();
-        // DB::table('exchange_symbols')->truncate();
-        // DB::table('rate_limits')->truncate();
+
+        // Optional truncation of base data tables if --clean is provided
+        if ($this->option('clean')) {
+            DB::table('core_job_queue')->truncate();
+            DB::table('api_requests_log')->truncate();
+            DB::table('symbols')->truncate();
+            DB::table('exchange_symbols')->truncate();
+            DB::table('rate_limits')->truncate();
+            DB::table('positions')->truncate();
+            DB::table('orders')->truncate();
+        }
 
         $blockUuid = (string) Str::uuid();
 
-        // Upsert Symbols.
+        // Upsert Symbols
         foreach (TradingPair::all() as $tradingPair) {
-            // Verify if the symbol is already on the database.
+            // Verify if the symbol is already in the database
             if (! Symbol::where('cmc_id', $tradingPair->cmc_id)->exists()) {
                 CoreJobQueue::create([
                     'class' => UpsertSymbolsJob::class,
@@ -56,7 +63,7 @@ class RefreshBaseDataCommand extends Command
             'block_uuid' => $blockUuid,
         ]);
 
-        // Exchange Information.
+        // Exchange Information
         foreach (ApiSystem::allExchanges() as $exchange) {
             CoreJobQueue::create([
                 'class' => QueryExchangeMarketDataJob::class,
@@ -70,7 +77,7 @@ class RefreshBaseDataCommand extends Command
             ]);
         }
 
-        // Leverage Brackets.
+        // Leverage Brackets
         foreach (ApiSystem::allExchanges() as $exchange) {
             CoreJobQueue::create([
                 'class' => QueryExchangeLeverageBracketsJob::class,
@@ -84,7 +91,7 @@ class RefreshBaseDataCommand extends Command
             ]);
         }
 
-        // Exchange Symbols.
+        // Exchange Symbols
         foreach (ApiSystem::allExchanges() as $exchange) {
             CoreJobQueue::create([
                 'class' => UpsertExchangeSymbolsJob::class,

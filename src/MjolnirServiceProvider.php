@@ -6,7 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchCoreJobsQueueCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchPositionsCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\RefreshBaseDataCommand;
-use Nidavellir\Mjolnir\Commands\Cronjobs\SyncAllOrdersCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\SyncOrdersCommand;
 use Nidavellir\Mjolnir\Commands\Debug\ClosePositionCommand;
 use Nidavellir\Mjolnir\Commands\Debug\GetAccountBalanceCommand;
 use Nidavellir\Mjolnir\Commands\Debug\PlaceOrderCommand;
@@ -41,7 +41,7 @@ class MjolnirServiceProvider extends ServiceProvider
                 DispatchCoreJobsQueueCommand::class,
                 RefreshBaseDataCommand::class,
                 DispatchPositionsCommand::class,
-                SyncAllOrdersCommand::class,
+                SyncOrdersCommand::class,
 
                 // Debug.
                 QueryTradeCommand::class,
