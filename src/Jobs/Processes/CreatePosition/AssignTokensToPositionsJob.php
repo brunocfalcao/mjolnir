@@ -319,7 +319,6 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
             ->update([
                 'status' => 'failed',
                 'error_message' => $e->getMessage(),
-                'is_syncing' => false,
             ]);
     }
 }

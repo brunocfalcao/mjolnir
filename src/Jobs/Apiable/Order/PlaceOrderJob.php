@@ -94,7 +94,6 @@ class PlaceOrderJob extends BaseApiableJob
     public function marketOrderSynced()
     {
         return $this->order->position->orders()
-            ->where('is_syncing', false)
             ->where('type', 'MARKET')
             ->where('status', 'FILLED')
             ->exists();

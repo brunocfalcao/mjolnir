@@ -41,9 +41,6 @@ class CreateNewPositionsJob extends BaseQueuableJob
             'direction' => $testExchangeSymbol->direction,
         ]);
 
-        // Start syncing position.
-        $data['is_syncing'] = true;
-
         for ($i = 0; $i < $this->numPositions; $i++) {
             $position = Position::create($data);
         }

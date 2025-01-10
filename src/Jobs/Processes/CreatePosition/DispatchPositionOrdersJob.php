@@ -134,7 +134,6 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
     {
         $this->position->update([
             'status' => 'failed',
-            'is_syncing' => false,
             'error_message' => $e->getMessage(),
         ]);
     }
