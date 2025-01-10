@@ -41,7 +41,6 @@ class ValidatePositionOpeningJob extends BaseQueuableJob
         ]);
 
         $this->position->changeToActive();
-        $this->position->changeToSynced();
     }
 
     public function resolveException(\Throwable $e)

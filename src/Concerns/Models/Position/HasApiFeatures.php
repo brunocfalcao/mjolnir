@@ -58,8 +58,6 @@ trait HasApiFeatures
     // Closes the position (opens a contrary order compared to the position).
     public function apiClose()
     {
-        $this->changeToSyncing();
-
         // Get all positions for this position account.
         $apiResponse = $this->account->apiQueryPositions();
 
@@ -96,7 +94,6 @@ trait HasApiFeatures
 
         $this->update(['closed_at' => now()]);
         $this->changeToClosed();
-        $this->changeToSynced();
 
         return $apiResponse->response;
     }

@@ -49,8 +49,6 @@ class PlaceOrderJob extends BaseApiableJob
     {
         info('[PlaceOrderJob] - Order ID: '.$this->order->id.', placing order on API...');
 
-        $this->order->changeToSyncing();
-
         /**
          * Small exception for the profit order. If the quantity is null then
          * we get the profit order quantity from the market order.
@@ -83,8 +81,6 @@ class PlaceOrderJob extends BaseApiableJob
 
         // Sync order.
         $this->order->apiSync();
-
-        $this->order->changeToSynced();
 
         info('[PlaceOrderJob] - Order ID: '.$this->order->id.', order placed and synced with exchange id '.$this->order->exchange_order_id);
 
