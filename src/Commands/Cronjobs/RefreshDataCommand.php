@@ -16,9 +16,9 @@ use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Symbol;
 use Nidavellir\Thor\Models\TradingPair;
 
-class RefreshBaseDataCommand extends Command
+class RefreshDataCommand extends Command
 {
-    protected $signature = 'mjolnir:refresh-base-data {--clean : Truncate base data tables before running}';
+    protected $signature = 'mjolnir:refresh-data {--clean : Truncate base data tables before running}';
 
     protected $description = 'Executes the hourly refresh cronjobs (symbols, exchange symbols, delisting, etc).';
 
