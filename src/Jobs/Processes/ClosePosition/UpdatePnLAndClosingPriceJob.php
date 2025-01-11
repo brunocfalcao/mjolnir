@@ -2,12 +2,13 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\ClosePosition;
 
+use Nidavellir\Thor\Models\User;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\Position;
 
 class UpdatePnLAndClosingPriceJob extends BaseApiableJob
 {
@@ -39,6 +40,14 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
                 'realized_pnl' => $pnl,
                 'closing_price' => $closingPrice,
             ]);
+
+            User::admin()->get()->each(function ($user) {
+                $user->pushover(
+                    message: "{$this->position->parsedTradingPair} closed (PnL: {$pnl})",
+                    title: 'Position closed',
+                    applicationKey: 'nidavellir_positions'
+                );
+            });
         }
 
         return $apiResponse->response;
