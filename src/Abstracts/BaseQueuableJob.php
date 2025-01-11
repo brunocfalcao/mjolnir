@@ -5,6 +5,7 @@ namespace Nidavellir\Mjolnir\Abstracts;
 use GuzzleHttp\Psr7\Response;
 use Nidavellir\Mjolnir\Exceptions\NonOverridableException;
 use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\User;
 use Psr\Http\Message\ResponseInterface;
 
 abstract class BaseQueuableJob extends BaseJob
@@ -130,6 +131,14 @@ abstract class BaseQueuableJob extends BaseJob
                 // Update to failed, and it's done.
                 $this->coreJobQueue->updateToFailed($e);
                 $this->coreJobQueue->finalizeDuration();
+
+                User::admin()->get()->each(function ($user) use ($e) {
+                    $user->pushover(
+                        message: "[{$this->coreJobQueue->id}] - ".$e->getMessage(),
+                        title: 'Core Job Queue Error',
+                        applicationKey: 'nidavellir_errors'
+                    );
+                });
             }
         }
     }

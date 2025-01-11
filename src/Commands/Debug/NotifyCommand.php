@@ -4,7 +4,6 @@ namespace Nidavellir\Mjolnir\Commands\Debug;
 
 use Illuminate\Console\Command;
 use Nidavellir\Thor\Models\User;
-use Nidavellir\Thor\Notifications\PushoverNotification;
 
 class NotifyCommand extends Command
 {

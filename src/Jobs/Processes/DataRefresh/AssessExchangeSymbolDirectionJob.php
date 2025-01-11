@@ -1,6 +1,6 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Jobs\Processes\BaseDataRefresh;
+namespace Nidavellir\Mjolnir\Jobs\Processes\DataRefresh;
 
 use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
