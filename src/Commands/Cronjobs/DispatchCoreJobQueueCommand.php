@@ -5,16 +5,15 @@ namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 use Illuminate\Console\Command;
 use Nidavellir\Thor\Models\CoreJobQueue;
 
-class DispatchCoreJobsQueueCommand extends Command
+class DispatchCoreJobQueueCommand extends Command
 {
-    protected $signature = 'mjolnir:core-job-queue-dispatch';
+    protected $signature = 'mjolnir:dispatch-core-job-queue';
 
     protected $description = 'Dispatch all pending API jobs';
 
     public function handle()
     {
         CoreJobQueue::dispatch();
-        $this->info(now());
 
         return 0;
     }

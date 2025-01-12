@@ -3,7 +3,7 @@
 namespace Nidavellir\Mjolnir;
 
 use Illuminate\Support\ServiceProvider;
-use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchCoreJobsQueueCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchCoreJobQueueCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchPositionsCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\RefreshDataCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\SyncOrdersCommand;
@@ -39,7 +39,7 @@ class MjolnirServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 // Cronjobs.
-                DispatchCoreJobsQueueCommand::class,
+                DispatchCoreJobQueueCommand::class,
                 RefreshDataCommand::class,
                 DispatchPositionsCommand::class,
                 SyncOrdersCommand::class,
