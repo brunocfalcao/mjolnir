@@ -109,7 +109,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
             CoreJobQueue::create([
                 'class' => QueryExchangeSymbolIndicatorJob::class,
-                'queue' => 'cronjobs',
+                'queue' => 'indicators',
 
                 'arguments' => [
                     'exchangeSymbolId' => $this->exchangeSymbol->id,
@@ -121,7 +121,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
             CoreJobQueue::create([
                 'class' => AssessExchangeSymbolDirectionJob::class,
-                'queue' => 'cronjobs',
+                'queue' => 'indicators',
 
                 'arguments' => [
                     'exchangeSymbolId' => $this->exchangeSymbol->id,

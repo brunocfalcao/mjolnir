@@ -82,7 +82,7 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
 
                 CoreJobQueue::create([
                     'class' => QueryExchangeSymbolIndicatorJob::class,
-                    'queue' => 'cronjobs',
+                    'queue' => 'indicators',
 
                     'arguments' => [
                         'exchangeSymbolId' => $exchangeSymbol->id,
@@ -94,7 +94,7 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
 
                 CoreJobQueue::create([
                     'class' => AssessExchangeSymbolDirectionJob::class,
-                    'queue' => 'cronjobs',
+                    'queue' => 'indicators',
 
                     'arguments' => [
                         'exchangeSymbolId' => $exchangeSymbol->id,
