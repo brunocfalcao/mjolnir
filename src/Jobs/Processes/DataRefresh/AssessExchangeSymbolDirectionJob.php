@@ -17,6 +17,8 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
     public string $timeFrame;
 
+    public int $retries = 20;
+
     public function __construct(int $exchangeSymbolId)
     {
         $this->exchangeSymbol = ExchangeSymbol::findOrFail($exchangeSymbolId);

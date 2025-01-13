@@ -25,6 +25,8 @@ class QueryExchangeSymbolIndicatorJob extends BaseApiableJob
 
     public ?string $timeframe;
 
+    public int $retries = 20;
+
     public function __construct(int $exchangeSymbolId, ?string $timeframe = null)
     {
         $this->timeframe = $timeframe;
