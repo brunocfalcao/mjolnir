@@ -28,6 +28,9 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
     public function computeApiable()
     {
+        // Just to avoid hitting a lot the rate limit threshold.
+        sleep(rand(0.75, 1.25));
+
         $previousJobQueue = $this->coreJobQueue->getPrevious()->first();
 
         // Convert array to have the indicator id as the key.
