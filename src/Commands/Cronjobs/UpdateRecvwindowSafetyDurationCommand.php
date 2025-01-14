@@ -17,8 +17,9 @@ class UpdateRecvwindowSafetyDurationCommand extends Command
         // Fetch the Binance admin account
         $account = Account::admin('binance');
 
-        if (!$account) {
-            $this->error("Binance admin account not found.");
+        if (! $account) {
+            $this->error('Binance admin account not found.');
+
             return 1;
         }
 

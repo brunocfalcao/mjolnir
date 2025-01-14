@@ -3,7 +3,6 @@
 namespace Nidavellir\Mjolnir\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 
@@ -18,8 +17,9 @@ class TestCommand extends Command
         // Fetch the Binance admin account
         $account = Account::admin('binance');
 
-        if (!$account) {
-            $this->error("Binance admin account not found.");
+        if (! $account) {
+            $this->error('Binance admin account not found.');
+
             return 1;
         }
 
@@ -48,7 +48,7 @@ class TestCommand extends Command
             'updated_at' => now(),
         ]);
 
-        $this->info("RecvWindow Margin updated successfully for Binance.");
+        $this->info('RecvWindow Margin updated successfully for Binance.');
 
         return 0;
     }
