@@ -1,17 +1,16 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Commands;
+namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 
-class TestCommand extends Command
+class UpdateRecvwindowSafetyDurationCommand extends Command
 {
-    protected $signature = 'debug:test';
+    protected $signature = 'mjolnir:update-recvwindow-safety-duration';
 
-    protected $description = 'Resolves the Binance recvWindow issue by syncing server time with a 25% safety margin';
+    protected $description = 'Updates the API system recvwindow duration (for now only works for Binance)';
 
     public function handle()
     {
@@ -33,22 +32,14 @@ class TestCommand extends Command
         // Calculate the time difference in milliseconds
         $timeDifferenceMs = abs($systemTime - $serverTime);
 
-        // Add 25% safety margin to the time difference
-        $recvWindowMargin = $timeDifferenceMs + ($timeDifferenceMs * 0.25); // 25% safety margin
-
-        // Log the calculated values
-        $this->info("Binance Server Time: {$serverTime} ms");
-        $this->info("System Time: {$systemTime} ms");
-        $this->info("Time Difference: {$timeDifferenceMs} ms");
-        $this->info("RecvWindow Margin (with 25% safety): {$recvWindowMargin} ms");
+        // Add 50% safety margin to the time difference
+        $recvWindowMargin = $timeDifferenceMs + ($timeDifferenceMs * 0.50); // 50% safety margin
 
         // Update the `recvwindow_margin` in the `api_systems` table
         ApiSystem::where('canonical', 'binance')->update([
             'recvwindow_margin' => $recvWindowMargin,
             'updated_at' => now(),
         ]);
-
-        $this->info("RecvWindow Margin updated successfully for Binance.");
 
         return 0;
     }
