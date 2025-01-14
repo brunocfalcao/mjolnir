@@ -35,7 +35,7 @@ class SelectPositionLeverageJob extends BaseQueuableJob
         }
 
         // Extract the max margin ratio from the account (interpreted as max leverage)
-        $maxLeverage = $this->account->max_margin_ratio;
+        $maxLeverage = $this->account->max_leverage;
 
         // Fetch the position's margin
         $margin = $this->position->margin;

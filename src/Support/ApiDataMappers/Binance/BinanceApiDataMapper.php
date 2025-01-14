@@ -4,6 +4,7 @@ namespace Nidavellir\Mjolnir\Support\ApiDataMappers\Binance;
 
 use Nidavellir\Mjolnir\Abstracts\BaseDataMapper;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsAccountBalanceQuery;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsAccountQuery;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsCancelOrders;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsExchangeInformationQuery;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsLeverageBracketsQuery;
@@ -19,6 +20,7 @@ use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsSymbolMarg
 class BinanceApiDataMapper extends BaseDataMapper
 {
     use MapsAccountBalanceQuery;
+    use MapsAccountQuery;
     use MapsCancelOrders;
     use MapsExchangeInformationQuery;
     use MapsLeverageBracketsQuery;

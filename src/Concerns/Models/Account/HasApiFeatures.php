@@ -23,6 +23,19 @@ trait HasApiFeatures
         return new ApiDataMapperProxy($this->apiSystem->canonical);
     }
 
+    // Queries the trade data for this position.
+    public function apiQuery()
+    {
+        $this->apiProperties = $this->apiMapper()->prepareQueryAccountProperties();
+
+        $this->apiResponse = $this->withApi()->account($this->apiProperties);
+
+        return new ApiResponse(
+            response: $this->apiResponse,
+            result: $this->apiMapper()->resolveQueryAccountResponse($this->apiResponse)
+        );
+    }
+
     // Returns the account that has a specific api system canonical from an admin user.
     public static function admin(string $apiSystemCanonical)
     {
@@ -67,6 +80,10 @@ trait HasApiFeatures
         );
     }
 
+    // Returns the full wallet balance and respective attributes.
+    public function apiQueryAccount(): ApiResponse {}
+
+    // Returns balance per account trading pair.
     public function apiQueryBalance(): ApiResponse
     {
         $this->apiProperties = $this->apiMapper()->prepareGetBalanceProperties($this);

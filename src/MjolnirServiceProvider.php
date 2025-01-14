@@ -7,6 +7,7 @@ use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchCoreJobQueueCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchPositionsCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\RefreshDataCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\SyncOrdersCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\UpdateAccountsBalancesCommand;
 use Nidavellir\Mjolnir\Commands\Debug\ClosePositionCommand;
 use Nidavellir\Mjolnir\Commands\Debug\GetAccountBalanceCommand;
 use Nidavellir\Mjolnir\Commands\Debug\NotifyCommand;
@@ -43,6 +44,7 @@ class MjolnirServiceProvider extends ServiceProvider
                 RefreshDataCommand::class,
                 DispatchPositionsCommand::class,
                 SyncOrdersCommand::class,
+                UpdateAccountsBalancesCommand::class,
 
                 // Debug.
                 NotifyCommand::class,

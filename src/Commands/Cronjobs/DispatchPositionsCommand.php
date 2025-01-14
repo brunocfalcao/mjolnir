@@ -23,7 +23,7 @@ class DispatchPositionsCommand extends Command
 
     public function handle()
     {
-        //File::put(storage_path('logs/laravel.log'), '');
+        // File::put(storage_path('logs/laravel.log'), '');
 
         if ($this->option('clean')) {
             $this->cleanData();

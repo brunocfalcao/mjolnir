@@ -25,7 +25,7 @@ class RefreshDataCommand extends Command
     public function handle()
     {
         // Always truncate the log file
-        //File::put(storage_path('logs/laravel.log'), '');
+        // File::put(storage_path('logs/laravel.log'), '');
 
         // Optional truncation of base data tables if --clean is provided
         if ($this->option('clean')) {

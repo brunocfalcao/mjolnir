@@ -264,6 +264,18 @@ class BinanceApi
         return $this->client->signRequest($apiRequest);
     }
 
+    // https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Account-Information-V3
+    public function account(ApiProperties $properties)
+    {
+        $apiRequest = ApiRequest::make(
+            'GET',
+            '/fapi/v3/account',
+            $properties
+        );
+
+        return $this->client->signRequest($apiRequest);
+    }
+
     // https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Get-Income-History
     public function income(ApiProperties $properties)
     {
