@@ -44,7 +44,7 @@ class UpdateAccountsBalancesCommand extends Command
             // Compute the margin ratio. If more than 2%, send notification.
             $marginRatio = round($balance['totalMaintMargin'] / $balance['totalMarginBalance'] * 100, 2);
 
-            if ($marginRation > 2) {
+            if ($marginRatio > 2) {
                 $account->user->pushover(
                     message: "Account ID {$account->id} achieved ".$marginRatio.'% margin ratio',
                     title: 'Margin ratio alert',
