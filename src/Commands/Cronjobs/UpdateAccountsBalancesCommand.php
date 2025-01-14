@@ -39,8 +39,18 @@ class UpdateAccountsBalancesCommand extends Command
                 'total_unrealized_profit' => $balance['totalUnrealizedProfit'],
                 'total_maintenance_margin' => $balance['totalMaintMargin'],
                 'total_margin_balance' => $balance['totalMarginBalance'],
-
             ]);
+
+            // Compute the margin ratio. If more than 2%, send notification.
+            $marginRatio = round($balance['totalMaintMargin'] / $balance['totalMarginBalance'] * 100, 2);
+
+            if ($marginRation > 2) {
+                $account->user->pushover(
+                    message: "Account ID {$account->id} achieved ".$marginRatio.'% margin ratio',
+                    title: 'Margin ratio alert',
+                    applicationKey: 'nidavellir_warnings'
+                );
+            }
         }
 
         return 0;
