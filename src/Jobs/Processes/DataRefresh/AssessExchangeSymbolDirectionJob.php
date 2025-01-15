@@ -154,13 +154,13 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
         // Only proceed if there is a change in direction or timeframe
         if ($currentDirection != $newSide || $currentTimeFrame != $this->timeFrame) {
-            $this->exchangeSymbol->update([
-                'direction' => $newSide,
-                'indicator_timeframe' => $this->timeFrame,
-
-                // Exchange symbol is now tradeable.
-                'is_tradeable' => true,
-            ]);
+            if ($this->exchangeSymbol->is_upsertable) {
+                $this->exchangeSymbol->update([
+                    'direction' => $newSide,
+                    'indicator_timeframe' => $this->timeFrame,
+                    'is_tradeable' => true,
+                ]);
+            }
         }
     }
 
