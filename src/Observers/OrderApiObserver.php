@@ -113,10 +113,10 @@ class OrderApiObserver
             ]);
         }
 
-        // Limit order filled?
-        if ($order->status == 'FILLED' && $order->getOriginal('status') != 'FILLED' && $order->type == 'LIMIT') {
+        // Limit order filled or partially filled? -- Compute WAP.
+        if (($order->status == 'FILLED' || $order->status == 'PARTIALLY_FILLED') && $order->getOriginal('status') != 'FILLED' && $order->type == 'LIMIT') {
             // WAP calculation.
-            info('[OrderApiObserver] - Order ID: '.$order->id.' - Limit order filled, recalculating WAP and readjusting Profit order');
+            info('[OrderApiObserver] - Order ID: '.$order->id.' - Limit order filled or partially filled, recalculating WAP and readjusting Profit order');
             CoreJobQueue::create([
                 'class' => CalculateWAPAndAdjustProfitOrderJob::class,
                 'queue' => 'orders',
