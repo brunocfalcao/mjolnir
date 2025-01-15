@@ -46,7 +46,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
          * Fetch all tradeable exchange symbols for the account's quote currency.
          * Include related models like 'symbol' and 'tradeConfiguration' for eager loading.
          */
-        $tradeableExchangeSymbols = ExchangeSymbol::tradeable()
+        $tradeableExchangeSymbols = ExchangeSymbol::eligible()
             ->where('exchange_symbols.quote_id', $this->account->quote->id)
             ->with('symbol', 'tradeConfiguration')
             ->get();
