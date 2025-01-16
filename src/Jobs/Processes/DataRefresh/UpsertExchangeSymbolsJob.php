@@ -36,7 +36,7 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
             $this->coreJobQueue
                 ->getByCanonical('market-data:'.$this->apiSystem->canonical)->first()->response
         )->keyBy('symbol')->filter(function ($value, $key) {
-            return strpos($key, '_') === false;
+            return strpos($key, '_') == false;
         });
 
         $leverageData = collect(
@@ -81,7 +81,14 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
                 $blockUuid = (string) Str::uuid();
 
                 // Only upsertable symbols will receive indicators conclusions.
-                if ($exchangeSymbol->is_upsertable) {
+
+                if ($exchangeSymbol->is_upsertable && $exchangeSymbol->is_active) {
+                    info($exchangeSymbol->symbol->token . ' is upsertable and active');
+                } else {
+                    info($exchangeSymbol->symbol->token . ' is NOT upsertable or/neither active');
+                }
+
+                if ($exchangeSymbol->is_upsertable && $exchangeSymbol->is_active) {
                     CoreJobQueue::create([
                         'class' => QueryExchangeSymbolIndicatorJob::class,
                         'queue' => 'indicators',
