@@ -95,6 +95,14 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
                     'indicators' => $indicatorData,
                     'indicators_last_synced_at' => now(),
                 ]);
+            } else {
+                // Disable exchange symbol for any trade in case it was previously active.
+                $this->exchangeSymbol->update([
+                    'is_tradeable' => false,
+                    'indicators' => null,
+                    'indicator_timeframe' => null,
+                    'indicators_last_synced_at' => null,
+                ]);
             }
         } else {
             // Directions inconclusive. Proceed to next timeframe.
