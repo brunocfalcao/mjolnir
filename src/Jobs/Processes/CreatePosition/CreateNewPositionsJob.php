@@ -29,16 +29,16 @@ class CreateNewPositionsJob extends BaseQueuableJob
     {
         info('[CreateNewPositionsJob] - Creating '.$this->numPositions.' position(s) to '.$this->account->user->name);
 
-        $testExchangeSymbol = ExchangeSymbol::find(58);
+        // $testExchangeSymbol = ExchangeSymbol::find(44);
 
-        info('[CreateNewPositionsJob] - Exchange Symbol: '.$testExchangeSymbol->symbol->token);
+        // info('[CreateNewPositionsJob] - Exchange Symbol: '.$testExchangeSymbol->symbol->token);
 
         $data = array_merge($this->extraData, [
             'account_id' => $this->account->id,
 
             // Testing reasons.
-            'exchange_symbol_id' => $testExchangeSymbol->id,
-            'direction' => $testExchangeSymbol->direction,
+            // 'exchange_symbol_id' => $testExchangeSymbol->id,
+            // 'direction' => $testExchangeSymbol->direction,
         ]);
 
         for ($i = 0; $i < $this->numPositions; $i++) {

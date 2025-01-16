@@ -95,6 +95,11 @@ abstract class BaseQueuableJob extends BaseJob
             }
 
             if ((isset($shouldRetry) && $shouldRetry) || (isset($orShouldRetry) && $orShouldRetry)) {
+                // If we have a method call beforeRetry(\Throwable $e), run it.
+                if (method_exists($this, 'beforeRetry')) {
+                    $this->beforeRetry($e);
+                }
+
                 $this->coreJobQueue->updateToRetry(now()->addSeconds($this->workerServerBackoffSeconds));
 
                 return;

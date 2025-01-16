@@ -36,8 +36,6 @@ class SyncOrdersCommand extends Command
             ->orders
             ->whereNotNull('exchange_order_id')
             ->where('status', '<>', 'FILLED') as $order) {
-            info('[SyncOrdersCommand] - Order ID '.$order->id.', syncing (can observe)');
-
             CoreJobQueue::create([
                 'class' => SyncOrderJob::class,
                 'queue' => 'cronjobs',

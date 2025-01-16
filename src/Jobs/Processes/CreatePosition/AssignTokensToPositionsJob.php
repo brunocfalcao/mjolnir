@@ -143,7 +143,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
                     $this->updatePositionWithExchangeSymbol($position, $fallbackSymbol, 'Fallback symbol due to no eligible symbol on the right category');
                 } else {
                     // If no symbols are left, cancel the position.
-                    $position->update(['status' => 'cancelled', 'comments' => 'No ExchangeSymbol available for trading']);
+                    $position->update(['status' => 'cancelled', 'error_message' => 'No ExchangeSymbol available for trading']);
                 }
             }
         }
@@ -235,6 +235,12 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
 
         // Load remaining data.
         $data['exchange_symbol_id'] = $exchangeSymbol->id;
+
+        // Just in case it wasn't configured before for testing reasons.
+        if (! $position->direction) {
+            $data['direction'] = $exchangeSymbol->direction;
+        }
+
         $data['comments'] = $comments;
 
         if (! $exchangeSymbolAlreadySelected) {
@@ -307,18 +313,5 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
         })->values();
 
         return $orderedExchangeSymbols->first() ?: null; // Return the first sorted symbol or null.
-    }
-
-    public function resolveException(\Throwable $e)
-    {
-        /**
-         * Fail all positions without an assigned exchange symbol in case of an exception.
-         */
-        Position::where('positions.account_id', $this->account->id)
-            ->whereNull('positions.exchange_symbol_id')
-            ->update([
-                'status' => 'failed',
-                'error_message' => $e->getMessage(),
-            ]);
     }
 }
