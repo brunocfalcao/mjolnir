@@ -87,7 +87,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
         if (count(array_unique($directions)) == 1) {
             $newSide = $directions[0];
 
-            // Upsert the exchange symbol is is upsertable.
+            // Update the indicators only if the exchange symbol if it is upsertable.
             if ($this->exchangeSymbol->is_upsertable) {
                 $this->updateSideAndNotify($newSide);
 

@@ -81,46 +81,28 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
                 $blockUuid = (string) Str::uuid();
 
                 // Only upsertable symbols will receive indicators conclusions.
+                CoreJobQueue::create([
+                    'class' => QueryExchangeSymbolIndicatorJob::class,
+                    'queue' => 'indicators',
 
-                if ($exchangeSymbol->is_upsertable && $exchangeSymbol->is_active) {
-                    info($exchangeSymbol->symbol->token . ' is upsertable and active');
-                } else {
-                    info($exchangeSymbol->symbol->token . ' is NOT upsertable or/neither active');
-                }
+                    'arguments' => [
+                        'exchangeSymbolId' => $exchangeSymbol->id,
+                        'timeframe' => $exchangeSymbol->tradeConfiguration->indicator_timeframes[0],
+                    ],
+                    'index' => 1,
+                    'block_uuid' => $blockUuid,
+                ]);
 
-                if ($exchangeSymbol->is_upsertable && $exchangeSymbol->is_active) {
-                    CoreJobQueue::create([
-                        'class' => QueryExchangeSymbolIndicatorJob::class,
-                        'queue' => 'indicators',
+                CoreJobQueue::create([
+                    'class' => AssessExchangeSymbolDirectionJob::class,
+                    'queue' => 'indicators',
 
-                        'arguments' => [
-                            'exchangeSymbolId' => $exchangeSymbol->id,
-                            'timeframe' => $exchangeSymbol->tradeConfiguration->indicator_timeframes[0],
-                        ],
-                        'index' => 1,
-                        'block_uuid' => $blockUuid,
-                    ]);
-
-                    CoreJobQueue::create([
-                        'class' => AssessExchangeSymbolDirectionJob::class,
-                        'queue' => 'indicators',
-
-                        'arguments' => [
-                            'exchangeSymbolId' => $exchangeSymbol->id,
-                        ],
-                        'index' => 2,
-                        'block_uuid' => $blockUuid,
-                    ]);
-                } else {
-                    // Fully remove all indicator data from the exchange symbol.
-                    $exchangeSymbol->update([
-                        'is_tradeable' => false,
-                        'direction' => null,
-                        'indicators' => null,
-                        'indicator_timeframe' => null,
-                        'indicators_last_synced_at' => null,
-                    ]);
-                }
+                    'arguments' => [
+                        'exchangeSymbolId' => $exchangeSymbol->id,
+                    ],
+                    'index' => 2,
+                    'block_uuid' => $blockUuid,
+                ]);
             }
         }
     }
