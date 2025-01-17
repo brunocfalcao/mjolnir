@@ -281,7 +281,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
          * Identify fast-traded exchange symbols that were closed within 2 minutes.
          */
         $fastTradedExchangeSymbols = $recentClosedPositions->filter(function ($position) {
-            if (! $position->exchangeSymbol || ! $position->exchangeSymbol->is_tradeable) {
+            if (! $position->exchangeSymbol || ! $position->exchangeSymbol->isTradeable()) {
                 return false;
             }
 

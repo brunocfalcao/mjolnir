@@ -28,9 +28,6 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        // Just to avoid hitting a lot the rate limit threshold.
-        sleep(rand(0.75, 1.25));
-
         $previousJobQueue = $this->coreJobQueue->getPrevious()->first();
 
         // Convert array to have the indicator id as the key.
@@ -87,21 +84,13 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
         if (count(array_unique($directions)) == 1) {
             $newSide = $directions[0];
 
-            // Update the indicators only if the exchange symbol if it is upsertable.
-            if ($this->exchangeSymbol->is_upsertable) {
+            // Update the indicators only if the exchange symbol is upsertable.
+            if ($this->exchangeSymbol->isUpsertable()) {
                 $this->updateSideAndNotify($newSide);
 
                 $this->exchangeSymbol->update([
                     'indicators' => $indicatorData,
                     'indicators_last_synced_at' => now(),
-                ]);
-            } else {
-                // Disable exchange symbol for any trade in case it was previously active.
-                $this->exchangeSymbol->update([
-                    'is_tradeable' => false,
-                    'indicators' => null,
-                    'indicator_timeframe' => null,
-                    'indicators_last_synced_at' => null,
                 ]);
             }
         } else {
@@ -115,7 +104,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
         $timeframes = $this->exchangeSymbol->tradeConfiguration->indicator_timeframes;
         $currentTimeFrameIndex = array_search($this->timeFrame, $timeframes);
 
-        if ($currentTimeFrameIndex !== false && isset($timeframes[$currentTimeFrameIndex + 1])) {
+        if ($currentTimeFrameIndex != false && isset($timeframes[$currentTimeFrameIndex + 1])) {
             $nextTimeFrame = $timeframes[$currentTimeFrameIndex + 1];
 
             $blockUuid = (string) Str::uuid();
@@ -144,14 +133,13 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
             ]);
         } else {
             // No conclusion reached: Disable exchange symbol.
-            if ($this->exchangeSymbol->direction == null) {
-                $this->exchangeSymbol->update([
-                    'is_tradeable' => false,
-                    'indicators' => null,
-                    'indicator_timeframe' => null,
-                    'indicators_last_synced_at' => null,
-                ]);
-            }
+            $this->exchangeSymbol->update([
+                'direction' => null,
+                'is_tradeable' => false,
+                'indicators' => null,
+                'indicator_timeframe' => null,
+                'indicators_last_synced_at' => null,
+            ]);
         }
     }
 
@@ -162,7 +150,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
         // Only proceed if there is a change in direction or timeframe
         if ($currentDirection != $newSide || $currentTimeFrame != $this->timeFrame) {
-            if ($this->exchangeSymbol->is_upsertable) {
+            if ($this->exchangeSymbol->isUpsertable()) {
                 $this->exchangeSymbol->update([
                     'direction' => $newSide,
                     'indicator_timeframe' => $this->timeFrame,

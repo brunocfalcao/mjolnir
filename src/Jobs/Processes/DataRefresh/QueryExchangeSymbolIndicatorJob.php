@@ -39,6 +39,9 @@ class QueryExchangeSymbolIndicatorJob extends BaseApiableJob
 
     public function computeApiable()
     {
+        // Just to avoid hitting a lot the rate limit threshold.
+        sleep(rand(0.75, 1.25));
+
         if (! $this->timeframe) {
             $this->timeframe = $this->exchangeSymbol->tradeConfiguration->indicator_timeframes[0];
         }
