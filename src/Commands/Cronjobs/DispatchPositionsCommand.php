@@ -27,7 +27,7 @@ class DispatchPositionsCommand extends Command
 
         if ($this->option('clean')) {
             $this->cleanData();
-            // $this->createTestingData();
+            $this->createTestingData();
         }
 
         // Do we have exchange symbols?
@@ -112,9 +112,11 @@ class DispatchPositionsCommand extends Command
     protected function createTestingData()
     {
         // Create the first Position (fast-traded, satisfies the criteria)
+        $id = 58;
         Position::create([
             'account_id' => 1, // Replace with a valid account_id
-            'exchange_symbol_id' => 2, // Replace with a valid exchange_symbol_id
+            'exchange_symbol_id' => $id, // Replace with a valid exchange_symbol_id
+            'direction' => ExchangeSymbol::find($id)->direction,
             'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago
             'closed_at' => Carbon::now(), // Closed now
             'created_at' => Carbon::now()->subMinutes(2), // Created 2 minutes ago
@@ -123,9 +125,11 @@ class DispatchPositionsCommand extends Command
         ]);
 
         // Create the first Position (fast-traded, satisfies the criteria)
+        $id = 30;
         Position::create([
             'account_id' => 1, // Replace with a valid account_id
-            'exchange_symbol_id' => 12, // Replace with a valid exchange_symbol_id
+            'exchange_symbol_id' => $id, // Replace with a valid exchange_symbol_id
+            'direction' => ExchangeSymbol::find($id)->direction,
             'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago
             'closed_at' => Carbon::now(), // Closed now
             'created_at' => Carbon::now()->subMinutes(2), // Created 2 minutes ago
@@ -134,9 +138,11 @@ class DispatchPositionsCommand extends Command
         ]);
 
         // Create the second Position (does not satisfy the criteria, created more than 5 minutes ago)
+        $id = 3;
         Position::create([
             'account_id' => 1, // Replace with a valid account_id
-            'exchange_symbol_id' => 3, // Replace with a valid exchange_symbol_id
+            'exchange_symbol_id' => $id, // Replace with a valid exchange_symbol_id
+            'direction' => ExchangeSymbol::find($id)->direction,
             'started_at' => Carbon::now()->subMinutes(10), // Started 10 minutes ago
             'closed_at' => Carbon::now()->subMinutes(7), // Closed 7 minutes ago
             'created_at' => Carbon::now()->subMinutes(10), // Created 10 minutes ago
@@ -145,9 +151,11 @@ class DispatchPositionsCommand extends Command
         ]);
 
         // Create another Position (fast-traded, satisfies the criteria)
+        $id = 2;
         Position::create([
             'account_id' => 1, // Replace with a valid account_id
-            'exchange_symbol_id' => 17, // Replace with a valid exchange_symbol_id
+            'exchange_symbol_id' => $id, // Replace with a valid exchange_symbol_id
+            'direction' => ExchangeSymbol::find($id)->direction,
             'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago
             'closed_at' => Carbon::now(), // Closed now
             'created_at' => Carbon::now()->subMinutes(2), // Created 2 minutes ago

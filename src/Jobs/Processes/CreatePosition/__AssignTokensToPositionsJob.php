@@ -13,7 +13,7 @@ use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\Symbol;
 use Nidavellir\Thor\Models\TradeConfiguration;
 
-class AssignTokensToPositionsJob extends BaseQueuableJob
+class __AssignTokensToPositionsJob extends BaseQueuableJob
 {
     public Account $account;
 
@@ -75,17 +75,8 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
 
             $directionMatch = $exchangeSymbol->direction == $directionPriority ? 0 : 1;
 
-            return [$indicatorTimeframeIndex, $directionMatch];
+            return [$directionMatch, $indicatorTimeframeIndex];
         })->values();
-
-        info('[AssignTokensToPositionsJob] Sorting ExchangeSymbols:', $orderedExchangeSymbols->map(function ($symbol) {
-            return [
-                'token' => $symbol->symbol->token,
-                'category' => $symbol->symbol->category_canonical,
-                'timeframe' => $symbol->indicator_timeframe,
-                'direction' => $symbol->direction,
-            ];
-        })->toArray());
 
         $activePositions = $this->account->positions->where('status', 'active');
 
@@ -117,12 +108,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
                 continue;
             }
 
-            $categoryPrioritySymbols = $this->prioritizeByCategory(
-                $orderedExchangeSymbols,
-                $preferredDirection
-            );
-
-            $eligibleExchangeSymbol = $this->findEligibleSymbolByDirection($categoryPrioritySymbols, $preferredDirection);
+            $eligibleExchangeSymbol = $this->findEligibleSymbolByDirection($orderedExchangeSymbols, $preferredDirection);
 
             if ($eligibleExchangeSymbol) {
                 $this->updatePositionWithExchangeSymbol($position, $eligibleExchangeSymbol);
@@ -140,7 +126,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
             }
 
             if ($orderedExchangeSymbols->isNotEmpty()) {
-                $fallbackSymbol = $orderedExchangeSymbols->sortBy('indicator_timeframe')->shift();
+                $fallbackSymbol = $orderedExchangeSymbols->shift();
                 $this->updatePositionWithExchangeSymbol($position, $fallbackSymbol, 'Fallback symbol due to no eligible symbol on the right category');
             } else {
                 $position->update(['status' => 'cancelled', 'error_message' => 'No ExchangeSymbol available for trading']);
@@ -163,25 +149,6 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
                 'block_uuid' => $blockUuid,
             ]);
         }
-    }
-
-    protected function prioritizeByCategory($orderedExchangeSymbols, $preferredDirection)
-    {
-        $categories = Symbol::query()->select('category_canonical')->distinct()->get()->pluck('category_canonical');
-        $categoryAllocations = $categories->mapWithKeys(function ($category) use ($orderedExchangeSymbols, $preferredDirection) {
-            $symbolsInCategory = $orderedExchangeSymbols->filter(function ($symbol) use ($category, $preferredDirection) {
-                return $symbol->symbol->category_canonical == $category &&
-                    (!$preferredDirection || $symbol->direction == $preferredDirection);
-            })->sortBy('indicator_timeframe');
-
-            return [$category => $symbolsInCategory];
-        });
-
-        $sortedByTimeframe = $categoryAllocations->flatMap(function ($symbols) {
-            return $symbols->sortBy('indicator_timeframe');
-        });
-
-        return $sortedByTimeframe;
     }
 
     protected function findEligibleSymbolByDirection($orderedExchangeSymbols, $preferredDirection)
@@ -261,7 +228,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
 
         if (! $exchangeSymbolAlreadySelected) {
             $position->load('account.user');
-            info("[AssignTokensToPositionsJob] - Assigning {$exchangeSymbol->symbol->token} ({$exchangeSymbol->direction}) ({$exchangeSymbol->symbol->category_canonical}) to position ID {$position->id}");
+            info("[AssignTokensToPositionsJob] - Assigning {$exchangeSymbol->symbol->token} ({$exchangeSymbol->direction}) to position ID {$position->id}");
             $position->update($data);
         } else {
             $position->update([
