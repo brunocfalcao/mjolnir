@@ -7,16 +7,13 @@ use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\Symbol;
-use Nidavellir\Thor\Models\TradeConfiguration;
 
 class AssignTokensToPositionsJob extends BaseQueuableJob
 {
     public Account $account;
-
     public ApiSystem $apiSystem;
 
     public function __construct(int $accountId)
@@ -33,261 +30,73 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
             ->whereNull('exchange_symbol_id')
             ->get();
 
-        $tradeableExchangeSymbols = ExchangeSymbol::eligible()
-            ->where('exchange_symbols.quote_id', $this->account->quote->id)
-            ->with('symbol', 'tradeConfiguration')
-            ->get();
+        $fastTradedSymbols = $this->tryToGetFastTradedSymbols();
 
-        $openedExchangeSymbols = collect(
-            Position::opened()
-                ->whereNotNull('positions.exchange_symbol_id')
-                ->where('positions.account_id', $this->account->id)
-                ->pluck('positions.exchange_symbol_id')
-        );
+        $longCount = $this->account->positions->where('status', 'active')->where('direction', 'LONG')->count();
+        $shortCount = $this->account->positions->where('status', 'active')->where('direction', 'SHORT')->count();
 
-        $availableExchangeSymbols = $tradeableExchangeSymbols->reject(function ($exchangeSymbol) use ($openedExchangeSymbols) {
-            return $openedExchangeSymbols->contains($exchangeSymbol->id);
-        })->values();
+        $remainingLongs = ($this->account->should_try_half_positions_direction) ? floor(count($positions) / 2) - $longCount : null;
+        $remainingShorts = ($this->account->should_try_half_positions_direction) ? floor(count($positions) / 2) - $shortCount : null;
 
-        $directionPriority = TradeConfiguration::default()->first()->direction_priority;
+        $eligibleExchangeSymbols = $this->organizeEligibleSymbols();
 
-        if ($directionPriority == null && $this->account->follow_btc_indicator) {
-            $btcExchangeSymbol = ExchangeSymbol::where(
-                'symbol_id',
-                Symbol::firstWhere('token', 'BTC')->id
-            )->where('exchange_symbols.quote_id', $this->account->quote->id)
-                ->where('exchange_symbols.is_active', true)
-                ->first();
-
-            if ($btcExchangeSymbol && $btcExchangeSymbol->direction) {
-                $directionPriority = $btcExchangeSymbol->direction;
-            }
-        }
-
-        $orderedExchangeSymbols = $availableExchangeSymbols->sortBy(function ($exchangeSymbol) use ($directionPriority) {
-            $indicatorTimeframes = $exchangeSymbol->tradeConfiguration->indicator_timeframes ?? [];
-            $indicatorTimeframeIndex = array_search($exchangeSymbol->indicator_timeframe, $indicatorTimeframes);
-            $indicatorTimeframeIndex = $indicatorTimeframeIndex !== false ? $indicatorTimeframeIndex : PHP_INT_MAX;
-
-            if ($directionPriority == null) {
-                return $indicatorTimeframeIndex;
-            }
-
-            $directionMatch = $exchangeSymbol->direction == $directionPriority ? 0 : 1;
-
-            return [$indicatorTimeframeIndex, $directionMatch];
-        })->values();
-
-        info('[AssignTokensToPositionsJob] Sorting ExchangeSymbols:', $orderedExchangeSymbols->map(function ($symbol) {
-            return [
-                'token' => $symbol->symbol->token,
-                'category' => $symbol->symbol->category_canonical,
-                'timeframe' => $symbol->indicator_timeframe,
-                'direction' => $symbol->direction,
-            ];
-        })->toArray());
-
-        $activePositions = $this->account->positions->where('status', 'active');
-
-        $longCount = $activePositions->where('direction', 'LONG')->count();
-        $shortCount = $activePositions->where('direction', 'SHORT')->count();
-
-        foreach ($positions as $position) {
-            $preferredDirection = null;
-
-            if ($this->account->should_try_half_positions_direction) {
-                $preferredDirection = $longCount <= $shortCount ? 'LONG' : 'SHORT';
-            }
-
-            $fastTradedSymbol = $this->tryToGetAfastTradedToken($orderedExchangeSymbols);
-
-            if ($fastTradedSymbol) {
-                info('[AssignTokensToPositionsJob] Fast Traded available symbol: ' . $fastTradedSymbol->symbol->token);
-                $this->updatePositionWithExchangeSymbol($position, $fastTradedSymbol, 'Fast trade exchange symbol.');
-                $orderedExchangeSymbols = $orderedExchangeSymbols->reject(function ($symbol) use ($fastTradedSymbol) {
-                    return $symbol->id == $fastTradedSymbol->id;
-                })->values();
-
-                if ($fastTradedSymbol->direction == 'LONG') {
-                    $longCount++;
-                } else {
-                    $shortCount++;
-                }
-
-                continue;
-            }
-
-            $categoryPrioritySymbols = $this->prioritizeByCategory(
-                $orderedExchangeSymbols,
-                $preferredDirection
-            );
-
-            $eligibleExchangeSymbol = $this->findEligibleSymbolByDirection($categoryPrioritySymbols, $preferredDirection);
-
-            if ($eligibleExchangeSymbol) {
-                $this->updatePositionWithExchangeSymbol($position, $eligibleExchangeSymbol);
-                $orderedExchangeSymbols = $orderedExchangeSymbols->reject(function ($symbol) use ($eligibleExchangeSymbol) {
-                    return $symbol->id == $eligibleExchangeSymbol->id;
-                })->values();
-
-                if ($eligibleExchangeSymbol->direction == 'LONG') {
-                    $longCount++;
-                } else {
-                    $shortCount++;
-                }
-
-                continue;
-            }
-
-            if ($orderedExchangeSymbols->isNotEmpty()) {
-                $fallbackSymbol = $orderedExchangeSymbols->sortBy('indicator_timeframe')->shift();
-                $this->updatePositionWithExchangeSymbol($position, $fallbackSymbol, 'Fallback symbol due to no eligible symbol on the right category');
-            } else {
-                $position->update(['status' => 'cancelled', 'error_message' => 'No ExchangeSymbol available for trading']);
-            }
-        }
-
-        foreach (Position::opened()->fromAccount($this->account)->with('account')->get() as $position) {
-            info('[AssignTokensToPositionsJob] Starting Lifecycle for account ID '.$position->account->id.' and position ID '.$position->id.' ('.$position->account->user->name.')');
-
-            $index = 1;
-            $blockUuid = (string) Str::uuid();
-
-            CoreJobQueue::create([
-                'class' => CreatePositionLifecycleJob::class,
-                'queue' => 'positions',
-                'arguments' => [
-                    'positionId' => $position->id,
-                ],
-                'index' => $index++,
-                'block_uuid' => $blockUuid,
-            ]);
-        }
-    }
-
-    protected function prioritizeByCategory($orderedExchangeSymbols, $preferredDirection)
-    {
-        $categories = Symbol::query()->select('category_canonical')->distinct()->get()->pluck('category_canonical');
-        $categoryAllocations = $categories->mapWithKeys(function ($category) use ($orderedExchangeSymbols, $preferredDirection) {
-            $symbolsInCategory = $orderedExchangeSymbols->filter(function ($symbol) use ($category, $preferredDirection) {
-                return $symbol->symbol->category_canonical == $category &&
-                    (!$preferredDirection || $symbol->direction == $preferredDirection);
-            })->sortBy('indicator_timeframe');
-
-            return [$category => $symbolsInCategory];
-        });
-
-        $sortedByTimeframe = $categoryAllocations->flatMap(function ($symbols) {
-            return $symbols->sortBy('indicator_timeframe');
-        });
-
-        return $sortedByTimeframe;
-    }
-
-    protected function findEligibleSymbolByDirection($orderedExchangeSymbols, $preferredDirection)
-    {
-        if ($preferredDirection) {
-            $symbol = $orderedExchangeSymbols->first(function ($exchangeSymbol) use ($preferredDirection) {
-                return $exchangeSymbol->direction == $preferredDirection;
-            });
-
-            if ($symbol) {
-                return $symbol;
-            }
-        }
-
-        return $this->findEligibleSymbol($orderedExchangeSymbols);
-    }
-
-    protected function findEligibleSymbol($orderedExchangeSymbols)
-    {
-        $maxConcurrentTrades = $this->account->max_concurrent_trades;
-        $categories = Symbol::query()->select('category_canonical')->distinct()->get()->pluck('category_canonical');
-        $totalCategories = $categories->count();
-
-        $tradesPerCategory = intdiv($maxConcurrentTrades, $totalCategories);
-        $extraTrades = $maxConcurrentTrades % $totalCategories;
-
-        $tradesAllocation = $categories->mapWithKeys(function ($category, $index) use ($tradesPerCategory, $extraTrades) {
-            $allocatedTrades = $tradesPerCategory + ($index < $extraTrades ? 1 : 0);
-
-            return [$category => $allocatedTrades];
-        });
-
-        $alreadyAssignedSymbols = Position::opened()
-            ->where('positions.account_id', $this->account->id)
-            ->pluck('positions.exchange_symbol_id')
+        $openedExchangeSymbols = Position::opened()
+            ->where('account_id', $this->account->id)
+            ->whereNotNull('exchange_symbol_id')
+            ->pluck('exchange_symbol_id')
             ->toArray();
 
-        foreach ($tradesAllocation as $category => $allowedTrades) {
-            $openedTradesCount = Position::opened()
-                ->whereHas('exchangeSymbol.symbol', function ($query) use ($category) {
-                    $query->where('category_canonical', $category);
-                })
-                ->count();
+        // Remove already opened exchange symbols from eligible symbols
+        $eligibleExchangeSymbols = $eligibleExchangeSymbols->map(function ($directions) use ($openedExchangeSymbols) {
+            return $directions->map(function ($directionGroup) use ($openedExchangeSymbols) {
+                return $directionGroup->reject(function ($symbol) use ($openedExchangeSymbols) {
+                    return in_array($symbol->id, $openedExchangeSymbols);
+                })->sortBy('indicator_timeframe')->values();
+            });
+        });
 
-            if ($openedTradesCount < $allowedTrades) {
-                $eligibleExchangeSymbol = $orderedExchangeSymbols
-                    ->first(function ($exchangeSymbol) use ($category, $alreadyAssignedSymbols) {
-                        return $exchangeSymbol->symbol->category_canonical == $category &&
-                            ! in_array($exchangeSymbol->id, $alreadyAssignedSymbols);
-                    });
+        // Remove fast-traded symbols already assigned to opened positions
+        $fastTradedSymbols = $fastTradedSymbols->reject(function ($symbol) use ($openedExchangeSymbols) {
+            return in_array($symbol->id, $openedExchangeSymbols);
+        })->values();
 
-                if ($eligibleExchangeSymbol) {
-                    return $eligibleExchangeSymbol;
+        // Initialize category selection tracking to ensure dispersion
+        $categorySelectionTracker = collect();
+
+        foreach ($positions as $position) {
+            $preferredDirection = $remainingLongs > $remainingShorts ? 'LONG' : 'SHORT';
+
+            $symbol = $fastTradedSymbols->shift() ?: $this->selectNextSymbol($eligibleExchangeSymbols, $preferredDirection, $categorySelectionTracker);
+
+            if ($symbol) {
+                $this->assignSymbolToPosition($position, $symbol);
+
+                // Update eligible symbols to remove selected symbol
+                $eligibleExchangeSymbols = $this->removeSelectedSymbol($eligibleExchangeSymbols, $symbol);
+
+                $categorySelectionTracker->push($symbol->symbol->category_canonical);
+
+                if ($symbol->direction === 'LONG') {
+                    $remainingLongs--;
+                } else {
+                    $remainingShorts--;
                 }
+            } else {
+                $position->update(['status' => 'cancelled', 'error_message' => 'No eligible symbol available.']);
             }
         }
-
-        return null;
     }
 
-    protected function updatePositionWithExchangeSymbol(Position $position, ExchangeSymbol $exchangeSymbol, ?string $comments = null)
+    private function tryToGetFastTradedSymbols()
     {
-        $exchangeSymbolAlreadySelected = Position::opened()
-            ->where('positions.account_id', $this->account->id)
-            ->where('positions.exchange_symbol_id', $exchangeSymbol->id)
-            ->exists();
-
-        $data = [];
-
-        $data['exchange_symbol_id'] = $exchangeSymbol->id;
-
-        if (! $position->direction) {
-            $data['direction'] = $exchangeSymbol->direction;
-        }
-
-        $data['comments'] = $comments;
-
-        if (! $exchangeSymbolAlreadySelected) {
-            $position->load('account.user');
-            info("[AssignTokensToPositionsJob] - Assigning {$exchangeSymbol->symbol->token} ({$exchangeSymbol->direction}) ({$exchangeSymbol->symbol->category_canonical}) to position ID {$position->id}");
-            $position->update($data);
-        } else {
-            $position->update([
-                'status' => 'cancelled', 'comments' => 'Exchange Symbol position conflict.',
-            ]);
-        }
-    }
-
-    protected function tryToGetAfastTradedToken($orderedExchangeSymbols)
-    {
-        $openPositionExchangeSymbols = ExchangeSymbol::whereIn(
-            'id',
-            Position::where('positions.account_id', $this->account->id)
-                ->opened()
-                ->pluck('positions.exchange_symbol_id')
-                ->unique()
-        )->get();
-
-        $recentClosedPositions = Position::where('positions.account_id', $this->account->id)
-            ->whereNotNull('positions.closed_at')
-            ->where('positions.closed_at', '>=', now()->subMinutes(5))
+        $recentClosedPositions = Position::where('account_id', $this->account->id)
+            ->whereNotNull('closed_at')
+            ->where('closed_at', '>=', now()->subMinutes(5))
             ->with('exchangeSymbol.symbol')
             ->get();
 
-        $fastTradedExchangeSymbols = $recentClosedPositions->filter(function ($position) {
-            if (! $position->exchangeSymbol || ! $position->exchangeSymbol->isTradeable()) {
+        return $recentClosedPositions->filter(function ($position) {
+            if (!$position->exchangeSymbol || !$position->exchangeSymbol->isTradeable()) {
                 return false;
             }
 
@@ -296,24 +105,81 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
             return $duration <= 180;
         })->map(function ($position) {
             return $position->exchangeSymbol;
-        })->unique();
+        })->unique()->values();
+    }
 
-        if ($fastTradedExchangeSymbols->isEmpty()) {
-            return null;
+    private function organizeEligibleSymbols()
+    {
+        $eligibleSymbols = ExchangeSymbol::eligible()
+            ->where('quote_id', $this->account->quote->id)
+            ->with('symbol', 'tradeConfiguration')
+            ->get()
+            ->groupBy(fn ($symbol) => $symbol->symbol->category_canonical)
+            ->map(function ($group) {
+                return $group->groupBy('direction')->map(function ($directionGroup) {
+                    return $directionGroup->sortBy('indicator_timeframe')->values();
+                });
+            });
+
+        return $eligibleSymbols;
+    }
+
+    private function selectNextSymbol($eligibleExchangeSymbols, $preferredDirection, $categorySelectionTracker)
+    {
+        // Prioritize unselected categories for dispersion
+        $unselectedCategories = $eligibleExchangeSymbols->keys()->diff($categorySelectionTracker);
+
+        foreach ($unselectedCategories as $category) {
+            if (isset($eligibleExchangeSymbols[$category][$preferredDirection]) && $eligibleExchangeSymbols[$category][$preferredDirection]->isNotEmpty()) {
+                return $eligibleExchangeSymbols[$category][$preferredDirection]->shift();
+            }
         }
 
-        $filteredExchangeSymbols = $fastTradedExchangeSymbols->reject(function ($exchangeSymbol) use ($openPositionExchangeSymbols, $orderedExchangeSymbols) {
-            return $openPositionExchangeSymbols->contains($exchangeSymbol) || ! $orderedExchangeSymbols->contains('id', $exchangeSymbol->id);
+        foreach ($unselectedCategories as $category) {
+            foreach ($eligibleExchangeSymbols[$category] as $directionGroup) {
+                if ($directionGroup->isNotEmpty()) {
+                    return $directionGroup->shift();
+                }
+            }
+        }
+
+        // Fallback to all categories if no unselected category is available
+        foreach ($eligibleExchangeSymbols as $category => $directions) {
+            if (isset($directions[$preferredDirection]) && $directions[$preferredDirection]->isNotEmpty()) {
+                return $directions[$preferredDirection]->shift();
+            }
+        }
+
+        foreach ($eligibleExchangeSymbols as $category => $directions) {
+            foreach ($directions as $directionGroup) {
+                if ($directionGroup->isNotEmpty()) {
+                    return $directionGroup->shift();
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function assignSymbolToPosition(Position $position, ExchangeSymbol $symbol)
+    {
+        $position->update([
+            'exchange_symbol_id' => $symbol->id,
+            'direction' => $position->direction ?: $symbol->direction,
+            'comments' => 'Assigned by AssignTokensToPositionsJob.',
+        ]);
+
+        info("[AssignTokensToPositionsJob] - Assigned {$symbol->symbol->token} ({$symbol->direction}) ({$symbol->symbol->category_canonical}) to position ID {$position->id}");
+    }
+
+    private function removeSelectedSymbol($eligibleExchangeSymbols, $selectedSymbol)
+    {
+        return $eligibleExchangeSymbols->map(function ($directions) use ($selectedSymbol) {
+            return $directions->map(function ($directionGroup) use ($selectedSymbol) {
+                return $directionGroup->reject(function ($symbol) use ($selectedSymbol) {
+                    return $symbol->id === $selectedSymbol->id;
+                })->values();
+            });
         });
-
-        $orderedExchangeSymbols = $filteredExchangeSymbols->sortBy(function ($exchangeSymbol) use ($recentClosedPositions) {
-            $position = $recentClosedPositions->firstWhere('exchange_symbol_id', $exchangeSymbol->id);
-
-            return $position->started_at->diffInSeconds($position->closed_at);
-        })->values();
-
-        info('Fast traded Symbols: ', $orderedExchangeSymbols->pluck('symbol.token')->toArray());
-
-        return $orderedExchangeSymbols->first() ?: null;
     }
 }

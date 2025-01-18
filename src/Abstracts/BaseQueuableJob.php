@@ -151,11 +151,11 @@ abstract class BaseQueuableJob extends BaseJob
     protected function computeAndStoreResult()
     {
         // Compute the result from the job
-        $this->result = $this->compute();
+        $result = $this->compute();
 
-        if ($this->result) {
+        if ($result) {
             // Determine the serialized result
-            $serializedResult = $this->serializeResult($this->result);
+            $serializedResult = $this->serializeResult($result);
 
             /**
              * Update result, but only if it wasn't updated before.
