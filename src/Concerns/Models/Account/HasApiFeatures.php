@@ -81,7 +81,9 @@ trait HasApiFeatures
     }
 
     // Returns the full wallet balance and respective attributes.
-    public function apiQueryAccount(): ApiResponse {}
+    public function apiQueryAccount(): ApiResponse
+    {
+    }
 
     // Returns balance per account trading pair.
     public function apiQueryBalance(): ApiResponse
