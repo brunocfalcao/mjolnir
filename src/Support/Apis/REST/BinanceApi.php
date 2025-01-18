@@ -2,7 +2,6 @@
 
 namespace Nidavellir\Mjolnir\Support\Apis\REST;
 
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Validation\Rule;
 use Nidavellir\Mjolnir\Concerns\HasPropertiesValidation;
 use Nidavellir\Mjolnir\Support\ApiClients\REST\BinanceApiClient;
@@ -24,10 +23,10 @@ class BinanceApi
             'url' => 'https://fapi.binance.com',
 
             // All ApiCredentials keys need to arrive encrypted.
-            'api_key' => Crypt::decrypt($credentials->get('api_key')),
+            'api_key' => $credentials->get('api_key'),
 
             // All ApiCredentials keys need to arrive encrypted.
-            'api_secret' => Crypt::decrypt($credentials->get('api_secret')),
+            'api_secret' => $credentials->get('api_secret'),
         ]);
     }
 

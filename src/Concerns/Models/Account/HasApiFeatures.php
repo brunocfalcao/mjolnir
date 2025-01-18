@@ -4,7 +4,7 @@ namespace Nidavellir\Mjolnir\Concerns\Models\Account;
 
 use GuzzleHttp\Psr7\Response;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
-use Nidavellir\Mjolnir\Support\Proxies\ApiProxy;
+use Nidavellir\Mjolnir\Support\Proxies\ApiRESTProxy;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiResponse;
@@ -52,12 +52,12 @@ trait HasApiFeatures
     }
 
     /**
-     * Return the right api client object from the ApiProxy given the account
+     * Return the right api client object from the ApiRESTProxy given the account
      * connection id.
      */
     public function withApi()
     {
-        return new ApiProxy(
+        return new ApiRESTProxy(
             $this->apiSystem->canonical,
             /**
              * The credentials stored on the exchange connection are always

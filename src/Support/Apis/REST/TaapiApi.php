@@ -2,7 +2,6 @@
 
 namespace Nidavellir\Mjolnir\Support\Apis\REST;
 
-use Illuminate\Support\Facades\Crypt;
 use Nidavellir\Mjolnir\Concerns\HasPropertiesValidation;
 use Nidavellir\Mjolnir\Support\ApiClients\REST\TaapiApiClient;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
@@ -26,7 +25,7 @@ class TaapiApi
     // Constructor to initialize the API client with credentials.
     public function __construct(ApiCredentials $credentials)
     {
-        $this->secret = Crypt::decrypt($credentials->get('secret'));
+        $this->secret = $credentials->get('secret');
 
         $this->client = new TaapiApiClient([
             'url' => 'https://api.taapi.io',

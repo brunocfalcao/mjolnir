@@ -8,7 +8,7 @@ use Nidavellir\Mjolnir\Support\Apis\REST\CoinmarketCapApi;
 use Nidavellir\Mjolnir\Support\Apis\REST\TaapiApi;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
 
-class ApiProxy
+class ApiRESTProxy
 {
     protected $api;
 

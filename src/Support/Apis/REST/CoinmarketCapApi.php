@@ -2,7 +2,6 @@
 
 namespace Nidavellir\Mjolnir\Support\Apis\REST;
 
-use Illuminate\Support\Facades\Crypt;
 use Nidavellir\Mjolnir\Support\ApiClients\REST\CoinmarketCapApiClient;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
@@ -19,7 +18,7 @@ class CoinmarketCapApi
             'url' => 'https://pro-api.coinmarketcap.com',
 
             // All ApiCredentials keys need to arrive encrypted.
-            'api_key' => Crypt::decrypt($credentials->get('api_key')),
+            'api_key' => $credentials->get('api_key'),
         ]);
     }
 

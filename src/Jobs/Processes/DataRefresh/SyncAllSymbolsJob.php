@@ -5,7 +5,7 @@ namespace Nidavellir\Mjolnir\Jobs\Processes\DataRefresh;
 use GuzzleHttp\Psr7\Response;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Support\Proxies\ApiProxy;
+use Nidavellir\Mjolnir\Support\Proxies\ApiRESTProxy;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
@@ -14,7 +14,7 @@ use Nidavellir\Thor\Models\Symbol;
 
 class SyncAllSymbolsJob extends BaseApiableJob
 {
-    public ApiProxy $api;
+    public ApiRESTProxy $api;
 
     public function __construct()
     {
@@ -24,7 +24,7 @@ class SyncAllSymbolsJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        $this->api = new ApiProxy('coinmarketcap', new ApiCredentials(Account::admin('coinmarketcap')->credentials));
+        $this->api = new ApiRESTProxy('coinmarketcap', new ApiCredentials(Account::admin('coinmarketcap')->credentials));
 
         $response = $this->api->getSymbolsMetadata($this->prepareApiProperties());
         $this->coreJobQueue->update(['response' => $this->parseResponse($response)]);

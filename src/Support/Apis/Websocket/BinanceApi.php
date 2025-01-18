@@ -2,7 +2,6 @@
 
 namespace Nidavellir\Mjolnir\Support\Apis\Websocket;
 
-use Illuminate\Support\Facades\Crypt;
 use Nidavellir\Mjolnir\Support\ApiClients\Websocket\BinanceApiClient;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
 
@@ -14,8 +13,8 @@ class BinanceApi
     {
         $this->client = new BinanceApiClient([
             'base_url' => 'wss://fstream.binance.com',
-            'api_key' => Crypt::decrypt($credentials->get('api_key')),
-            'api_secret' => Crypt::decrypt($credentials->get('api_secret')),
+            'api_key' => $credentials->get('api_key'),
+            'api_secret' => $credentials->get('api_secret'),
         ]);
     }
 

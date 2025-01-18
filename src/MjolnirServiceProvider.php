@@ -5,6 +5,7 @@ namespace Nidavellir\Mjolnir;
 use Illuminate\Support\ServiceProvider;
 use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchCoreJobQueueCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchPositionsCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\GetBinancePricesCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\OptimizeCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\RefreshDataCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\SyncOrdersCommand;
@@ -49,6 +50,7 @@ class MjolnirServiceProvider extends ServiceProvider
                 SyncOrdersCommand::class,
                 UpdateAccountsBalancesCommand::class,
                 OptimizeCommand::class,
+                GetBinancePricesCommand::class,
 
                 // Debug.
                 NotifyCommand::class,
