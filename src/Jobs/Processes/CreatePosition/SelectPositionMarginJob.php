@@ -42,6 +42,21 @@ class SelectPositionMarginJob extends BaseApiableJob
          * versus the account balance that exists.
          */
 
+        // Margin already exists?
+        if ($this->position->margin) {
+            info('[SelectPositionMarginJob] - Margin (already existed): '.$this->position->margin);
+
+            return;
+        }
+
+        if ($this->account->margin) {
+            // Update the position margin with the account margin override.
+            $this->position->update(['margin' => $this->account->margin]);
+            info('[SelectPositionMarginJob] - Margin (overrided by account margin): '.$this->position->margin);
+
+            return;
+        }
+
         // Lets start by fetching the balance.
         $response = $this->account->apiQueryBalance();
 
@@ -60,13 +75,18 @@ class SelectPositionMarginJob extends BaseApiableJob
             )
         );
 
-        // Override?
-        if (! $this->position->margin) {
+        if ($this->account->margin) {
             // Update the position margin, and move on.
             $this->position->update(['margin' => $margin]);
+        } else {
+            // Override?
+            if (! $this->position->margin) {
+                // Update the position margin, and move on.
+                $this->position->update(['margin' => $margin]);
+            }
         }
 
-        info('[SelectPositionMarginJob] - Margin: '.$this->position->margin);
+        info('[SelectPositionMarginJob] - Margin (calculated): '.$this->position->margin);
     }
 
     public function resolveException(\Throwable $e)

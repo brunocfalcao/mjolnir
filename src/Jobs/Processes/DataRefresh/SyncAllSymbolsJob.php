@@ -41,7 +41,7 @@ class SyncAllSymbolsJob extends BaseApiableJob
         $properties = new ApiProperties;
         $properties->set('options.id', implode(
             ',',
-            Symbol::all()->pluck('cmc_id')->toArray()
+            Symbol::whereNull('image_url')->pluck('cmc_id')->toArray()
         ));
 
         return $properties;
