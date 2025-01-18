@@ -49,9 +49,9 @@ class SelectPositionMarginJob extends BaseApiableJob
             return;
         }
 
-        if ($this->account->margin) {
+        if ($this->account->margin_override) {
             // Update the position margin with the account margin override.
-            $this->position->update(['margin' => $this->account->margin]);
+            $this->position->update(['margin' => $this->account->margin_override]);
             info('[SelectPositionMarginJob] - Margin (overrided by account margin): '.$this->position->margin);
 
             return;

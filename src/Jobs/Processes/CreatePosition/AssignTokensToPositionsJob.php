@@ -2,19 +2,20 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\CreatePosition;
 
-use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\Symbol;
 use Nidavellir\Thor\Models\TradeConfiguration;
 
 class AssignTokensToPositionsJob extends BaseQueuableJob
 {
+    private ?string $categoryPointer = null; // Pointer to track the last selected category
+
     public Account $account;
+
     public ApiSystem $apiSystem;
 
     public function __construct(int $accountId)
@@ -33,7 +34,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
 
         $fastTradedSymbols = $this->tryToGetFastTradedSymbols();
 
-        info("[AssignTokensToPositionsJob] - Fast traded symbols: " . $fastTradedSymbols->pluck('symbol.token')->join(', '));
+        info('[AssignTokensToPositionsJob] - Fast traded symbols: '.$fastTradedSymbols->pluck('symbol.token')->join(', '));
 
         $longCount = $this->account->positions->where('status', 'active')->where('direction', 'LONG')->count();
         $shortCount = $this->account->positions->where('status', 'active')->where('direction', 'SHORT')->count();
@@ -42,16 +43,6 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
         $remainingShorts = ($this->account->should_try_half_positions_direction) ? floor(count($positions) / 2) - $shortCount : null;
 
         $eligibleExchangeSymbols = $this->organizeEligibleSymbols();
-
-        foreach ($eligibleExchangeSymbols as $category => $directions) {
-            info("[AssignTokensToPositionsJob] - Category: {$category}");
-            foreach ($directions as $direction => $symbols) {
-                info("[AssignTokensToPositionsJob] -- Direction: {$direction}");
-                foreach ($symbols as $symbol) {
-                    info("[AssignTokensToPositionsJob] --- Symbol: {$symbol->symbol->token} ({$symbol->indicator_timeframe})");
-                }
-            }
-        }
 
         $openedExchangeSymbols = Position::opened()
             ->where('account_id', $this->account->id)
@@ -67,36 +58,21 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
             });
         });
 
-        info("[AssignTokensToPositionsJob] - Eligible symbols after filtering opened positions:");
-        foreach ($eligibleExchangeSymbols as $category => $directions) {
-            info("[AssignTokensToPositionsJob] - Category: {$category}");
-            foreach ($directions as $direction => $symbols) {
-                info("[AssignTokensToPositionsJob] -- Direction: {$direction}");
-                foreach ($symbols as $symbol) {
-                    info("[AssignTokensToPositionsJob] --- Symbol: {$symbol->symbol->token} ({$symbol->indicator_timeframe})");
-                }
-            }
-        }
-
         $fastTradedSymbols = $fastTradedSymbols->reject(function ($symbol) use ($openedExchangeSymbols) {
             return in_array($symbol->id, $openedExchangeSymbols);
         })->values();
 
-        info("[AssignTokensToPositionsJob] - Fast traded symbols after filtering opened positions: " . $fastTradedSymbols->pluck('symbol.token')->join(', '));
-
-        $lastSelectedCategory = null;
+        info('[AssignTokensToPositionsJob] - Fast traded symbols after filtering opened positions: '.$fastTradedSymbols->pluck('symbol.token')->join(', '));
 
         foreach ($positions as $position) {
             $preferredDirection = $remainingLongs > $remainingShorts ? 'LONG' : 'SHORT';
 
-            $symbol = $fastTradedSymbols->shift() ?: $this->selectNextSymbol($eligibleExchangeSymbols, $preferredDirection, $lastSelectedCategory);
+            $symbol = $fastTradedSymbols->shift() ?: $this->selectNextSymbol($eligibleExchangeSymbols, $preferredDirection);
 
             if ($symbol) {
                 $this->assignSymbolToPosition($position, $symbol);
 
                 $eligibleExchangeSymbols = $this->removeSelectedSymbol($eligibleExchangeSymbols, $symbol);
-
-                $lastSelectedCategory = $symbol->symbol->category_canonical;
 
                 if ($symbol->direction === 'LONG') {
                     $remainingLongs--;
@@ -118,7 +94,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
             ->get();
 
         return $recentClosedPositions->filter(function ($position) {
-            if (!$position->exchangeSymbol || !$position->exchangeSymbol->isTradeable()) {
+            if (! $position->exchangeSymbol || ! $position->exchangeSymbol->isTradeable()) {
                 return false;
             }
 
@@ -150,31 +126,51 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
         return $eligibleSymbols;
     }
 
-    private function selectNextSymbol($eligibleExchangeSymbols, $preferredDirection, &$lastSelectedCategory)
+    private function selectNextSymbol($eligibleExchangeSymbols, $preferredDirection)
     {
         $categories = $eligibleExchangeSymbols->keys()->toArray();
-        $startIndex = $lastSelectedCategory ? array_search($lastSelectedCategory, $categories) + 1 : 0;
+        $categoryCount = count($categories);
 
-        for ($i = 0; $i < count($categories); $i++) {
-            $currentIndex = ($startIndex + $i) % count($categories);
+        // Initialize the pointer if it hasn't been set
+        if ($this->categoryPointer === null) {
+            $this->categoryPointer = $categories[0];
+        }
+
+        // Step 1: Find the starting index based on the last selected category
+        $startIndex = array_search($this->categoryPointer, $categories);
+        $startIndex = ($startIndex + 1) % $categoryCount; // Move to the next category in a round-robin manner
+
+        // Step 2: Try all categories except the last selected one first
+        for ($i = 0; $i < $categoryCount; $i++) {
+            $currentIndex = ($startIndex + $i) % $categoryCount;
             $currentCategory = $categories[$currentIndex];
 
-            if (isset($eligibleExchangeSymbols[$currentCategory][$preferredDirection]) && $eligibleExchangeSymbols[$currentCategory][$preferredDirection]->isNotEmpty()) {
-                return $eligibleExchangeSymbols[$currentCategory][$preferredDirection]->shift();
+            // Check for the preferred direction within the current category
+            if (isset($eligibleExchangeSymbols[$currentCategory][$preferredDirection]) &&
+                $eligibleExchangeSymbols[$currentCategory][$preferredDirection]->isNotEmpty()) {
+                $symbol = $eligibleExchangeSymbols[$currentCategory][$preferredDirection]->shift();
+                $this->categoryPointer = $currentCategory; // Update the pointer to this category
+
+                return $symbol;
             }
         }
 
-        for ($i = 0; $i < count($categories); $i++) {
-            $currentIndex = ($startIndex + $i) % count($categories);
+        // Step 3: If no preferred direction matches, try all directions in the current cycle
+        for ($i = 0; $i < $categoryCount; $i++) {
+            $currentIndex = ($startIndex + $i) % $categoryCount;
             $currentCategory = $categories[$currentIndex];
 
             foreach ($eligibleExchangeSymbols[$currentCategory] as $directionGroup) {
                 if ($directionGroup->isNotEmpty()) {
-                    return $directionGroup->shift();
+                    $symbol = $directionGroup->shift();
+                    $this->categoryPointer = $currentCategory; // Update the pointer to this category
+
+                    return $symbol;
                 }
             }
         }
 
+        // Step 4: No eligible symbols available
         return null;
     }
 
