@@ -29,6 +29,7 @@ class RefreshDataCommand extends Command
 
         // Optional truncation of base data tables if --clean is provided
         if ($this->option('clean')) {
+            File::put(storage_path('logs/laravel.log'), '');
             DB::table('core_job_queue')->truncate();
             DB::table('api_requests_log')->truncate();
             DB::table('symbols')->truncate();

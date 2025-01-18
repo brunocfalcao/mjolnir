@@ -28,6 +28,8 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
     public function computeApiable()
     {
+        $this->exchangeSymbol->load('symbol');
+
         $previousJobQueue = $this->coreJobQueue->getPrevious()->first();
 
         // Convert array to have the indicator id as the key.
@@ -35,6 +37,8 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
         // Get timeframe of previous indicator calculation job.
         $this->timeFrame = $previousJobQueue->arguments['timeframe'];
+
+        info('[AssessExchangeSymbolDirectionJob] - '.$this->exchangeSymbol->symbol->token.' - '.$this->timeFrame);
 
         /**
          * All the indicators needs to give the same conclusion, for the
@@ -104,7 +108,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
         $timeframes = $this->exchangeSymbol->tradeConfiguration->indicator_timeframes;
         $currentTimeFrameIndex = array_search($this->timeFrame, $timeframes);
 
-        if ($currentTimeFrameIndex != false && isset($timeframes[$currentTimeFrameIndex + 1])) {
+        if (isset($timeframes[$currentTimeFrameIndex + 1])) {
             $nextTimeFrame = $timeframes[$currentTimeFrameIndex + 1];
 
             $blockUuid = (string) Str::uuid();
