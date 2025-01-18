@@ -3,14 +3,14 @@
 namespace Nidavellir\Mjolnir\Jobs\Processes\CreatePosition;
 
 use Illuminate\Support\Str;
-use Nidavellir\Thor\Models\Symbol;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\ExchangeSymbol;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\Symbol;
 use Nidavellir\Thor\Models\TradeConfiguration;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
-use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 
 class AssignTokensToPositionsJob extends BaseQueuableJob
 {
@@ -59,16 +59,14 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
             ->pluck('exchange_symbol_id')
             ->toArray();
 
-        // Remove already opened exchange symbols from eligible symbols
         $eligibleExchangeSymbols = $eligibleExchangeSymbols->map(function ($directions) use ($openedExchangeSymbols) {
             return $directions->map(function ($directionGroup) use ($openedExchangeSymbols) {
                 return $directionGroup->reject(function ($symbol) use ($openedExchangeSymbols) {
                     return in_array($symbol->id, $openedExchangeSymbols);
-                })->sortBy('indicator_timeframe')->values();
+                })->values();
             });
         });
 
-        // Log eligible symbols after removing opened ones
         info("[AssignTokensToPositionsJob] - Eligible symbols after filtering opened positions:");
         foreach ($eligibleExchangeSymbols as $category => $directions) {
             info("[AssignTokensToPositionsJob] - Category: {$category}");
@@ -80,28 +78,25 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
             }
         }
 
-        // Remove fast-traded symbols already assigned to opened positions
         $fastTradedSymbols = $fastTradedSymbols->reject(function ($symbol) use ($openedExchangeSymbols) {
             return in_array($symbol->id, $openedExchangeSymbols);
         })->values();
 
         info("[AssignTokensToPositionsJob] - Fast traded symbols after filtering opened positions: " . $fastTradedSymbols->pluck('symbol.token')->join(', '));
 
-        // Initialize category selection tracking to ensure dispersion
-        $categorySelectionTracker = collect();
+        $lastSelectedCategory = null;
 
         foreach ($positions as $position) {
             $preferredDirection = $remainingLongs > $remainingShorts ? 'LONG' : 'SHORT';
 
-            $symbol = $fastTradedSymbols->shift() ?: $this->selectNextSymbol($eligibleExchangeSymbols, $preferredDirection, $categorySelectionTracker);
+            $symbol = $fastTradedSymbols->shift() ?: $this->selectNextSymbol($eligibleExchangeSymbols, $preferredDirection, $lastSelectedCategory);
 
             if ($symbol) {
                 $this->assignSymbolToPosition($position, $symbol);
 
-                // Update eligible symbols to remove selected symbol
                 $eligibleExchangeSymbols = $this->removeSelectedSymbol($eligibleExchangeSymbols, $symbol);
 
-                $categorySelectionTracker->push($symbol->symbol->category_canonical);
+                $lastSelectedCategory = $symbol->symbol->category_canonical;
 
                 if ($symbol->direction === 'LONG') {
                     $remainingLongs--;
@@ -137,53 +132,43 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
 
     private function organizeEligibleSymbols()
     {
-        $timeframeOrder = TradeConfiguration::default()->first()->indicator_timeframes;
+        $timeframeOrdering = TradeConfiguration::default()->first()->indicator_timeframes;
 
         $eligibleSymbols = ExchangeSymbol::eligible()
-        ->where('quote_id', $this->account->quote->id)
-        ->with('symbol', 'tradeConfiguration')
-        ->get()
-        ->groupBy(fn ($symbol) => $symbol->symbol->category_canonical)
-        ->map(function ($group) use ($timeframeOrder) {
-            return $group->groupBy('direction')->map(function ($directionGroup) use ($timeframeOrder) {
-                return $directionGroup->sortBy(function ($symbol) use ($timeframeOrder) {
-                    // Sort timeframes according to their position in $timeframeOrder
-                    return array_search($symbol->indicator_timeframe, $timeframeOrder);
-                })->values();
+            ->where('quote_id', $this->account->quote->id)
+            ->with('symbol', 'tradeConfiguration')
+            ->get()
+            ->groupBy(fn ($symbol) => $symbol->symbol->category_canonical)
+            ->map(function ($group) use ($timeframeOrdering) {
+                return $group->groupBy('direction')->map(function ($directionGroup) use ($timeframeOrdering) {
+                    return $directionGroup->sortBy(function ($symbol) use ($timeframeOrdering) {
+                        return array_search($symbol->indicator_timeframe, $timeframeOrdering);
+                    })->values();
+                });
             });
-        });
 
         return $eligibleSymbols;
     }
 
-    private function selectNextSymbol($eligibleExchangeSymbols, $preferredDirection, $categorySelectionTracker)
+    private function selectNextSymbol($eligibleExchangeSymbols, $preferredDirection, &$lastSelectedCategory)
     {
-        // Prioritize unselected categories for dispersion
-        $unselectedCategories = $eligibleExchangeSymbols->keys()->diff($categorySelectionTracker);
+        $categories = $eligibleExchangeSymbols->keys()->toArray();
+        $startIndex = $lastSelectedCategory ? array_search($lastSelectedCategory, $categories) + 1 : 0;
 
-        foreach ($unselectedCategories as $category) {
-            if (isset($eligibleExchangeSymbols[$category][$preferredDirection]) && $eligibleExchangeSymbols[$category][$preferredDirection]->isNotEmpty()) {
-                return $eligibleExchangeSymbols[$category][$preferredDirection]->shift();
+        for ($i = 0; $i < count($categories); $i++) {
+            $currentIndex = ($startIndex + $i) % count($categories);
+            $currentCategory = $categories[$currentIndex];
+
+            if (isset($eligibleExchangeSymbols[$currentCategory][$preferredDirection]) && $eligibleExchangeSymbols[$currentCategory][$preferredDirection]->isNotEmpty()) {
+                return $eligibleExchangeSymbols[$currentCategory][$preferredDirection]->shift();
             }
         }
 
-        foreach ($unselectedCategories as $category) {
-            foreach ($eligibleExchangeSymbols[$category] as $directionGroup) {
-                if ($directionGroup->isNotEmpty()) {
-                    return $directionGroup->shift();
-                }
-            }
-        }
+        for ($i = 0; $i < count($categories); $i++) {
+            $currentIndex = ($startIndex + $i) % count($categories);
+            $currentCategory = $categories[$currentIndex];
 
-        // Fallback to all categories if no unselected category is available
-        foreach ($eligibleExchangeSymbols as $category => $directions) {
-            if (isset($directions[$preferredDirection]) && $directions[$preferredDirection]->isNotEmpty()) {
-                return $directions[$preferredDirection]->shift();
-            }
-        }
-
-        foreach ($eligibleExchangeSymbols as $category => $directions) {
-            foreach ($directions as $directionGroup) {
+            foreach ($eligibleExchangeSymbols[$currentCategory] as $directionGroup) {
                 if ($directionGroup->isNotEmpty()) {
                     return $directionGroup->shift();
                 }
