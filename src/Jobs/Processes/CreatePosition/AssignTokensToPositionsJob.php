@@ -3,13 +3,14 @@
 namespace Nidavellir\Mjolnir\Jobs\Processes\CreatePosition;
 
 use Illuminate\Support\Str;
-use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
+use Nidavellir\Thor\Models\Symbol;
 use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\ExchangeSymbol;
-use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\Symbol;
+use Nidavellir\Thor\Models\TradeConfiguration;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 
 class AssignTokensToPositionsJob extends BaseQueuableJob
 {
@@ -32,6 +33,8 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
 
         $fastTradedSymbols = $this->tryToGetFastTradedSymbols();
 
+        info("[AssignTokensToPositionsJob] - Fast traded symbols: " . $fastTradedSymbols->pluck('symbol.token')->join(', '));
+
         $longCount = $this->account->positions->where('status', 'active')->where('direction', 'LONG')->count();
         $shortCount = $this->account->positions->where('status', 'active')->where('direction', 'SHORT')->count();
 
@@ -39,6 +42,16 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
         $remainingShorts = ($this->account->should_try_half_positions_direction) ? floor(count($positions) / 2) - $shortCount : null;
 
         $eligibleExchangeSymbols = $this->organizeEligibleSymbols();
+
+        foreach ($eligibleExchangeSymbols as $category => $directions) {
+            info("[AssignTokensToPositionsJob] - Category: {$category}");
+            foreach ($directions as $direction => $symbols) {
+                info("[AssignTokensToPositionsJob] -- Direction: {$direction}");
+                foreach ($symbols as $symbol) {
+                    info("[AssignTokensToPositionsJob] --- Symbol: {$symbol->symbol->token} ({$symbol->indicator_timeframe})");
+                }
+            }
+        }
 
         $openedExchangeSymbols = Position::opened()
             ->where('account_id', $this->account->id)
@@ -55,10 +68,24 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
             });
         });
 
+        // Log eligible symbols after removing opened ones
+        info("[AssignTokensToPositionsJob] - Eligible symbols after filtering opened positions:");
+        foreach ($eligibleExchangeSymbols as $category => $directions) {
+            info("[AssignTokensToPositionsJob] - Category: {$category}");
+            foreach ($directions as $direction => $symbols) {
+                info("[AssignTokensToPositionsJob] -- Direction: {$direction}");
+                foreach ($symbols as $symbol) {
+                    info("[AssignTokensToPositionsJob] --- Symbol: {$symbol->symbol->token} ({$symbol->indicator_timeframe})");
+                }
+            }
+        }
+
         // Remove fast-traded symbols already assigned to opened positions
         $fastTradedSymbols = $fastTradedSymbols->reject(function ($symbol) use ($openedExchangeSymbols) {
             return in_array($symbol->id, $openedExchangeSymbols);
         })->values();
+
+        info("[AssignTokensToPositionsJob] - Fast traded symbols after filtering opened positions: " . $fastTradedSymbols->pluck('symbol.token')->join(', '));
 
         // Initialize category selection tracking to ensure dispersion
         $categorySelectionTracker = collect();
@@ -110,16 +137,21 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
 
     private function organizeEligibleSymbols()
     {
+        $timeframeOrder = TradeConfiguration::default()->first()->indicator_timeframes;
+
         $eligibleSymbols = ExchangeSymbol::eligible()
-            ->where('quote_id', $this->account->quote->id)
-            ->with('symbol', 'tradeConfiguration')
-            ->get()
-            ->groupBy(fn ($symbol) => $symbol->symbol->category_canonical)
-            ->map(function ($group) {
-                return $group->groupBy('direction')->map(function ($directionGroup) {
-                    return $directionGroup->sortBy('indicator_timeframe')->values();
-                });
+        ->where('quote_id', $this->account->quote->id)
+        ->with('symbol', 'tradeConfiguration')
+        ->get()
+        ->groupBy(fn ($symbol) => $symbol->symbol->category_canonical)
+        ->map(function ($group) use ($timeframeOrder) {
+            return $group->groupBy('direction')->map(function ($directionGroup) use ($timeframeOrder) {
+                return $directionGroup->sortBy(function ($symbol) use ($timeframeOrder) {
+                    // Sort timeframes according to their position in $timeframeOrder
+                    return array_search($symbol->indicator_timeframe, $timeframeOrder);
+                })->values();
             });
+        });
 
         return $eligibleSymbols;
     }
