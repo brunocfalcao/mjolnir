@@ -24,6 +24,11 @@ class SyncAllSymbolsJob extends BaseApiableJob
 
     public function computeApiable()
     {
+        // Anything to update?
+        if (!Symbol::whereNull('image_url')->pluck('cmc_id')->isNotEmpty()) {
+            return;
+        }
+
         $this->api = new ApiRESTProxy('coinmarketcap', new ApiCredentials(Account::admin('coinmarketcap')->credentials));
 
         $response = $this->api->getSymbolsMetadata($this->prepareApiProperties());
