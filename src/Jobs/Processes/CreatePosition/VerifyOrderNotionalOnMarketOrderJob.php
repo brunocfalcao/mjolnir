@@ -40,9 +40,9 @@ class VerifyOrderNotionalOnMarketOrderJob extends BaseApiableJob
 
         $quantityForMarketOrder = api_format_quantity($quantity / get_market_order_amount_divider($totalLimitOrders), $this->position->exchangeSymbol);
 
-        if ($quantityForMarketOrder == 0) {
-            $this->coreJobQueue->updateToFailed('Market order quantity will be zero, this exchange symbol cannot be selected', true);
-            $this->position->updateToFailed('Market order quantity will be zero, this exchange symbol cannot be selected');
+        if ($quantityForMarketOrder * $this->markPrice < $this->position->exchangeSymbol->min_notional) {
+            $this->coreJobQueue->updateToFailed('Position notional less than exchange symbol minimum notional', true);
+            $this->position->updateToFailed('Position notional less than exchange symbol minimum notional');
         }
     }
 

@@ -32,6 +32,13 @@ class SyncOrdersCommand extends Command
 
     private function syncOrdersForPosition(Position $position)
     {
+        $apiPositions = $position->apiQueryPositions();
+
+        // Update position to closing so the Api Order observer will know about it.
+        if (! array_key_exists($position->parsedTradingPair, $apiPositions)) {
+            $this->position->updateToClosing();
+        }
+
         foreach ($position
             ->orders
             ->whereNotNull('exchange_order_id')
