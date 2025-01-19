@@ -24,14 +24,6 @@ class UpdateAccountsBalancesCommand extends Command
         foreach ($accounts as $account) {
             $balance = $account->apiQuery()->result;
 
-            // Update directly the account itself.
-            $account->update([
-                'total_wallet_balance' => $balance['totalWalletBalance'],
-                'total_unrealized_profit' => $balance['totalUnrealizedProfit'],
-                'total_maintenance_margin' => $balance['totalMaintMargin'],
-                'total_margin_balance' => $balance['totalMarginBalance'],
-            ]);
-
             // Save snapshot in the account balance history.
             AccountBalanceHistory::create([
                 'account_id' => $account->id,
