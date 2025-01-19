@@ -52,22 +52,14 @@ function notional(Position $position)
 
 function remove_trailing_zeros(float $number): float
 {
-    // Convert the number to a string
-    $stringNumber = (string) $number;
+    // Check if the number has a decimal point
+    if (strpos((string) $number, '.') !== false) {
+        // Remove trailing zeros using rtrim with a specific character set
+        $stringNumber = rtrim(rtrim((string) $number, '0'), '.');
 
-    // Iterate backwards to remove trailing zeros
-    for ($i = strlen($stringNumber) - 1; $i >= 0; $i--) {
-        if ($stringNumber[$i] === '0') {
-            $stringNumber = substr($stringNumber, 0, $i);
-        } elseif ($stringNumber[$i] === '.') {
-            // Remove the decimal point if it's the last character
-            $stringNumber = substr($stringNumber, 0, $i);
-            break;
-        } else {
-            break;
-        }
+        return (float) $stringNumber;
     }
 
-    // Convert back to float and return
-    return (float) $stringNumber;
+    // Return the number unchanged if it doesn't have a decimal part
+    return $number;
 }

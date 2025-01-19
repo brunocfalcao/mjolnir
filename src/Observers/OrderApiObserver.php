@@ -35,17 +35,17 @@ class OrderApiObserver
         $quantityChanged = false;
 
         if ($order->getOriginal('status') != $order->status) {
-            info('[OrderApiObserver] - '.$order->type.' Order ID: '.$order->id.' - status changed detected');
+            info('[OrderApiObserver] - '.$order->type.' Order ID: '.$order->id.' - status changed from '.$order->getOriginal('status').' to '.$order->status);
             $statusChanged = true;
         }
 
         if ($order->getOriginal('price') != $order->price) {
-            info('[OrderApiObserver] - '.$order->type.' Order ID: '.$order->id.' - price changed detected');
+            info('[OrderApiObserver] - '.$order->type.' Order ID: '.$order->id.' - price changed from '.$order->getOriginal('price').' to '.$order->price);
             $priceChanged = true;
         }
 
         if ($order->getOriginal('quantity') != $order->quantity) {
-            info('[OrderApiObserver] - '.$order->type.' Order ID: '.$order->id.' - quantity changed detected');
+            info('[OrderApiObserver] - '.$order->type.' Order ID: '.$order->id.' - quantity changed from '.$order->getOriginal('quantity').' to '.$order->quantity);
             $quantityChanged = true;
         }
 

@@ -51,11 +51,24 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
         // Calculate the total trade quantity given the notional and mark price.
         $this->quantity = $this->getTotalTradeQuantity();
 
+        info('Current Price: '.
+             $this->markPrice.
+             ', Margin: '.
+             $this->position->margin.
+             ', Leverage: '.
+             $this->position->leverage.
+             ', Notional: '.
+             notional($this->position).
+             ', Total Trade Quantity: '.
+            $this->quantity);
+
         /**
          * Create orders.
          * Limit orders, then market order, then profit order.
          */
         foreach ($this->position->order_ratios as $ratio) {
+            info('Quantity computed: '.api_format_quantity($this->quantity / $ratio[1], $this->position->exchangeSymbol));
+
             Order::create([
                 'position_id' => $this->position->id,
                 'type' => 'LIMIT',

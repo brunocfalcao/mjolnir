@@ -17,8 +17,8 @@ class SyncOrdersCommand extends Command
 
     public function handle()
     {
-        // File::put(storage_path('logs/laravel.log'), '');
-        // DB::table('core_job_queue')->truncate();
+        File::put(storage_path('logs/laravel.log'), '');
+        DB::table('core_job_queue')->truncate();
 
         // Fetch all open positions for the account and process them
         $positions = $this->getOpenPositions();

@@ -87,6 +87,16 @@ class CreatePositionLifecycleJob extends BaseQueuableJob
         ]);
 
         CoreJobQueue::create([
+            'class' => VerifyOrderNotionalOnMarketOrderJob::class,
+            'queue' => 'positions',
+            'arguments' => [
+                'positionId' => $this->position->id,
+            ],
+            'index' => $index++,
+            'block_uuid' => $blockUuid,
+        ]);
+
+        CoreJobQueue::create([
             'class' => DispatchPositionOrdersJob::class,
             'queue' => 'orders',
             'arguments' => [
@@ -110,7 +120,7 @@ class CreatePositionLifecycleJob extends BaseQueuableJob
         $this->notify($message);
     }
 
-    public function resolveException(Throwable $e)
+    public function resolveException(\Throwable $e)
     {
         $this->position
             ->update([
