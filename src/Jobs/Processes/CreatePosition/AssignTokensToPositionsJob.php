@@ -67,7 +67,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
                     ]);
                 } else {
                     // Non available exchange symbols. Fail position.
-                    $this->position->updateToFailed('No exchange symbols available, try again later');
+                    $position->updateToFailed('No exchange symbols available, try again later');
                 }
             }
         }
