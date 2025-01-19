@@ -38,17 +38,17 @@ class OrderApiObserver
 
         $token = $order->position->exchangeSymbol->symbol->token;
 
-        if ($order->getOriginal('status') != $order->status) {
+        if ($order->wasChanged('status') && !empty($order->getOriginal('status')) && $order->getOriginal('status') != $order->status) {
             info('[OrderApiObserver] ' . $token . ' - '.$order->type.' Order ID: '.$order->id.' - status changed from '.$order->getOriginal('status').' to '.$order->status);
             $statusChanged = true;
         }
 
-        if ($order->getOriginal('price') != $order->price) {
+        if ($order->wasChanged('price') && !empty($order->getOriginal('price')) && $order->getOriginal('price') != $order->price) {
             info('[OrderApiObserver] ' . $token . ' - '.$order->type.' Order ID: '.$order->id.' - price changed from '.$order->getOriginal('price').' to '.$order->price);
             $priceChanged = true;
         }
 
-        if ($order->getOriginal('quantity') != $order->quantity) {
+        if ($order->wasChanged('quantity') && !empty($order->getOriginal('quantity')) && $order->getOriginal('quantity') != $order->quantity) {
             info('[OrderApiObserver] ' . $token . ' - '.$order->type.' Order ID: '.$order->id.' - quantity changed from '.$order->getOriginal('quantity').' to '.$order->quantity);
             $quantityChanged = true;
         }
