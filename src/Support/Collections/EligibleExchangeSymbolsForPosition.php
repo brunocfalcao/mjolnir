@@ -116,17 +116,19 @@ class EligibleExchangeSymbolsForPosition
             }
         }
 
+        // This option overrides a fallback.
         if ($position->account->with_half_positions_direction) {
             $longs = $exchangeSymbolsInOpenPositions->where('direction', 'LONG')->count();
             $shorts = $exchangeSymbolsInOpenPositions->where('direction', 'SHORT')->count();
 
             if ($longs >= $shorts) {
-                $selectedExchangeSymbol = $exchangeSymbolsAvailable->firstWhere('direction', 'SHORT');
+                return $exchangeSymbolsAvailable->firstWhere('direction', 'SHORT');
             } else {
-                $selectedExchangeSymbol = $exchangeSymbolsAvailable->firstWhere('direction', 'LONG');
+                return $exchangeSymbolsAvailable->firstWhere('direction', 'LONG');
             }
         }
 
+        // A last fallback. Just get the shortest timeframe exchange symbol.
         return $selectedExchangeSymbol ?? $exchangeSymbolsAvailable->first();
     }
 }
