@@ -42,7 +42,7 @@ class PlaceOrderJob extends BaseApiableJob
     public function authorize()
     {
         // Any order failed?
-        if ($this->order->position->orders->where('status', 'failed')->isNotEmpty()) {
+        if ($this->order->position->orders->where('status', 'FAILED')->isNotEmpty()) {
             throw new \Exception('Other orders failed, aborting place orders.');
         }
 

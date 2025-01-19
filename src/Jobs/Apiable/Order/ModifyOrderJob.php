@@ -24,7 +24,7 @@ class ModifyOrderJob extends BaseApiableJob
 
     public float $quantity;
 
-    public function __construct(int $orderId, ?float $quantity = null, ?float $price = null)
+    public function __construct(int $orderId, float $quantity, float $price)
     {
         $this->order = Order::with(['position.account.apiSystem'])->findOrFail($orderId);
 
