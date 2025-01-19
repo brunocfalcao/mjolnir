@@ -9,6 +9,7 @@ use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\User;
 
 class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
 {
@@ -35,7 +36,20 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
         $wap = $this->position->calculateWAP();
 
         if ($wap['quantity'] != null && $wap['price'] != null) {
-            $apiResponse = $this->position->orders->firstWhere('type', 'PROFIT')->apiModify($wap['quantity'], $wap['price']);
+            // Obtain info from the profit order.
+            $profitOrder = $this->position->orders->firstWhere('type', 'PROFIT');
+            $originalPrice = $profitOrder->price;
+            $originalQuantity = $profitOrder->quantity;
+
+            $apiResponse = $profitOrder->apiModify($wap['quantity'], $wap['price']);
+
+            User::admin()->get()->each(function ($user) use ($originalPrice, $originalQuantity, $profitOrder) {
+                $user->pushover(
+                    message: "{$this->position->parsedTradingPair} WAP triggered. Price: {$originalPrice} to {$profitOrder->price}, Qty: {$originalQuantity} to {$profitOrder->quantity}",
+                    title: 'WAP triggered',
+                    applicationKey: 'nidavellir_orders'
+                );
+            });
 
             // Inform the order observer not to put the PROFIT order back on its original values.
             $this->position->update(['wap_triggered' => true]);

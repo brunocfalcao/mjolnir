@@ -23,7 +23,6 @@ class EligibleExchangeSymbolsForPosition
         $exchangeSymbolsEligible->load(['symbol', 'quote']);
 
         // Reject all exchange symbols with a notional lower than the position notional.
-
         if ($position->order_ratios && $position->notional && $position->leverage) {
             if ($notional != 0) {
                 $exchangeSymbolsEligible = $exchangeSymbolsEligible->reject(function ($exchangeSymbol) use ($position) {
