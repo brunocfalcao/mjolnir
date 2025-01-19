@@ -77,7 +77,7 @@ class SelectPositionMarginJob extends BaseApiableJob
             )
         );
 
-        if ($this->account->margin) {
+        if ($this->position->margin) {
             // Update the position margin, and move on.
             $this->position->update(['margin' => $margin]);
         } else {
