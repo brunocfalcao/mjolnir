@@ -132,12 +132,16 @@ class EligibleExchangeSymbolsForPosition
             $maxHalfPositions = $position->account->max_concurrent_trades / 2;
 
             if ($longs < $maxHalfPositions) {
-                return $exchangeSymbolsAvailable->firstWhere('direction', 'LONG');
+                $selectedExchangeSymbol = $exchangeSymbolsAvailable->firstWhere('direction', 'LONG');
             }
 
-            if ($shorts < $maxHalfPositions) {
-                return $exchangeSymbolsAvailable->firstWhere('direction', 'SHORT');
+            if (!$selectedExchangeSymbol) {
+                if ($shorts < $maxHalfPositions) {
+                    $selectedExchangeSymbol = $exchangeSymbolsAvailable->firstWhere('direction', 'SHORT');
+                }
             }
+
+            return $selectedExchangeSymbol;
             /*
             if ($longs >= $shorts) {
                 return $exchangeSymbolsAvailable->firstWhere('direction', 'SHORT');
