@@ -27,7 +27,8 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
 
     public function compute()
     {
-        $positions = Position::opened()
+        $positions = Position
+            ->where('status', 'new')
             ->where(
                 'account_id',
                 $this->account->id
