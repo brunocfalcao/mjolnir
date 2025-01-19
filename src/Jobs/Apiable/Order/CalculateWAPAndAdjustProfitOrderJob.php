@@ -43,6 +43,9 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
 
             $apiResponse = $profitOrder->apiModify($wap['quantity'], $wap['price']);
 
+            // Inform the order observer not to put the PROFIT order back on its original values.
+            $this->position->update(['wap_triggered' => true]);
+
             User::admin()->get()->each(function ($user) use ($originalPrice, $originalQuantity, $profitOrder) {
                 $user->pushover(
                     message: "{$this->position->parsedTradingPair} WAP triggered. Price: {$originalPrice} to {$profitOrder->price}, Qty: {$originalQuantity} to {$profitOrder->quantity}",
@@ -50,9 +53,6 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
                     applicationKey: 'nidavellir_orders'
                 );
             });
-
-            // Inform the order observer not to put the PROFIT order back on its original values.
-            $this->position->update(['wap_triggered' => true]);
         } else {
             throw new \Exception('A WAP calculation was requested but there was an error. Position ID: '.$this->position->id);
         }
