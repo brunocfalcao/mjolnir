@@ -30,6 +30,7 @@ class CreateNewPositionsJob extends BaseQueuableJob
 
     public function compute()
     {
+        /*
         info('[CreateNewPositionsJob] - Creating '.$this->numPositions.' position(s) to '.$this->account->user->name);
 
         $testToken = 'SOL';
@@ -46,6 +47,7 @@ class CreateNewPositionsJob extends BaseQueuableJob
             'exchange_symbol_id' => $testExchangeSymbol->id,
             'direction' => $testExchangeSymbol->direction,
         ];
+        */
 
         $data = array_merge($this->extraData, [
             'account_id' => $this->account->id,
