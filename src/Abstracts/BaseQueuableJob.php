@@ -61,7 +61,9 @@ abstract class BaseQueuableJob extends BaseJob
 
             // All good.
         } catch (\Throwable $e) {
+            info('[BaseQueuableJob] - On catch()');
             if ($e instanceof NonOverridableException) {
+                info('[BaseQueuableJob] - $e is an instance of NonOverridableException');
                 // Last try to make things like a rollback.
                 if (method_exists($this, 'resolveException')) {
                     $this->resolveException($e);
@@ -80,6 +82,7 @@ abstract class BaseQueuableJob extends BaseJob
                 return;
             }
 
+            info('[BaseQueuableJob] - $e is NOT and instance of NonOverridableException');
             /**
              * We will try to run the 3 exception handler methods from the
              * exceptionHandler if exists. Then we will run the local ones.
@@ -203,6 +206,11 @@ abstract class BaseQueuableJob extends BaseJob
 
         // Attempt to decode JSON body or fallback to raw string
         return json_decode($body, true) ?? (string) $body;
+    }
+
+    public function failed(?Throwable $exception): void
+    {
+        $this->coreJobQueue->updateToFailed($e);
     }
 
     abstract protected function compute();

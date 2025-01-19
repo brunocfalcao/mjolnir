@@ -4,7 +4,7 @@ namespace Nidavellir\Mjolnir\Jobs\Apiable\Order;
 
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Jobs\Apiable\Position\CancelOpenOrdersFromPositionJob;
+use Nidavellir\Mjolnir\Jobs\Apiable\Position\CancelOpenOrdersJob;
 use Nidavellir\Mjolnir\Jobs\Apiable\Position\ClosePositionJob;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
@@ -108,7 +108,7 @@ class PlaceOrderJob extends BaseApiableJob
     public function resolveException(\Throwable $e)
     {
         CoreJobQueue::create([
-            'class' => CancelOpenOrdersFromPositionJob::class,
+            'class' => CancelOpenOrdersJob::class,
             'queue' => 'orders',
             'arguments' => [
                 'positionId' => $this->order->position->id,

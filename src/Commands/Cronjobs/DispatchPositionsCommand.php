@@ -27,7 +27,7 @@ class DispatchPositionsCommand extends Command
 
         if ($this->option('clean')) {
             $this->cleanData();
-            $this->createTestingData();
+            // $this->createTestingData();
         }
 
         // Do we have exchange symbols?

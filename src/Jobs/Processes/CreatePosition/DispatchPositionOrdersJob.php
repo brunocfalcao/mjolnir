@@ -88,9 +88,6 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
 
     protected function dispatchOrders()
     {
-        // Testing purposes.
-        return;
-
         $blockUuid = (string) Str::uuid();
 
         $this->position->orders->each(function ($order) use ($blockUuid) {
