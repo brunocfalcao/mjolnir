@@ -27,6 +27,10 @@ class OrderApiObserver
             return;
         }
 
+        if ($order->type == 'MARKET') {
+            return;
+        }
+
         /**
          * Get all status variables.
          */
