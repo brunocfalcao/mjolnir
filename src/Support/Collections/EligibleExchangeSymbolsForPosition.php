@@ -129,7 +129,7 @@ class EligibleExchangeSymbolsForPosition
              * But, if we have 5 longs open, we can still open one more long.
              */
 
-            $maxHalfPositions = $position->max_concurrent_trades / 2;
+            $maxHalfPositions = $position->account->max_concurrent_trades / 2;
 
             if ($longs < $maxHalfPositions) {
                 return $exchangeSymbolsAvailable->firstWhere('direction', 'LONG');
