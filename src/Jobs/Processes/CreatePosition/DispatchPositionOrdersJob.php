@@ -104,7 +104,7 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
         $blockUuid = (string) Str::uuid();
 
         $this->position->orders->each(function ($order) use ($blockUuid) {
-            //info('[DispatchPositionOrdersJob] - Dispatching order ID '.$order->id.' ('.$order->type.')');
+            // info('[DispatchPositionOrdersJob] - Dispatching order ID '.$order->id.' ('.$order->type.')');
 
             CoreJobQueue::create([
                 'class' => PlaceOrderJob::class,

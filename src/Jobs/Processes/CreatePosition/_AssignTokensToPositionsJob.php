@@ -40,7 +40,7 @@ class _AssignTokensToPositionsJob extends BaseQueuableJob
 
         $fastTradedSymbols = $this->tryToGetFastTradedSymbols();
 
-        //info('[AssignTokensToPositionsJob] - Fast traded symbols: '.$fastTradedSymbols->pluck('symbol.token')->join(', '));
+        // info('[AssignTokensToPositionsJob] - Fast traded symbols: '.$fastTradedSymbols->pluck('symbol.token')->join(', '));
 
         $longCount = $this->account->positions->where('status', 'active')->where('direction', 'LONG')->count();
         $shortCount = $this->account->positions->where('status', 'active')->where('direction', 'SHORT')->count();
@@ -68,7 +68,7 @@ class _AssignTokensToPositionsJob extends BaseQueuableJob
             return in_array($symbol->id, $openedExchangeSymbols);
         })->values();
 
-        //info('[AssignTokensToPositionsJob] - Fast traded symbols after filtering opened positions: '.$fastTradedSymbols->pluck('symbol.token')->join(', '));
+        // info('[AssignTokensToPositionsJob] - Fast traded symbols after filtering opened positions: '.$fastTradedSymbols->pluck('symbol.token')->join(', '));
 
         foreach ($positions as $position) {
             $preferredDirection = $remainingLongs > $remainingShorts ? 'LONG' : 'SHORT';
@@ -91,7 +91,7 @@ class _AssignTokensToPositionsJob extends BaseQueuableJob
         }
 
         foreach (Position::opened()->fromAccount($this->account)->with('account')->get() as $position) {
-            //info('Starting Position lifecycle for account ID '.$position->account->id.' and position ID '.$position->id.' ('.$position->account->user->name.')');
+            // info('Starting Position lifecycle for account ID '.$position->account->id.' and position ID '.$position->id.' ('.$position->account->user->name.')');
 
             $index = 1;
             $blockUuid = (string) Str::uuid();
@@ -204,7 +204,7 @@ class _AssignTokensToPositionsJob extends BaseQueuableJob
             'direction' => $position->direction ?: $symbol->direction,
         ]);
 
-        //info("[AssignTokensToPositionsJob] - Assigned {$symbol->symbol->token} ({$symbol->direction}) ({$symbol->symbol->category_canonical}) to position ID {$position->id}");
+        // info("[AssignTokensToPositionsJob] - Assigned {$symbol->symbol->token} ({$symbol->direction}) ({$symbol->symbol->category_canonical}) to position ID {$position->id}");
     }
 
     private function removeSelectedSymbol($eligibleExchangeSymbols, $selectedSymbol)

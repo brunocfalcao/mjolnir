@@ -44,7 +44,7 @@ class SelectPositionMarginJob extends BaseApiableJob
 
         // Margin already exists?
         if ($this->position->margin) {
-            //info('[SelectPositionMarginJob] - Margin (already existed): '.$this->position->margin);
+            // info('[SelectPositionMarginJob] - Margin (already existed): '.$this->position->margin);
 
             return;
         }
@@ -52,7 +52,7 @@ class SelectPositionMarginJob extends BaseApiableJob
         if ($this->account->margin_override) {
             // Update the position margin with the account margin override.
             $this->position->update(['margin' => $this->account->margin_override]);
-            //info('[SelectPositionMarginJob] - Margin (overrided by account margin): '.$this->position->margin);
+            // info('[SelectPositionMarginJob] - Margin (overrided by account margin): '.$this->position->margin);
 
             return;
         }
@@ -88,7 +88,7 @@ class SelectPositionMarginJob extends BaseApiableJob
             }
         }
 
-        //info('[SelectPositionMarginJob] - Margin (calculated): '.$this->position->margin);
+        // info('[SelectPositionMarginJob] - Margin (calculated): '.$this->position->margin);
     }
 
     public function resolveException(\Throwable $e)
