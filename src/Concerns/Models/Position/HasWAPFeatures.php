@@ -40,6 +40,18 @@ trait HasWAPFeatures
         // Calculate WAP price
         $wapPrice = $totalWeightedPrice / $totalQuantity;
 
+        // Get profit percentage. E.g: 0.330
+        $profitPercentage = $this->profit_percentage;
+
+        // Add the Profit % on top of it.
+        if ($this->direction == 'LONG') {
+            // Add profit for LONG positions
+            $wapPrice = $wapPrice * (1 + $profitPercentage / 100);
+        } elseif ($this->direction == 'SHORT') {
+            // Subtract profit for SHORT positions
+            $wapPrice = $wapPrice * (1 - $profitPercentage / 100);
+        }
+
         // Return total quantity and WAP price as an array, and format both numbers.
         return [
             'quantity' => api_format_quantity($totalQuantity, $this->exchangeSymbol),
