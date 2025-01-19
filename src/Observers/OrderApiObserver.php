@@ -142,6 +142,8 @@ class OrderApiObserver
                 'queue' => 'orders',
                 'arguments' => [
                     'orderId' => $profitOrder->id,
+                    'originalPrice' => $order->getOriginal('price'),
+                    'originalQuantity' => $order->getOriginal('quantity'),
                 ],
             ]);
         }

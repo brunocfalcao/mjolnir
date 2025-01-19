@@ -21,7 +21,11 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
 
     public Order $order;
 
-    public function __construct(int $orderId)
+    public float $originalPrice;
+
+    public float $originalQuantity;
+
+    public function __construct(int $orderId, float $originalPrice, float $originalQuantity)
     {
         $this->order = Order::with(['position.account.apiSystem'])->findOrFail($orderId);
         $this->position = $this->order->position;
@@ -29,6 +33,9 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
         $this->apiSystem = $this->account->apiSystem;
         $this->rateLimiter = RateLimitProxy::make($this->apiSystem->canonical)->withAccount($this->account);
         $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
+
+        $this->originalPrice = $originalPrice;
+        $this->originalQuantity = $originalQuantity;
     }
 
     public function computeApiable()
@@ -38,17 +45,16 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
         if ($wap['quantity'] != null && $wap['price'] != null) {
             // Obtain info from the profit order.
             $profitOrder = $this->position->orders->firstWhere('type', 'PROFIT');
-            $originalPrice = $profitOrder->price;
-            $originalQuantity = $profitOrder->quantity;
 
+            // Modify order for the new WAP values.
             $apiResponse = $profitOrder->apiModify($wap['quantity'], $wap['price']);
 
             // Inform the order observer not to put the PROFIT order back on its original values.
             $this->position->update(['wap_triggered' => true]);
 
-            User::admin()->get()->each(function ($user) use ($originalPrice, $originalQuantity, $profitOrder) {
+            User::admin()->get()->each(function ($user) use ($profitOrder) {
                 $user->pushover(
-                    message: "{$this->position->parsedTradingPair} WAP triggered. Price: {$originalPrice} to {$profitOrder->price}, Qty: {$originalQuantity} to {$profitOrder->quantity}",
+                    message: "{$this->position->parsedTradingPair} WAP triggered. Price: {$this->originalPrice} to {$profitOrder->price}, Qty: {$this->originalQuantity} to {$profitOrder->quantity}",
                     title: 'WAP triggered',
                     applicationKey: 'nidavellir_orders'
                 );
