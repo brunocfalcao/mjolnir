@@ -33,7 +33,7 @@ function get_market_order_amount_divider($totalLimitOrders)
 
 function api_format_quantity($quantity, ExchangeSymbol $exchangeSymbol)
 {
-    info('[api_format_quantity] - Entered '.$quantity.' got out '.remove_trailing_zeros(round($quantity, $exchangeSymbol->quantity_precision)));
+    info('[api_format_quantity] - Entered '.$quantity.' with precision ' . $exchangeSymbol->quantity_precision . ', got out ' . round($quantity, $exchangeSymbol->quantity_precision)) . ' or with trailing zeros: ' . remove_trailing_zeros(round($quantity, $exchangeSymbol->quantity_precision));
 
     return remove_trailing_zeros(round($quantity, $exchangeSymbol->quantity_precision));
 }
