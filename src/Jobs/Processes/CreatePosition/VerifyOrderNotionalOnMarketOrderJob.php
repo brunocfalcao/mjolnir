@@ -40,9 +40,7 @@ class VerifyOrderNotionalOnMarketOrderJob extends BaseApiableJob
 
         $quantityForMarketOrder = api_format_quantity($quantity / get_market_order_amount_divider($totalLimitOrders), $this->position->exchangeSymbol);
 
-        if ($quantityForMarketOrder == 0) {
-            throw new \Exception('Market order quantity will be zero, this exchange symbol cannot be selected');
-        }
+        $this->coreJobQueue->updateToFailed('Market order quantity will be zero, this exchange symbol cannot be selected');
     }
 
     protected function getTotalTradeQuantity(): float
