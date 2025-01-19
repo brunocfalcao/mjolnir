@@ -32,8 +32,6 @@ class DispatchPositionsCommand extends Command
 
         // Do we have exchange symbols?
         if (! ExchangeSymbol::query()->exists()) {
-            throw new \Exception('There are no exchange symbols available');
-
             return;
         }
 
