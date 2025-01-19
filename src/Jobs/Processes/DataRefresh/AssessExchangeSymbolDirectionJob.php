@@ -38,8 +38,6 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
         // Get timeframe of previous indicator calculation job.
         $this->timeFrame = $previousJobQueue->arguments['timeframe'];
 
-        info('[AssessExchangeSymbolDirectionJob] - '.$this->exchangeSymbol->symbol->token.' - '.$this->timeFrame);
-
         /**
          * All the indicators needs to give the same conclusion, for the
          * exchange symbol to be tradeable. If there is no conclusion,

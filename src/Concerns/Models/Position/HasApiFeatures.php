@@ -65,8 +65,6 @@ trait HasApiFeatures
         $positions = $apiResponse->result;
 
         if (array_key_exists($this->parsedTradingPair, $positions)) {
-            info('Position to close found (test): ', $positions[$this->parsedTradingPair]);
-
             // We have a position. Lets place a contrary order to close it.
             $positionFromExchange = $positions[$this->parsedTradingPair];
 
