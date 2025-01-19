@@ -60,7 +60,7 @@ class OrderApiObserver
         $isClosing = $order->position->status == 'closing';
 
         // Non-Profit order price or quantity changed? Resettle order quantity and price.
-        if ($priceChanged || $quantityChanged && ! $isClosing) {
+        if (($priceChanged || $quantityChanged) && ! $isClosing) {
             if ($order->type != 'PROFIT') {
                 info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Order had a price and/or quantity changed. Resettling order');
                 info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ModifyOrderJob::class');
