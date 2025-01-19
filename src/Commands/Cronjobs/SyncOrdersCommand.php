@@ -33,7 +33,7 @@ class SyncOrdersCommand extends Command
     private function syncOrdersForPosition(Position $position)
     {
         $position->load('account');
-        $apiPositions = $position->account->apiQueryPositions();
+        $apiPositions = $position->account->apiQueryPositions()->result;
 
         // Update position to closing so the Api Order observer will know about it.
         if (! array_key_exists($position->parsedTradingPair, $apiPositions)) {
