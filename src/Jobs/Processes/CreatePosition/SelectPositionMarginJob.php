@@ -44,7 +44,7 @@ class SelectPositionMarginJob extends BaseApiableJob
 
         // Margin already exists?
         if ($this->position->margin) {
-            info('[SelectPositionMarginJob] - Margin (already existed): '.$this->position->margin);
+            //info('[SelectPositionMarginJob] - Margin (already existed): '.$this->position->margin);
 
             return;
         }
@@ -52,7 +52,7 @@ class SelectPositionMarginJob extends BaseApiableJob
         if ($this->account->margin_override) {
             // Update the position margin with the account margin override.
             $this->position->update(['margin' => $this->account->margin_override]);
-            info('[SelectPositionMarginJob] - Margin (overrided by account margin): '.$this->position->margin);
+            //info('[SelectPositionMarginJob] - Margin (overrided by account margin): '.$this->position->margin);
 
             return;
         }
@@ -62,9 +62,11 @@ class SelectPositionMarginJob extends BaseApiableJob
 
         $this->balance = $response->result[$this->account->quote->canonical]['crossWalletBalance'];
 
+        /*
         info('[SelectPositionMarginJob] - Balance: '.$this->balance);
         info('[SelectPositionMarginJob] - Max balance percentage: '.$this->account->max_balance_percentage);
         info('[SelectPositionMarginJob] - Position size percentage: '.$this->account->position_size_percentage);
+        */
 
         // The available balance will then be sliced for this account size percentage.
         $margin = remove_trailing_zeros(
@@ -86,7 +88,7 @@ class SelectPositionMarginJob extends BaseApiableJob
             }
         }
 
-        info('[SelectPositionMarginJob] - Margin (calculated): '.$this->position->margin);
+        //info('[SelectPositionMarginJob] - Margin (calculated): '.$this->position->margin);
     }
 
     public function resolveException(\Throwable $e)

@@ -51,6 +51,7 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
         // Calculate the total trade quantity given the notional and mark price.
         $this->quantity = $this->getTotalTradeQuantity();
 
+        /*
         info('Current Price: '.
              $this->markPrice.
              ', Margin: '.
@@ -61,14 +62,13 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
              notional($this->position).
              ', Total Trade Quantity: '.
             $this->quantity);
+        */
 
         /**
          * Create orders.
          * Limit orders, then market order, then profit order.
          */
         foreach ($this->position->order_ratios as $ratio) {
-            info('Quantity computed: '.api_format_quantity($this->quantity / $ratio[1], $this->position->exchangeSymbol));
-
             Order::create([
                 'position_id' => $this->position->id,
                 'type' => 'LIMIT',
@@ -104,7 +104,7 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
         $blockUuid = (string) Str::uuid();
 
         $this->position->orders->each(function ($order) use ($blockUuid) {
-            info('[DispatchPositionOrdersJob] - Dispatching order ID '.$order->id.' ('.$order->type.')');
+            //info('[DispatchPositionOrdersJob] - Dispatching order ID '.$order->id.' ('.$order->type.')');
 
             CoreJobQueue::create([
                 'class' => PlaceOrderJob::class,

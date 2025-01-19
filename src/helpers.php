@@ -35,8 +35,6 @@ function api_format_quantity($quantity, ExchangeSymbol $exchangeSymbol)
 {
     $exchangeSymbol->load('symbol');
 
-    info('[api_format_quantity] '.$exchangeSymbol->symbol->token.' - Entered '.$quantity.' with precision '.$exchangeSymbol->quantity_precision.', got out '.round($quantity, $exchangeSymbol->quantity_precision)).' or with trailing zeros: '.remove_trailing_zeros(round($quantity, $exchangeSymbol->quantity_precision));
-
     return remove_trailing_zeros(round($quantity, $exchangeSymbol->quantity_precision));
 }
 
