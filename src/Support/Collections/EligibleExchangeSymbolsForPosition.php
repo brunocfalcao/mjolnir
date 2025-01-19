@@ -121,11 +121,30 @@ class EligibleExchangeSymbolsForPosition
             $longs = $exchangeSymbolsInOpenPositions->where('direction', 'LONG')->count();
             $shorts = $exchangeSymbolsInOpenPositions->where('direction', 'SHORT')->count();
 
+            /**
+             * We should get a short or a long, but in case there is space for the half
+             * then we get a position on that direction. E.g.:
+             *
+             * 4 Shorts available, 12 longs available.
+             * But, if we have 5 longs open, we can still open one more long.
+             */
+
+            $maxHalfPositions = $position->max_concurrent_trades / 2;
+
+            if ($longs < $maxHalfPositions) {
+                return $exchangeSymbolsAvailable->firstWhere('direction', 'LONG');
+            }
+
+            if ($shorts < $maxHalfPositions) {
+                return $exchangeSymbolsAvailable->firstWhere('direction', 'SHORT');
+            }
+            /*
             if ($longs >= $shorts) {
                 return $exchangeSymbolsAvailable->firstWhere('direction', 'SHORT');
             } else {
                 return $exchangeSymbolsAvailable->firstWhere('direction', 'LONG');
             }
+            */
         }
 
         // A last fallback. Just get the shortest timeframe exchange symbol.
