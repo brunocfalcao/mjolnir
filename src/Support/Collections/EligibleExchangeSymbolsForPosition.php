@@ -50,6 +50,10 @@ class EligibleExchangeSymbolsForPosition
         $tradeConfiguration = TradeConfiguration::default()->first();
         $timeframes = $tradeConfiguration->indicator_timeframes;
 
+        // Reshuffle exchange symbols.
+        $exchangeSymbolsAvailable = $exchangeSymbolsAvailable->shuffle();
+
+        // Sort by shortest timeframe.
         $exchangeSymbolsAvailable = $exchangeSymbolsAvailable->sortBy(function ($exchangeSymbol) use ($timeframes) {
             return array_search($exchangeSymbol->indicator_timeframe, $timeframes);
         });
@@ -59,12 +63,14 @@ class EligibleExchangeSymbolsForPosition
         $usedCategories = $exchangeSymbolsInOpenPositions->pluck('symbol.category_canonical')->unique();
         $availableCategories = $eligibleCategories->diff($usedCategories);
 
+        // Make a backup.
         $backupExchangeSymbols = $exchangeSymbolsAvailable;
 
         $exchangeSymbolsAvailable = $exchangeSymbolsAvailable->filter(function ($exchangeSymbol) use ($availableCategories) {
             return $availableCategories->contains($exchangeSymbol->symbol->category_canonical);
         });
 
+        // Rollback if we dont have symbols.
         if ($exchangeSymbolsAvailable->isEmpty()) {
             $exchangeSymbolsAvailable = $backupExchangeSymbols;
         }
