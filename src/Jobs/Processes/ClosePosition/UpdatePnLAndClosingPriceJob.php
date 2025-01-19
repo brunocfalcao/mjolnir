@@ -41,6 +41,7 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
                 'closing_price' => $closingPrice,
             ]);
 
+            /*
             User::admin()->get()->each(function ($user) use ($pnl) {
                 $user->pushover(
                     message: "{$this->position->parsedTradingPair} closed (PnL: {$pnl})",
@@ -48,6 +49,7 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
                     applicationKey: 'nidavellir_positions'
                 );
             });
+            */
         }
 
         return $apiResponse->response;
