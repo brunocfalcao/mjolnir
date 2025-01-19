@@ -37,7 +37,7 @@ class SyncOrdersCommand extends Command
 
         // Update position to closing so the Api Order observer will know about it.
         if (! array_key_exists($position->parsedTradingPair, $apiPositions)) {
-            $this->position->updateToClosing();
+            $position->updateToClosing();
         }
 
         foreach ($position
