@@ -198,7 +198,6 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
         $position->update([
             'exchange_symbol_id' => $symbol->id,
             'direction' => $position->direction ?: $symbol->direction,
-            'comments' => 'Assigned by AssignTokensToPositionsJob.',
         ]);
 
         info("[AssignTokensToPositionsJob] - Assigned {$symbol->symbol->token} ({$symbol->direction}) ({$symbol->symbol->category_canonical}) to position ID {$position->id}");

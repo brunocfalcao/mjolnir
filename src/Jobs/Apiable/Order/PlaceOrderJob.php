@@ -41,6 +41,11 @@ class PlaceOrderJob extends BaseApiableJob
 
     public function authorize()
     {
+        // Any order failed?
+        if ($this->order->position->orders->where('status', 'failed')->isNotEmpty()) {
+            throw new \Exception('Other orders failed, aborting place orders.');
+        }
+
         // First the market order, then the others.
         return $this->order->type == 'MARKET' || $this->marketOrderSynced();
     }
@@ -122,5 +127,11 @@ class PlaceOrderJob extends BaseApiableJob
                 'positionId' => $this->order->position->id,
             ],
         ]);
+
+        // TODO: The Position needs to be marked as failed, and not as closed. Too tired now.
+
+        $this->order->changeToFailed($e);
+
+        $this->coreJobQueueStatusUpdated = false;
     }
 }

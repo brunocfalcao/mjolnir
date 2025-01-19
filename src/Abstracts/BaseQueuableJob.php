@@ -126,6 +126,8 @@ abstract class BaseQueuableJob extends BaseJob
                 return;
             }
 
+            info('[BaseQueuableJob] - Starting resolvException conditions');
+
             // Last try to make things like a rollback.
             if (method_exists($this, 'resolveException')) {
                 $this->resolveException($e);
@@ -135,7 +137,11 @@ abstract class BaseQueuableJob extends BaseJob
                 $this->exceptionHandler->resolveException($e);
             }
 
+            info('[BaseQueuableJob] - Testing coreJobQueueStatusUpdated '.(bool) $this->coreJobQueueStatusUpdated);
+
             if (! $this->coreJobQueueStatusUpdated) {
+                info('[BaseQueuableJob] - Finalizing state');
+
                 // Update to failed, and it's done.
                 $this->coreJobQueue->updateToFailed($e);
                 $this->coreJobQueue->finalizeDuration();
@@ -208,7 +214,7 @@ abstract class BaseQueuableJob extends BaseJob
         return json_decode($body, true) ?? (string) $body;
     }
 
-    public function failed(?Throwable $exception): void
+    public function failed(\Throwable $e): void
     {
         $this->coreJobQueue->updateToFailed($e);
     }

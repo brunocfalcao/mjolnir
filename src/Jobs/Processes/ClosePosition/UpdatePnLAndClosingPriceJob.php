@@ -41,7 +41,7 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
                 'closing_price' => $closingPrice,
             ]);
 
-            User::admin()->get()->each(function ($user) {
+            User::admin()->get()->each(function ($user) use ($pnl) {
                 $user->pushover(
                     message: "{$this->position->parsedTradingPair} closed (PnL: {$pnl})",
                     title: 'Position closed',
