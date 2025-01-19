@@ -1,0 +1,127 @@
+<?php
+
+namespace Nidavellir\Mjolnir\Support\Collections;
+
+use Illuminate\Support\Collection;
+use Nidavellir\Thor\Models\ExchangeSymbol;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\TradeConfiguration;
+
+class EligibleExchangeSymbolsForPosition
+{
+    public static function getBestExchangeSymbol(Position $position)
+    {
+        // Eager load relationships.
+        $position->load(['account.quote', 'exchangeSymbol.symbol']);
+
+        // Get all exchange symbols on active positions.
+        $exchangeSymbolsInOpenPositions = self::getActiveExchangeSymbols($position);
+        $exchangeSymbolsInOpenPositions->load(['symbol', 'quote']);
+
+        // Get all possible exchange symbols.
+        $exchangeSymbolsEligible = self::getEligibleExchangeSymbols($position);
+        $exchangeSymbolsEligible->load(['symbol', 'quote']);
+
+        // Reject all exchange symbols with a notional lower than the position notional.
+
+        if ($position->order_ratios && $position->notional && $position->leverage) {
+            if ($notional != 0) {
+                $exchangeSymbolsEligible = $exchangeSymbolsEligible->reject(function ($exchangeSymbol) use ($position) {
+
+                    $totalLimitOrders = count($position->order_ratios);
+                    $notionalForMarketOrder = api_format_price(notional($position) / get_market_order_amount_divider($totalLimitOrders), $exchangeSymbol->price_precision);
+
+                    return $exchangeSymbol->min_notional < $notionalForMarketOrder;
+                });
+            }
+        }
+
+        // Remove the exchange symbols used in positions.
+        $exchangeSymbolsAvailable = $exchangeSymbolsEligible->diff($exchangeSymbolsInOpenPositions);
+
+        if ($exchangeSymbolsAvailable->isEmpty()) {
+            return null;
+        }
+
+        // Eaget load relationships.
+        $exchangeSymbolsAvailable->load(['symbol', 'quote']);
+
+        // Sort the exchange symbols by the indicator timeframe.
+        $tradeConfiguration = TradeConfiguration::default()->first();
+        $timeframes = $tradeConfiguration->indicator_timeframes;
+
+        $exchangeSymbolsAvailable = $exchangeSymbolsAvailable->sortBy(function ($exchangeSymbol) use ($timeframes) {
+            return array_search($exchangeSymbol->indicator_timeframe, $timeframes);
+        });
+
+        // Handle categories.
+        $eligibleCategories = $exchangeSymbolsEligible->pluck('symbol.category_canonical')->unique();
+        $usedCategories = $exchangeSymbolsInOpenPositions->pluck('symbol.category_canonical')->unique();
+        $availableCategories = $eligibleCategories->diff($usedCategories);
+
+        $backupExchangeSymbols = $exchangeSymbolsAvailable;
+
+        $exchangeSymbolsAvailable = $exchangeSymbolsAvailable->filter(function ($exchangeSymbol) use ($availableCategories) {
+            return $availableCategories->contains($exchangeSymbol->symbol->category_canonical);
+        });
+
+        if ($exchangeSymbolsAvailable->isEmpty()) {
+            $exchangeSymbolsAvailable = $backupExchangeSymbols;
+        }
+
+        // Select the best exchange symbol based on account preferences and fallback.
+        return self::selectBestExchangeSymbol($exchangeSymbolsAvailable, $exchangeSymbolsInOpenPositions, $position);
+    }
+
+    protected static function getEligibleExchangeSymbols(Position $position)
+    {
+        return ExchangeSymbol::with(['symbol', 'quote'])
+            ->eligible()
+            ->fromQuote($position->account->quote)
+            ->get();
+    }
+
+    protected static function getActiveExchangeSymbols(Position $position)
+    {
+        $activeExchangeSymbolsIds = $position->fromAccount($position->account)
+            ->opened()
+            ->pluck('exchange_symbol_id');
+
+        return ExchangeSymbol::whereIn('id', $activeExchangeSymbolsIds)
+            ->with(['symbol', 'quote'])
+            ->get();
+    }
+
+    protected static function selectBestExchangeSymbol(Collection $exchangeSymbolsAvailable, Collection $exchangeSymbolsInOpenPositions, Position $position)
+    {
+        $selectedExchangeSymbol = null;
+
+        if ($position->account->direction_priority) {
+            $selectedExchangeSymbol = $exchangeSymbolsAvailable->firstWhere('direction', $position->account->direction_priority);
+        }
+
+        if (! $selectedExchangeSymbol && $position->account->follow_btc_direction) {
+            $btcSymbol = Symbol::firstWhere('token', 'BTC');
+            $btcExchangeSymbol = ExchangeSymbol::where('symbol_id', $btcSymbol->id)
+                ->where('quote_id', $position->account->quote)
+                ->first();
+
+            if ($btcExchangeSymbol->direction) {
+                $selectedExchangeSymbol = $exchangeSymbolsAvailable->firstWhere('direction', $btcExchangeSymbol->direction);
+            }
+        }
+
+        if ($position->account->with_half_positions_direction) {
+            $longs = $exchangeSymbolsInOpenPositions->where('direction', 'LONG')->count();
+            $shorts = $exchangeSymbolsInOpenPositions->where('direction', 'SHORT')->count();
+
+            if ($longs >= $shorts) {
+                $selectedExchangeSymbol = $exchangeSymbolsAvailable->firstWhere('direction', 'SHORT');
+            } else {
+                $selectedExchangeSymbol = $exchangeSymbolsAvailable->firstWhere('direction', 'LONG');
+            }
+        }
+
+        return $selectedExchangeSymbol ?? $exchangeSymbolsAvailable->first();
+    }
+}

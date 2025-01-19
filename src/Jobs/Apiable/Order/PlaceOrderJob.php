@@ -130,7 +130,7 @@ class PlaceOrderJob extends BaseApiableJob
 
         // TODO: The Position needs to be marked as failed, and not as closed. Too tired now.
 
-        $this->order->changeToFailed($e);
+        $this->order->updateToFailed($e);
 
         $this->coreJobQueueStatusUpdated = false;
     }

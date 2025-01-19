@@ -35,7 +35,7 @@ function api_format_quantity($quantity, ExchangeSymbol $exchangeSymbol)
 {
     $exchangeSymbol->load('symbol');
 
-    info('[api_format_quantity] ' . $exchangeSymbol->symbol->token . ' - Entered '.$quantity.' with precision ' . $exchangeSymbol->quantity_precision . ', got out ' . round($quantity, $exchangeSymbol->quantity_precision)) . ' or with trailing zeros: ' . remove_trailing_zeros(round($quantity, $exchangeSymbol->quantity_precision));
+    info('[api_format_quantity] '.$exchangeSymbol->symbol->token.' - Entered '.$quantity.' with precision '.$exchangeSymbol->quantity_precision.', got out '.round($quantity, $exchangeSymbol->quantity_precision)).' or with trailing zeros: '.remove_trailing_zeros(round($quantity, $exchangeSymbol->quantity_precision));
 
     return remove_trailing_zeros(round($quantity, $exchangeSymbol->quantity_precision));
 }
@@ -52,5 +52,22 @@ function notional(Position $position)
 
 function remove_trailing_zeros(float $number): float
 {
-    return (float) rtrim(rtrim(number_format($number, 10, '.', ''), '0'), '.');
+    // Convert the number to a string
+    $stringNumber = (string) $number;
+
+    // Iterate backwards to remove trailing zeros
+    for ($i = strlen($stringNumber) - 1; $i >= 0; $i--) {
+        if ($stringNumber[$i] === '0') {
+            $stringNumber = substr($stringNumber, 0, $i);
+        } elseif ($stringNumber[$i] === '.') {
+            // Remove the decimal point if it's the last character
+            $stringNumber = substr($stringNumber, 0, $i);
+            break;
+        } else {
+            break;
+        }
+    }
+
+    // Convert back to float and return
+    return (float) $stringNumber;
 }

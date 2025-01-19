@@ -109,10 +109,11 @@ class DispatchPositionsCommand extends Command
     protected function createTestingData()
     {
         // Create the first Position (fast-traded, satisfies the criteria)
-        $id = 58;
+        $id = 17;
         Position::create([
             'account_id' => 1, // Replace with a valid account_id
             'exchange_symbol_id' => $id, // Replace with a valid exchange_symbol_id
+            'margin' => Account::find(1)->margin_override,
             'direction' => ExchangeSymbol::find($id)->direction,
             'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago
             'closed_at' => Carbon::now(), // Closed now
@@ -122,10 +123,11 @@ class DispatchPositionsCommand extends Command
         ]);
 
         // Create the first Position (fast-traded, satisfies the criteria)
-        $id = 30;
+        $id = 15;
         Position::create([
             'account_id' => 1, // Replace with a valid account_id
             'exchange_symbol_id' => $id, // Replace with a valid exchange_symbol_id
+            'margin' => Account::find(1)->margin_override,
             'direction' => ExchangeSymbol::find($id)->direction,
             'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago
             'closed_at' => Carbon::now(), // Closed now
@@ -135,23 +137,25 @@ class DispatchPositionsCommand extends Command
         ]);
 
         // Create the second Position (does not satisfy the criteria, created more than 5 minutes ago)
-        $id = 3;
+        $id = 7;
         Position::create([
             'account_id' => 1, // Replace with a valid account_id
             'exchange_symbol_id' => $id, // Replace with a valid exchange_symbol_id
+            'margin' => Account::find(1)->margin_override,
             'direction' => ExchangeSymbol::find($id)->direction,
             'started_at' => Carbon::now()->subMinutes(10), // Started 10 minutes ago
             'closed_at' => Carbon::now()->subMinutes(7), // Closed 7 minutes ago
             'created_at' => Carbon::now()->subMinutes(10), // Created 10 minutes ago
             'updated_at' => Carbon::now()->subMinutes(7), // Updated 7 minutes ago
-            'status' => 'closed', // Set the status to closed
+            'status' => 'new', // Set the status to closed
         ]);
 
         // Create another Position (fast-traded, satisfies the criteria)
-        $id = 2;
+        $id = 14;
         Position::create([
             'account_id' => 1, // Replace with a valid account_id
             'exchange_symbol_id' => $id, // Replace with a valid exchange_symbol_id
+            'margin' => Account::find(1)->margin_override,
             'direction' => ExchangeSymbol::find($id)->direction,
             'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago
             'closed_at' => Carbon::now(), // Closed now

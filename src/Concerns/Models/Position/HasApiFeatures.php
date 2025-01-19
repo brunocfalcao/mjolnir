@@ -90,8 +90,7 @@ trait HasApiFeatures
             }
         }
 
-        $this->update(['closed_at' => now()]);
-        $this->changeToClosed();
+        $this->updateToClosed();
 
         return $apiResponse->response;
     }

@@ -40,7 +40,7 @@ class ValidatePositionOpeningJob extends BaseQueuableJob
             'opening_price' => $this->position->orders->firstWhere('type', 'MARKET')->price,
         ]);
 
-        $this->position->changeToActive();
+        $this->position->updateToActive();
 
         $this->position->load('exchangeSymbol.symbol');
     }

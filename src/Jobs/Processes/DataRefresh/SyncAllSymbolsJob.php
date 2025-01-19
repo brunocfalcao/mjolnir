@@ -24,8 +24,7 @@ class SyncAllSymbolsJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        // Anything to update?
-        if (!Symbol::whereNull('image_url')->pluck('cmc_id')->isNotEmpty()) {
+        if (Symbol::whereNull('image_url')->doesntExist()) {
             return;
         }
 
