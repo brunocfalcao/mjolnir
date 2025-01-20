@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Nidavellir\Mjolnir\Jobs\Apiable\Order\SyncOrderJob;
+use Nidavellir\Mjolnir\Jobs\Processes\ClosePosition\ClosePositionLifecycleJob;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Position;
 
@@ -38,6 +39,17 @@ class SyncOrdersCommand extends Command
         // Update position to closing so the Api Order observer will know about it.
         if (! array_key_exists($position->parsedTradingPair, $apiPositions)) {
             $position->updateToClosing();
+
+            // Close position.
+            CoreJobQueue::create([
+                'class' => ClosePositionLifecycleJob::class,
+                'queue' => 'positions',
+                'arguments' => [
+                    'positionId' => $position->id,
+                ],
+            ]);
+
+            return;
         }
 
         foreach ($position

@@ -57,7 +57,7 @@ class PlaceOrderJob extends BaseApiableJob
         }
 
         // Are we trying to create another limit order more than the totalLimitOrders?
-        $totalLimitOrders = count($this->order->position->orders_ratio);
+        $totalLimitOrders = count($this->order->position->order_ratios);
         if ($this->order->type == 'LIMIT' &&
             $orders->where('type', 'LIMIT')->count() > $totalLimitOrders) {
             throw new \Exception('Total limit orders where already created!');

@@ -60,7 +60,7 @@ class OrderApiObserver
         // Get profit order.
         $profitOrder = $order->position->orders->firstWhere('type', 'PROFIT');
 
-        // Pay attention if the position was just closed (position.status = 'closing')
+        // Pay attention if the position was just closed (position.status = 'closing'). Then act.
         $isClosing = $order->position->status == 'closing';
 
         // Non-Profit order price or quantity changed? Resettle order quantity and price.
