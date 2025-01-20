@@ -36,11 +36,11 @@ class SyncOrdersCommand extends Command
         $position->load('account');
         $apiPositions = $position->account->apiQueryPositions()->result;
 
-        // Update position to closing so the Api Order observer will know about it.
+        // Close position and sync orders.
         if (! array_key_exists($position->parsedTradingPair, $apiPositions)) {
-            //$position->updateToClosing();
+            // Update position to closing, so we disable the order observers.
+            $this->position->updateToClosing();
 
-            // Close position.
             CoreJobQueue::create([
                 'class' => ClosePositionLifecycleJob::class,
                 'queue' => 'positions',
@@ -48,8 +48,6 @@ class SyncOrdersCommand extends Command
                     'positionId' => $position->id,
                 ],
             ]);
-
-            return;
         }
 
         foreach ($position
