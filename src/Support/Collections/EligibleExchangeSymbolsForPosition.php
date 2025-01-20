@@ -128,8 +128,8 @@ class EligibleExchangeSymbolsForPosition
                 ->where('direction', 'SHORT')
                 ->count();
 
-            //$longs = $exchangeSymbolsInOpenPositions->where('direction', 'LONG')->count();
-            //$shorts = $exchangeSymbolsInOpenPositions->where('direction', 'SHORT')->count();
+            // $longs = $exchangeSymbolsInOpenPositions->where('direction', 'LONG')->count();
+            // $shorts = $exchangeSymbolsInOpenPositions->where('direction', 'SHORT')->count();
 
             /**
              * We should get a short or a long, but in case there is space for the half
@@ -138,7 +138,6 @@ class EligibleExchangeSymbolsForPosition
              * 4 Shorts available, 12 longs available.
              * But, if we have 5 longs open, we can still open one more long.
              */
-
             $maxHalfPositions = $position->account->max_concurrent_trades / 2;
 
             info("Total Longs: {$longs}");
@@ -149,7 +148,7 @@ class EligibleExchangeSymbolsForPosition
                 $selectedExchangeSymbol = $exchangeSymbolsAvailable->firstWhere('direction', 'LONG');
             }
 
-            if (!$selectedExchangeSymbol) {
+            if (! $selectedExchangeSymbol) {
                 if ($shorts < $maxHalfPositions) {
                     $selectedExchangeSymbol = $exchangeSymbolsAvailable->firstWhere('direction', 'SHORT');
                 }

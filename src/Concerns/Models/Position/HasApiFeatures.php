@@ -90,7 +90,14 @@ trait HasApiFeatures
             }
         }
 
-        $this->updateToClosed();
+        /**
+         * Only change to closed if the position is opened (new or active).
+         * Because if it's marked as failed then we should keep it as failed,
+         * or on any other stated for the future.
+         */
+        if ($this->isOpened()) {
+            $this->updateToClosed();
+        }
 
         return $apiResponse->response;
     }

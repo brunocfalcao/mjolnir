@@ -41,9 +41,26 @@ class PlaceOrderJob extends BaseApiableJob
 
     public function authorize()
     {
+        $orders = $this->order->position->orders;
+
         // Any order failed?
-        if ($this->order->position->orders->where('status', 'FAILED')->isNotEmpty()) {
+        if ($orders->where('status', 'FAILED')->isNotEmpty()) {
             throw new \Exception('Other orders failed, aborting place orders.');
+        }
+
+        // Are we placing another MARKET, PROFIT, or MARKET-CANCEL order by mistake?
+        if (in_array($this->order->type, ['MARKET', 'PROFIT', 'MARKET-CANCEL']) &&
+            $orders->whereIn('type', ['MARKET', 'PROFIT', 'MARKET-CANCEL'])
+                ->whereNotNull('exchange_order_id')
+                ->isNotEmpty()) {
+            throw new \Exception('A 2nd market, profit, or market-cancel order is trying to be created for the same position!');
+        }
+
+        // Are we trying to create another limit order more than the totalLimitOrders?
+        $totalLimitOrders = count($this->order->position->orders_ratio);
+        if ($this->order->type == 'LIMIT' &&
+            $orders->where('type', 'LIMIT')->count() > $totalLimitOrders) {
+            throw new \Exception('Total limit orders where already created!');
         }
 
         // First the market order, then the others.
@@ -112,6 +129,15 @@ class PlaceOrderJob extends BaseApiableJob
 
     public function resolveException(\Throwable $e)
     {
+        /**
+         * In order to avoid this order being processed again, since it might
+         * be on the status new, we need to change it immediately to the
+         * status failed.
+         */
+        $this->order
+            ->position
+            ->updateToFailed('Position is marked as failed because we are cancelling all open orders (an exception was triggered)');
+
         CoreJobQueue::create([
             'class' => CancelOpenOrdersJob::class,
             'queue' => 'orders',
@@ -127,8 +153,6 @@ class PlaceOrderJob extends BaseApiableJob
                 'positionId' => $this->order->position->id,
             ],
         ]);
-
-        // TODO: The Position needs to be marked as failed, and not as closed. Too tired now.
 
         $this->order->updateToFailed($e);
 
