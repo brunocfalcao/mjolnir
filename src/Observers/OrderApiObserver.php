@@ -61,10 +61,10 @@ class OrderApiObserver
         $profitOrder = $order->position->orders->firstWhere('type', 'PROFIT');
 
         // Pay attention if the position was just closed (position.status = 'closing'). Then act.
-        $isClosing = $order->position->status == 'closing';
+        //$isClosing = $order->position->status == 'closing';
 
         // Non-Profit order price or quantity changed? Resettle order quantity and price.
-        if (($priceChanged || $quantityChanged) && ! $isClosing) {
+        if (($priceChanged || $quantityChanged) /*&& ! $isClosing*/) {
             if ($order->type != 'PROFIT') {
                 // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Order had a price and/or quantity changed. Resettling order');
                 // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ModifyOrderJob::class');
@@ -119,7 +119,7 @@ class OrderApiObserver
         }
 
         // Order cancelled by mistake? Re-place the order.
-        if ($order->status == 'CANCELLED' && $order->getOriginal('status') != 'CANCELLED' && ! $isClosing) {
+        if ($order->status == 'CANCELLED' && $order->getOriginal('status') != 'CANCELLED' /*&& ! $isClosing*/) {
             // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Order canceled by mistake. Recreating order');
             // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering PlaceOrderJob::class');
             CoreJobQueue::create([
