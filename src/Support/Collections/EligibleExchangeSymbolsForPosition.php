@@ -131,6 +131,10 @@ class EligibleExchangeSymbolsForPosition
 
             $maxHalfPositions = $position->account->max_concurrent_trades / 2;
 
+            info("Total Longs: {$longs}");
+            info("Total Shorts: {$shorts}");
+            info("MaxHalfPositions: {$maxHalfPositions}");
+
             if ($longs < $maxHalfPositions) {
                 $selectedExchangeSymbol = $exchangeSymbolsAvailable->firstWhere('direction', 'LONG');
             }
