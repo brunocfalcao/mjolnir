@@ -118,8 +118,15 @@ class EligibleExchangeSymbolsForPosition
 
         // This option overrides a fallback.
         if ($position->account->with_half_positions_direction) {
-            $longs = $position->account->positions->where('status', 'active')->where('direction', 'LONG')->count();
-            $shorts = $position->account->positions->where('status', 'active')->where('direction', 'SHORT')->count();
+            $longs = $position->account->positions()
+                ->whereIn('status', ['active', 'new'])
+                ->where('direction', 'LONG')
+                ->count();
+
+            $shorts = $position->account->positions()
+                ->whereIn('status', ['active', 'new'])
+                ->where('direction', 'SHORT')
+                ->count();
 
             //$longs = $exchangeSymbolsInOpenPositions->where('direction', 'LONG')->count();
             //$shorts = $exchangeSymbolsInOpenPositions->where('direction', 'SHORT')->count();
