@@ -38,7 +38,7 @@ class SyncOrdersCommand extends Command
 
         // Update position to closing so the Api Order observer will know about it.
         if (! array_key_exists($position->parsedTradingPair, $apiPositions)) {
-            $position->updateToClosing();
+            //$position->updateToClosing();
 
             // Close position.
             CoreJobQueue::create([
