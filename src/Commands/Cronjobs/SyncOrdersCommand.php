@@ -5,6 +5,7 @@ namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Jobs\Apiable\Order\SyncOrderJob;
 use Nidavellir\Mjolnir\Jobs\Processes\ClosePosition\ClosePositionLifecycleJob;
 use Nidavellir\Thor\Models\CoreJobQueue;
@@ -24,6 +25,8 @@ class SyncOrdersCommand extends Command
         // Fetch all open positions for the account and process them
         $positions = $this->getOpenPositions();
 
+        info('Open positions: '.$positions->count());
+
         foreach ($positions as $position) {
             $this->syncOrdersForPosition($position);
         }
@@ -33,13 +36,15 @@ class SyncOrdersCommand extends Command
 
     private function syncOrdersForPosition(Position $position)
     {
+        info('Syncing orders for position id '.$position->id);
+
         $position->load('account');
         $apiPositions = $position->account->apiQueryPositions()->result;
 
         // Close position and sync orders.
         if (! array_key_exists($position->parsedTradingPair, $apiPositions)) {
             // Update position to closing, so we disable the order observers.
-            $this->position->updateToClosing();
+            $position->updateToClosing();
         }
 
         $blockUuid = (string) Str::uuid();

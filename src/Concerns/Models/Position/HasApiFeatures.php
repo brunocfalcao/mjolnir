@@ -95,7 +95,7 @@ trait HasApiFeatures
          * Because if it's marked as failed then we should keep it as failed,
          * or on any other stated for the future.
          */
-        if ($this->isOpened()) {
+        if ($this->isClosing()) {
             $this->updateToClosed();
         }
 
