@@ -40,15 +40,10 @@ class SyncOrdersCommand extends Command
         if (! array_key_exists($position->parsedTradingPair, $apiPositions)) {
             // Update position to closing, so we disable the order observers.
             $this->position->updateToClosing();
-
-            CoreJobQueue::create([
-                'class' => ClosePositionLifecycleJob::class,
-                'queue' => 'positions',
-                'arguments' => [
-                    'positionId' => $position->id,
-                ],
-            ]);
         }
+
+        $blockUuid = (string) Str::uuid();
+        $index = 1;
 
         foreach ($position
             ->orders
@@ -61,6 +56,20 @@ class SyncOrdersCommand extends Command
                 'arguments' => [
                     'orderId' => $order->id,
                 ],
+                'index' => $index++,
+                'block_uuid' => $blockUuid,
+            ]);
+        }
+
+        if ($position->status == 'closing') {
+            CoreJobQueue::create([
+                'class' => ClosePositionLifecycleJob::class,
+                'queue' => 'positions',
+                'arguments' => [
+                    'positionId' => $position->id,
+                ],
+                'index' => $index++,
+                'block_uuid' => $blockUuid,
             ]);
         }
     }

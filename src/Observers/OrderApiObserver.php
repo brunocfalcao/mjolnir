@@ -21,7 +21,7 @@ class OrderApiObserver
     public function updated(Order $order): void
     {
         // Is this position new or active? -- Continue.
-        if (!$order->position->isOpened()) {
+        if (! $order->position->isOpened()) {
             return;
         }
 

@@ -51,9 +51,9 @@ class PlaceOrderJob extends BaseApiableJob
         // Are we placing another MARKET, PROFIT, or MARKET-CANCEL order by mistake?
         if (in_array($this->order->type, ['MARKET', 'PROFIT', 'MARKET-CANCEL']) &&
             $orders->where('type', $this->order->type)
-                   ->whereNotNull('exchange_order_id')
-                   ->isNotEmpty()) {
-            throw new \Exception('A 2nd order of the same type (' . $this->order->type . ') is trying to be created for the same position!');
+                ->whereNotNull('exchange_order_id')
+                ->isNotEmpty()) {
+            throw new \Exception('A 2nd order of the same type ('.$this->order->type.') is trying to be created for the same position!');
         }
 
         // Are we trying to create another limit order more than the totalLimitOrders?
