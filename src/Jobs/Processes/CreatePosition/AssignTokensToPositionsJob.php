@@ -33,7 +33,10 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
                 $this->account->id
             )->get();
 
+        $tokens = [];
+
         foreach ($positions as $position) {
+            // Do we already have an exchange symbol and a direction?
             if ($position->exchange_symbol_id != null && $position->direction != null) {
                 // Start the position creation lifecycle.
                 CoreJobQueue::create([
@@ -43,6 +46,8 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
                         'positionId' => $position->id,
                     ],
                 ]);
+
+                $tokens[] = $position->parsedTradingPair;
             } else {
                 $selectedExchangeSymbol = EligibleExchangeSymbolsForPosition::getBestExchangeSymbol($position);
 
@@ -65,11 +70,15 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
                             'positionId' => $position->id,
                         ],
                     ]);
+
+                    $tokens[] = $position->parsedTradingPair;
                 } else {
                     // Non available exchange symbols. Fail position.
                     $position->updateToFailed('No exchange symbols available, try again later');
                 }
             }
         }
+
+        return $tokens;
     }
 }

@@ -69,13 +69,12 @@ class SelectPositionLeverageJob extends BaseQueuableJob
         // Update the position's leverage with the calculated value
         $this->position->leverage = $finalLeverage;
         $this->position->save();
+
+        return "Leverage selected for {$this->position->parsedTradingPair}: {$finalLeverage}";
     }
 
     public function resolveException(\Throwable $e)
     {
-        $this->position->update([
-            'status' => 'failed',
-            'error_message' => $e->getMessage(),
-        ]);
+        $this->position->updateToFailed($e);
     }
 }

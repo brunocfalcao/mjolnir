@@ -87,4 +87,11 @@ class VerifyBalanceConditionsJob extends BaseApiableJob
             }
         }
     }
+
+    public function resolveException(\Throwable $e)
+    {
+        $this->positions()->isOpened()->get()->each(function ($position) use ($e) {
+            $position->updateToFailed($e->getMessage());
+        });
+    }
 }

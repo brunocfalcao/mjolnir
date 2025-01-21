@@ -30,10 +30,9 @@ class CreateNewPositionsJob extends BaseQueuableJob
 
     public function compute()
     {
-        /*
         info('[CreateNewPositionsJob] - Creating '.$this->numPositions.' position(s) to '.$this->account->user->name);
 
-        $testToken = 'SOL';
+        $testToken = 'LTC';
         $testExchangeSymbol = ExchangeSymbol::where('symbol_id', Symbol::firstWhere('token', 'SOL')->id)
             ->where('quote_id', Quote::firstWhere('canonical', 'USDT')->id)
             ->first();
@@ -47,7 +46,6 @@ class CreateNewPositionsJob extends BaseQueuableJob
             'exchange_symbol_id' => $testExchangeSymbol->id,
             'direction' => $testExchangeSymbol->direction,
         ];
-        */
 
         $data = array_merge($this->extraData, [
             'account_id' => $this->account->id,
@@ -55,8 +53,12 @@ class CreateNewPositionsJob extends BaseQueuableJob
 
         $blockUuid = (string) Str::uuid();
 
+        $positionIds = [];
+
         for ($i = 0; $i < $this->numPositions; $i++) {
             $position = Position::create($data);
+
+            $positionIds[] = $position->id;
         }
 
         CoreJobQueue::create([
@@ -68,5 +70,7 @@ class CreateNewPositionsJob extends BaseQueuableJob
             'index' => 2,
             'block_uuid' => $blockUuid,
         ]);
+
+        return ['Positions Ids' => $positionIds];
     }
 }

@@ -50,7 +50,5 @@ class RollbackPositionLifecycleJob extends BaseQueuableJob
         ]);
     }
 
-    public function resolveException(\Throwable $e)
-    {
-    }
+    public function resolveException(\Throwable $e) {}
 }

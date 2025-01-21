@@ -8,7 +8,6 @@ use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\User;
 
 class CreatePositionLifecycleJob extends BaseQueuableJob
 {
@@ -29,7 +28,11 @@ class CreatePositionLifecycleJob extends BaseQueuableJob
         $index = 1;
 
         if ($this->position->direction == null || $this->position->exchange_symbol_id == null) {
-            $this->failPosition('Position without a direction or without an exchange symbol');
+            $message = 'Position without a direction or without an exchange symbol';
+            $this->coreJobQueue->updateToFailed($message, true);
+            $this->position->updateToFailed($message);
+
+            return;
         }
 
         if (! $this->position->margin) {
@@ -107,38 +110,5 @@ class CreatePositionLifecycleJob extends BaseQueuableJob
         ]);
 
         return $this->position;
-    }
-
-    public function failPosition(string $message)
-    {
-        $this->position
-            ->update([
-                'status' => 'cancelled',
-                'error_message' => $message,
-            ]);
-
-        $this->notify($message);
-    }
-
-    public function resolveException(\Throwable $e)
-    {
-        $this->position
-            ->update([
-                'status' => 'failed',
-                'error_message' => $e->getMessage(),
-            ]);
-
-        $this->notify($e->getMessage());
-    }
-
-    public function notify($message)
-    {
-        User::admin()->get()->each(function ($user) use ($message) {
-            $user->pushover(
-                message: "[{$this->position->id}] - Position opening failed - {$message}",
-                title: 'Position opening error',
-                applicationKey: 'nidavellir_errors'
-            );
-        });
     }
 }

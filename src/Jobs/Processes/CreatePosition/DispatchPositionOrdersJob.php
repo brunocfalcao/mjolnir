@@ -97,6 +97,8 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
 
         // Dispatch all orders to be created.
         $this->dispatchOrders();
+
+        return $this->position;
     }
 
     protected function dispatchOrders()
@@ -145,9 +147,6 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
 
     public function resolveException(\Throwable $e)
     {
-        $this->position->update([
-            'status' => 'failed',
-            'error_message' => $e->getMessage(),
-        ]);
+        $this->position->updateToFailed($e);
     }
 }

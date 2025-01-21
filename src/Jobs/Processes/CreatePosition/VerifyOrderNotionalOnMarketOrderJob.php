@@ -40,9 +40,17 @@ class VerifyOrderNotionalOnMarketOrderJob extends BaseApiableJob
 
         $quantityForMarketOrder = api_format_quantity($quantity / get_market_order_amount_divider($totalLimitOrders), $this->position->exchangeSymbol);
 
-        if ($quantityForMarketOrder * $this->markPrice < $this->position->exchangeSymbol->min_notional) {
-            $this->coreJobQueue->updateToFailed('Position notional less than exchange symbol minimum notional', true);
-            $this->position->updateToFailed('Position notional less than exchange symbol minimum notional');
+        $marketOrderNotional = api_format_price($quantityForMarketOrder * $this->markPrice, $this->position->exchangeSymbol);
+
+        if ($marketOrderNotional < $this->position->exchangeSymbol->min_notional) {
+            // Stop Job Queue sequence and fail position, silently.
+            $message = "Market order notional ({$marketOrderNotional}) less than exchange symbol minimum notional ({$this->position->exchangeSymbol->min_notional})";
+
+            $this->coreJobQueue->updateToFailed($message, true);
+            $this->position->updateToFailed($message);
+
+            // Flag the parent class that all statuses were updated.
+            $this->coreJobQueueStatusUpdated = true;
         }
     }
 

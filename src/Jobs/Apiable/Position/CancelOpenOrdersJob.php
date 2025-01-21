@@ -28,6 +28,6 @@ class CancelOpenOrdersJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        return $this->position->apiCancelOrders()->response;
+        return $this->position->apiCancelOrders()->result;
     }
 }

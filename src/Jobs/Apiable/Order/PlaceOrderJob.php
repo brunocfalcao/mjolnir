@@ -2,17 +2,17 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Apiable\Order;
 
-use Nidavellir\Thor\Models\User;
-use Nidavellir\Thor\Models\Order;
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
-use Nidavellir\Mjolnir\Jobs\Apiable\Position\ClosePositionJob;
 use Nidavellir\Mjolnir\Jobs\Apiable\Position\CancelOpenOrdersJob;
+use Nidavellir\Mjolnir\Jobs\Apiable\Position\ClosePositionJob;
+use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\Order;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\User;
 
 class PlaceOrderJob extends BaseApiableJob
 {
@@ -43,7 +43,7 @@ class PlaceOrderJob extends BaseApiableJob
     public function authorize()
     {
         // Any order failed?
-        if ($orders->where('status', 'FAILED')->isNotEmpty()) {
+        if ($this->order->position->orders->where('status', 'FAILED')->isNotEmpty()) {
             throw new \Exception('Other orders failed, aborting place orders.');
         }
 
@@ -59,7 +59,7 @@ class PlaceOrderJob extends BaseApiableJob
         if ($result !== true) {
             $this->order->updateToFailed($result);
 
-            User::admin()->get()->each(function ($user) use ($e) {
+            User::admin()->get()->each(function ($user) {
                 $user->pushover(
                     message: "[PlaceOrderJob] - Conditions not met: {$result}",
                     title: 'Place Order error',
@@ -133,8 +133,8 @@ class PlaceOrderJob extends BaseApiableJob
         $totalLimitOrders = count($this->order->position->order_ratios);
         if ($this->order->type == 'LIMIT' &&
             $orders->where('type', 'LIMIT')
-                   ->whereIn('status', ['PARTIALLY_FILLED', 'FILLED', 'NEW'])
-                   ->count() > $totalLimitOrders) {
+                ->whereIn('status', ['PARTIALLY_FILLED', 'FILLED', 'NEW'])
+                ->count() > $totalLimitOrders) {
             return 'Total limit orders where already created!';
         }
 
@@ -161,14 +161,13 @@ class PlaceOrderJob extends BaseApiableJob
 
     public function resolveException(\Throwable $e)
     {
-        /**
-         * In order to avoid this order being processed again, since it might
-         * be on the status new, we need to change it immediately to the
-         * status failed.
-         */
-        $this->order
-            ->position
-            ->updateToFailed('Position is marked as failed because we are cancelling all open orders (an exception was triggered)');
+        // Position is already in rollbacking mode? -- Skip resolve exception.
+        if ($this->position->isRollbacking() || $this->position->isRollbacked()) {
+            return;
+        }
+
+        // Start position rollbacking.
+        $this->position->updateToRollbacking($e->getMessage());
 
         CoreJobQueue::create([
             'class' => CancelOpenOrdersJob::class,
@@ -186,7 +185,7 @@ class PlaceOrderJob extends BaseApiableJob
             ],
         ]);
 
-        $this->order->updateToFailed($e);
+        $this->order->updateToRollbacked($e->getMessage());
 
         $this->coreJobQueueStatusUpdated = false;
     }
