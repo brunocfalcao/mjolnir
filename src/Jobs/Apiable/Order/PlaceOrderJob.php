@@ -2,16 +2,17 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Apiable\Order;
 
-use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
-use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Jobs\Apiable\Position\CancelOpenOrdersJob;
-use Nidavellir\Mjolnir\Jobs\Apiable\Position\ClosePositionJob;
-use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Thor\Models\User;
+use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Thor\Models\Order;
-use Nidavellir\Thor\Models\Position;
+use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Mjolnir\Jobs\Apiable\Position\ClosePositionJob;
+use Nidavellir\Mjolnir\Jobs\Apiable\Position\CancelOpenOrdersJob;
 
 class PlaceOrderJob extends BaseApiableJob
 {
@@ -41,26 +42,9 @@ class PlaceOrderJob extends BaseApiableJob
 
     public function authorize()
     {
-        $orders = $this->order->position->orders;
-
         // Any order failed?
         if ($orders->where('status', 'FAILED')->isNotEmpty()) {
             throw new \Exception('Other orders failed, aborting place orders.');
-        }
-
-        // Are we placing another MARKET, PROFIT, or MARKET-CANCEL order by mistake?
-        if (in_array($this->order->type, ['MARKET', 'PROFIT', 'MARKET-CANCEL']) &&
-            $orders->where('type', $this->order->type)
-                ->whereNotNull('exchange_order_id')
-                ->isNotEmpty()) {
-            throw new \Exception('A 2nd order of the same type ('.$this->order->type.') is trying to be created for the same position!');
-        }
-
-        // Are we trying to create another limit order more than the totalLimitOrders?
-        $totalLimitOrders = count($this->order->position->order_ratios);
-        if ($this->order->type == 'LIMIT' &&
-            $orders->where('type', 'LIMIT')->count() > $totalLimitOrders) {
-            throw new \Exception('Total limit orders where already created!');
         }
 
         // First the market order, then the others.
@@ -69,11 +53,34 @@ class PlaceOrderJob extends BaseApiableJob
 
     public function computeApiable()
     {
+        // Verify if conditions are met to place this order. If not, silently abort.
+        $result = $this->verifyConditions();
+
+        if ($result !== true) {
+            $this->order->updateToFailed($result);
+
+            User::admin()->get()->each(function ($user) use ($e) {
+                $user->pushover(
+                    message: "[PlaceOrderJob] - Conditions not met: {$result}",
+                    title: 'Place Order error',
+                    applicationKey: 'nidavellir_errors'
+                );
+            });
+
+            /**
+             * Finish the core job queue. We don't need to trigger an exception
+             * because if so, then it might remove all the already present orders.
+             * We will check what's going on later, via pushover message.
+             */
+            return;
+        }
+
         // info('[PlaceOrderJob] - Order ID: '.$this->order->id.', placing order on API...');
 
         /**
          * Small exception for the profit order. If the quantity is null then
-         * we get the profit order quantity from the market order.
+         * we get the profit order quantity from the market order. It always
+         * need to have the same quantity, even as the first time.
          */
         if ($this->order->type == 'PROFIT') {
             $marketOrder = $this->order->position->orders->firstWhere('type', 'MARKET');
@@ -99,6 +106,7 @@ class PlaceOrderJob extends BaseApiableJob
             ]);
         }
 
+        // The api place gets data from the profit order db entry.
         $apiResponse = $this->order->apiPlace();
 
         // Sync order.
@@ -107,6 +115,30 @@ class PlaceOrderJob extends BaseApiableJob
         // info('[PlaceOrderJob] - Order ID: '.$this->order->id.', order placed and synced with exchange id '.$this->order->exchange_order_id);
 
         return $apiResponse->response;
+    }
+
+    public function verifyConditions()
+    {
+        $orders = $this->order->position->orders;
+
+        // Are we placing another MARKET, PROFIT, or MARKET-CANCEL order by mistake?
+        if (in_array($this->order->type, ['MARKET', 'PROFIT', 'MARKET-CANCEL']) &&
+            $orders->where('type', $this->order->type)
+                ->whereNotNull('exchange_order_id')
+                ->isNotEmpty()) {
+            return 'A 2nd order of the same type ('.$this->order->type.') is trying to be created for the same position!';
+        }
+
+        // Are we trying to create another limit order more than the total limit orders as PARTIALLY FILLED, FILLED and NEW ?
+        $totalLimitOrders = count($this->order->position->order_ratios);
+        if ($this->order->type == 'LIMIT' &&
+            $orders->where('type', 'LIMIT')
+                   ->whereIn('status', ['PARTIALLY_FILLED', 'FILLED', 'NEW'])
+                   ->count() > $totalLimitOrders) {
+            return 'Total limit orders where already created!';
+        }
+
+        return true;
     }
 
     public function marketOrderSynced()
