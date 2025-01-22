@@ -32,12 +32,12 @@ class CreateNewPositionsJob extends BaseQueuableJob
     {
         info('[CreateNewPositionsJob] - Creating '.$this->numPositions.' position(s) to '.$this->account->user->name);
 
-        $testToken = 'LTC';
-        $testExchangeSymbol = ExchangeSymbol::where('symbol_id', Symbol::firstWhere('token', 'SOL')->id)
+        $testToken = 'SOL';
+        $testExchangeSymbol = ExchangeSymbol::where('symbol_id', Symbol::firstWhere('token', $testToken)->id)
             ->where('quote_id', Quote::firstWhere('canonical', 'USDT')->id)
             ->first();
 
-        $testExchangeSymbol->update(['direction' => 'LONG']);
+        // $testExchangeSymbol->update(['direction' => 'SHORT']);
 
         info('[CreateNewPositionsJob] - TESTING Exchange Symbol: '.$testExchangeSymbol->symbol->token);
 

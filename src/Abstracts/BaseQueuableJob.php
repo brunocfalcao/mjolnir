@@ -14,7 +14,7 @@ abstract class BaseQueuableJob extends BaseJob
 
     public CoreJobQueue $coreJobQueue;
 
-    public int $workerServerBackoffSeconds = 5;
+    public int $workerServerBackoffSeconds = 10;
 
     public bool $coreJobQueueStatusUpdated = false;
 
@@ -27,7 +27,7 @@ abstract class BaseQueuableJob extends BaseJob
 
             // Max retries reached?
             if ($this->coreJobQueue->retries == $this->retries + 1) {
-                throw new NonOverridableException('CoreJobQueue max retries reached');
+                throw new NonOverridableException('CoreJobQueue max retries reached (nidavellir error)');
             }
 
             // Quick authorization method on the child job.

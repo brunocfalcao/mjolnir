@@ -12,7 +12,7 @@ use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Position;
 
-class DispatchPositionOrdersJob extends BaseQueuableJob
+class _DispatchPositionOrdersJob extends BaseQueuableJob
 {
     public Account $account;
 
@@ -48,57 +48,45 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
             throw new \Exception('Mark price not fetched for position ID '.$this->position->id.'. Cancelling position');
         }
 
+        // Calculate the total trade quantity given the notional and mark price.
+        $this->quantity = $this->getTotalTradeQuantity();
+
+        info('Current Price: '.
+             $this->markPrice.
+             ', Margin: '.
+             $this->position->margin.
+             ', Leverage: '.
+             $this->position->leverage.
+             ', Notional: '.
+             notional($this->position).
+             ', Total Trade Quantity: '.
+            $this->quantity);
+
+        return;
+
         /**
-         * The quantity calculation for each order follows the Market to Limit orders.
-         *
-         * We first calculate the quantity for the limit order. And then we
-         * multiply that calculation on each of the next limit orders using
-         * the martingale strategy.
+         * Create orders.
+         * Limit orders, then market order, then profit order.
          */
-
-        // Don't format. Just get the raw number.
-        $marketOrderQuantity = api_format_quantity(notional($this->position) /
-                               $this->markPrice /
-                               get_market_order_amount_divider(
-                                   $this->position->total_limit_orders
-                               ), $this->position->exchangeSymbol);
-
-        info('[DispatchPositionOrdersJob] - MarketOrderQuantity (no rounding): '.$marketOrderQuantity);
-
-        /**
-         * Now, for each limit order we will MULTIPLY the quantity to obtain
-         * the correct quantity for the limit order.
-         */
-        $percentageGap = $this->position->percentage_gap;
-
-        for ($i = 0; $i < $this->position->total_limit_orders; $i++) {
-            $quantity = api_format_quantity($marketOrderQuantity * (2 ** ($i + 1)), $this->position->ExchangeSymbol);
-            $price = $this->getAveragePrice(($i + 1) * $percentageGap);
-
-            $quantityNoRounding = $marketOrderQuantity * (2 ** ($i + 1));
-
+        foreach ($this->position->order_ratios as $ratio) {
             Order::create([
                 'position_id' => $this->position->id,
                 'type' => 'LIMIT',
                 'side' => $side['same'],
-                'price' => $price,
-                'quantity' => $quantity,
+                'price' => $this->getAveragePrice($ratio[0]),
+                'quantity' => api_format_quantity($this->quantity / $ratio[1], $this->position->exchangeSymbol),
             ]);
-
-            info("[DispatchPositionOrdersJob] - LIMIT order quantity: {$quantity}, Price: {$price}, Percentage Gap: ".($i + 1) * $percentageGap);
-            info("[DispatchPositionOrdersJob] - LIMIT order quantity NO ROUNDING: {$quantityNoRounding}");
-            info("[DispatchPositionOrdersJob] - LIMIT order quantity: {$quantity}, Price: {$price}, Percentage Gap: ".($i + 1) * $percentageGap);
         }
+
+        $totalLimitOrders = count($this->position->order_ratios);
 
         // Create the market order.
         Order::create([
             'position_id' => $this->position->id,
             'type' => 'MARKET',
             'side' => $side['same'],
-            'quantity' => $marketOrderQuantity,
+            'quantity' => api_format_quantity($this->quantity / get_market_order_amount_divider($totalLimitOrders), $this->position->exchangeSymbol),
         ]);
-
-        info("[DispatchPositionOrdersJob] - MARKET order quantity: {$marketOrderQuantity}");
 
         // Create the profit order.
         Order::create([
@@ -106,8 +94,6 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
             'type' => 'PROFIT',
             'side' => $side['opposite'],
         ]);
-
-        return;
 
         // Dispatch all orders to be created.
         $this->dispatchOrders();
@@ -147,11 +133,9 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
     protected function getAveragePrice(float $percentage): float
     {
         $change = $this->markPrice * ($percentage / 100);
-
-        // For SHORT, the price increases. For LONG, it decreases.
         $newPrice = $this->position->direction == 'LONG'
-        ? $this->markPrice - $change
-        : $this->markPrice + $change;
+            ? $this->markPrice + $change
+            : $this->markPrice - $change;
 
         return api_format_price($newPrice, $this->position->exchangeSymbol);
     }

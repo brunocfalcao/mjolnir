@@ -29,8 +29,8 @@ class UpdateRemainingPositionDataJob extends BaseQueuableJob
     {
         $data = [];
 
-        if (! $this->position->order_ratios) {
-            $data['order_ratios'] = TradeConfiguration::default()->first()->order_ratios;
+        if (! $this->position->total_limit_orders) {
+            $data['total_limit_orders'] = TradeConfiguration::default()->first()->total_limit_orders;
         }
 
         if (! $this->position->profit_percentage) {

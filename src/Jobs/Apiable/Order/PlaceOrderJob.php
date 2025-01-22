@@ -130,7 +130,7 @@ class PlaceOrderJob extends BaseApiableJob
         }
 
         // Are we trying to create another limit order more than the total limit orders as PARTIALLY FILLED, FILLED and NEW ?
-        $totalLimitOrders = count($this->order->position->order_ratios);
+        $totalLimitOrders = $this->order->position->total_limit_orders;
         if ($this->order->type == 'LIMIT' &&
             $orders->where('type', 'LIMIT')
                 ->whereIn('status', ['PARTIALLY_FILLED', 'FILLED', 'NEW'])

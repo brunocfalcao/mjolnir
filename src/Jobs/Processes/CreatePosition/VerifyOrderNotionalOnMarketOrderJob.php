@@ -34,17 +34,37 @@ class VerifyOrderNotionalOnMarketOrderJob extends BaseApiableJob
     {
         $this->markPrice = $this->position->exchangeSymbol->apiQueryMarkPrice($this->account);
 
-        $totalLimitOrders = count($this->position->order_ratios);
+        $totalLimitOrders = $this->position->total_limit_orders;
 
-        $quantity = $this->getTotalTradeQuantity();
+        info('[VerifyOrderNotionalOnMarketOrderJob] - Position Direction: '.$this->position->direction);
 
-        $quantityForMarketOrder = api_format_quantity($quantity / get_market_order_amount_divider($totalLimitOrders), $this->position->exchangeSymbol);
+        info("[VerifyOrderNotionalOnMarketOrderJob] - Minimum Notional for {$this->position->parsedTradingPair}: ".$this->position->exchangeSymbol->min_notional);
 
-        $marketOrderNotional = api_format_price($quantityForMarketOrder * $this->markPrice, $this->position->exchangeSymbol);
+        info('[VerifyOrderNotionalOnMarketOrderJob] - Position Margin: '.$this->position->margin);
 
-        if ($marketOrderNotional < $this->position->exchangeSymbol->min_notional) {
+        info('[VerifyOrderNotionalOnMarketOrderJob] - Position Notional: '.notional($this->position));
+
+        $totalTradeQuantity = $this->getTotalTradeQuantity();
+
+        info("[VerifyOrderNotionalOnMarketOrderJob] - Price: {$this->markPrice}");
+        info('[VerifyOrderNotionalOnMarketOrderJob] - Divider: '.get_market_order_amount_divider($this->position->total_limit_orders));
+        info("[VerifyOrderNotionalOnMarketOrderJob] - Limit Orders: {$this->position->total_limit_orders}");
+
+        $marketOrderQuantity = api_format_quantity(notional($this->position) /
+                               $this->markPrice /
+                               get_market_order_amount_divider(
+                                   $this->position->total_limit_orders
+                               ), $this->position->exchangeSymbol);
+
+        info('[VerifyOrderNotionalOnMarketOrderJob] - Market Order Quantity: '.$marketOrderQuantity);
+
+        info('[VerifyOrderNotionalOnMarketOrderJob] - Market Order Size: '.api_format_price($marketOrderQuantity * $this->markPrice, $this->position->exchangeSymbol).' USDT');
+
+        $marketOrderSize = api_format_price($marketOrderQuantity * $this->markPrice, $this->position->exchangeSymbol);
+
+        if ($marketOrderSize < $this->position->exchangeSymbol->min_notional) {
             // Stop Job Queue sequence and fail position, silently.
-            $message = "Market order notional ({$marketOrderNotional}) less than exchange symbol minimum notional ({$this->position->exchangeSymbol->min_notional})";
+            $message = "Market order size ({$marketOrderSize}) less than exchange symbol minimum notional ({$this->position->exchangeSymbol->min_notional})";
 
             $this->coreJobQueue->updateToFailed($message, true);
             $this->position->updateToFailed($message);

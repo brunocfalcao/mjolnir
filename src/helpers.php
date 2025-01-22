@@ -35,7 +35,14 @@ function api_format_quantity($quantity, ExchangeSymbol $exchangeSymbol)
 {
     $exchangeSymbol->load('symbol');
 
-    return remove_trailing_zeros(round($quantity, $exchangeSymbol->quantity_precision));
+    // Calculate the factor based on quantity precision
+    $precisionFactor = pow(10, $exchangeSymbol->quantity_precision);
+
+    // Floor the quantity to ensure it doesn't exceed precision limits
+    $flooredQuantity = floor($quantity * $precisionFactor) / $precisionFactor;
+
+    // Remove trailing zeros and return
+    return remove_trailing_zeros($flooredQuantity);
 }
 
 function api_format_price($price, ExchangeSymbol $exchangeSymbol)
