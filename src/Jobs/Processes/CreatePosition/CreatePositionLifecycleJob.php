@@ -3,11 +3,12 @@
 namespace Nidavellir\Mjolnir\Jobs\Processes\CreatePosition;
 
 use Illuminate\Support\Str;
-use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Jobs\Processes\CreatePosition\SelectPositionMarginJob;
 
 class CreatePositionLifecycleJob extends BaseQueuableJob
 {
@@ -34,6 +35,16 @@ class CreatePositionLifecycleJob extends BaseQueuableJob
 
             return;
         }
+
+        CoreJobQueue::create([
+            'class' => VerifyIfTradingPairIsOpenedJob::class,
+            'queue' => 'positions',
+            'arguments' => [
+                'positionId' => $this->position->id,
+            ],
+            'index' => $index++,
+            'block_uuid' => $blockUuid,
+        ]);
 
         if (! $this->position->margin) {
             CoreJobQueue::create([

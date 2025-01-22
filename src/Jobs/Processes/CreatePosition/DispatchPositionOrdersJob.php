@@ -107,8 +107,6 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
             'side' => $side['opposite'],
         ]);
 
-        return;
-
         // Dispatch all orders to be created.
         $this->dispatchOrders();
 
