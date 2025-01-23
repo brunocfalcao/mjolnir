@@ -3,6 +3,7 @@
 namespace Nidavellir\Mjolnir\Observers;
 
 use Illuminate\Support\Str;
+use Nidavellir\Mjolnir\Exceptions\JustEndException;
 use Nidavellir\Mjolnir\Jobs\Apiable\Order\CalculateWAPAndAdjustProfitOrderJob;
 use Nidavellir\Mjolnir\Jobs\Apiable\Order\ModifyOrderJob;
 use Nidavellir\Mjolnir\Jobs\Apiable\Order\PlaceOrderJob;
@@ -16,25 +17,64 @@ class OrderApiObserver
     {
         // Assign a UUID before creating the order
         $order->uuid = (string) Str::uuid();
+
+        /**
+         * Check if we are creating more orders than we should.
+         * If so, then we need to raise a JustEndException so the
+         * order is not exceptionable-resolvable by the BaseQueuableJob.
+         */
+        $order->load('position');
+
+        // Do we already have all the limit orders and are we creating one more?
+        $totalEligibleOrders = $order->position
+            ->orders
+            ->where('type', 'LIMIT')
+            ->whereIn('status', ['NEW', 'FILLED', 'PARTIALLY_FILLED'])
+            ->count();
+
+        if ($totalEligibleOrders == $order->position->total_limit_orders && $order->type == 'LIMIT') {
+            throw new JustEndException("Excessively creating one more LIMIT order for position {$order->position->id}. Aborting creation.");
+        }
+
+        $eligibleMarketOrder = $order->position
+            ->orders
+            ->where('type', 'MARKET')
+            ->whereIn('status', ['NEW', 'FILLED'])
+            ->count();
+
+        if ($order->type == 'MARKET' && $eligibleMarketOrder == 1) {
+            throw new JustEndException("Excessively creating one more MARKET order for position {$order->position->id}. Aborting creation.");
+        }
+
+        $eligibleProfitOrder = $order->position
+            ->orders
+            ->where('type', 'PROFIT')
+            ->whereIn('status', ['NEW', 'FILLED', 'PARTIALLY_FILLED'])
+            ->count();
+
+        if ($order->type == 'PROFIT' && $eligibleProfitOrder == 1) {
+            throw new JustEndException("Excessively creating one more PROFIT order for position {$order->position->id}. Aborting creation.");
+        }
+
+        $eligibleMarketCancelOrder = $order->position
+            ->orders
+            ->where('type', 'MARKET-CANCEL')
+            ->whereIn('status', ['NEW', 'FILLED'])
+            ->count();
+
+        if ($order->type == 'MARKET-CANCEL' && $eligibleMarketCancelOrder == 1) {
+            throw new JustEndException("Excessively creating one more MARKET-CANCEL order for position {$order->position->id}. Aborting creation.");
+        }
     }
 
     public function updated(Order $order): void
     {
-        // Is this position new or active? -- Continue.
-        if (! $order->position->isOpened()) {
+        // Just check active positions and non-market/market-cancel orders.
+        if (! $order->position->status != 'active' || $order->type == 'MARKET' || $order->type == 'MARKET-CANCEL') {
             return;
         }
 
-        $order->load('position.orders');
-
-        // We just api observe for active orders.
-        if ($order->position->status != 'active') {
-            return;
-        }
-
-        if ($order->type == 'MARKET') {
-            return;
-        }
+        $order->load(['position.orders', 'position.exchangeSymbol.symbol']);
 
         /**
          * Get all status variables.
@@ -42,8 +82,6 @@ class OrderApiObserver
         $statusChanged = false;
         $priceChanged = false;
         $quantityChanged = false;
-
-        $order->load('position.exchangeSymbol.symbol');
 
         $token = $order->position->exchangeSymbol->symbol->token;
 

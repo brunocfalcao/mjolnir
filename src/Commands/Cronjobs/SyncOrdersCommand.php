@@ -41,11 +41,8 @@ class SyncOrdersCommand extends Command
         $position->load('account');
         $apiPositions = $position->account->apiQueryPositions()->result;
 
-        // Close position and sync orders.
-        if (! array_key_exists($position->parsedTradingPair, $apiPositions)) {
-            // Update position to closing, so we disable the order observers.
-            $position->updateToClosing();
-        }
+        // Update position to closing to disable the order api observers.
+        $position->updateToClosing();
 
         $blockUuid = (string) Str::uuid();
         $index = 1;
@@ -56,7 +53,7 @@ class SyncOrdersCommand extends Command
             ->whereNotNull('exchange_order_id') as $order) {
             CoreJobQueue::create([
                 'class' => SyncOrderJob::class,
-                'queue' => 'cronjobs',
+                'queue' => 'orders',
 
                 'arguments' => [
                     'orderId' => $order->id,

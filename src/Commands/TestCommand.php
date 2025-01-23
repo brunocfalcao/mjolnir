@@ -3,9 +3,7 @@
 namespace Nidavellir\Mjolnir\Commands;
 
 use Illuminate\Console\Command;
-use Nidavellir\Mjolnir\Support\Collections\EligibleExchangeSymbolsForPosition;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\Order;
 
 class TestCommand extends Command
 {
@@ -15,13 +13,14 @@ class TestCommand extends Command
 
     public function handle()
     {
-        dd(EligibleExchangeSymbolsForPosition::getBestExchangeSymbol(Position::find(1))->symbol->token);
+        $order = Order::find(6); // Assuming you have the order instance
 
-        return;
-
-        $apiResponse = ApiSystem::find(1)->apiQueryMarketData();
-
-        dd($apiResponse->response);
+        if ($order) {
+            $clonedOrder = $order->replicate(); // Clone the current instance
+            $clonedOrder->created_at = now(); // Set a new creation timestamp
+            $clonedOrder->updated_at = now(); // Optionally set an updated timestamp
+            $clonedOrder->save(); // Save the cloned order to the database
+        }
 
         return 0;
     }

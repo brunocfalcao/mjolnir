@@ -35,7 +35,9 @@ class DispatchPositionsCommand extends Command
         }
 
         // The BTC exchange symbol shouldn't be tradeable. Enforce it.
-        $btc = ExchangeSymbol::firstWhere('symbol_id', Symbol::firstWhere('token', 'BTC')->id);
+        $btc = ExchangeSymbol::where('symbol_id', Symbol::firstWhere('token', 'BTC')->id)
+            ->where('is_tradeable', true)
+            ->first();
 
         if ($btc) {
             $btc->update(['is_tradeable' => false]);
@@ -56,7 +58,7 @@ class DispatchPositionsCommand extends Command
             // Calculate the delta.
             $delta = $account->max_concurrent_trades - $openPositions->count();
 
-            // info('[DispatchAccountPositionsCommand] - Dispatching '.$delta.' position(s) to '.$account->user->name);
+            info('[DispatchAccountPositionsCommand] - Dispatching '.$delta.' position(s) to '.$account->user->name);
 
             $blockUuid = (string) Str::uuid();
 

@@ -3,7 +3,8 @@
 namespace Nidavellir\Mjolnir\Abstracts;
 
 use GuzzleHttp\Psr7\Response;
-use Nidavellir\Mjolnir\Exceptions\NonOverridableException;
+use Nidavellir\Mjolnir\Exceptions\JustEndException;
+use Nidavellir\Mjolnir\Exceptions\JustResolveException;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\User;
 use Psr\Http\Message\ResponseInterface;
@@ -27,7 +28,7 @@ abstract class BaseQueuableJob extends BaseJob
 
             // Max retries reached?
             if ($this->coreJobQueue->retries == $this->retries + 1) {
-                throw new NonOverridableException('CoreJobQueue max retries reached (nidavellir error)');
+                throw new JustResolveException('CoreJobQueue max retries reached (nidavellir error)');
             }
 
             // Quick authorization method on the child job.
@@ -61,7 +62,7 @@ abstract class BaseQueuableJob extends BaseJob
 
             // All good.
         } catch (\Throwable $e) {
-            if ($e instanceof NonOverridableException) {
+            if ($e instanceof JustResolveException) {
                 // Last try to make things like a rollback.
                 if (method_exists($this, 'resolveException')) {
                     $this->resolveException($e);
@@ -71,6 +72,16 @@ abstract class BaseQueuableJob extends BaseJob
                     $this->exceptionHandler->resolveException($e);
                 }
 
+                if (! $this->coreJobQueueStatusUpdated) {
+                    // Update to failed, and it's done.
+                    $this->coreJobQueue->updateToFailed($e);
+                    $this->coreJobQueue->finalizeDuration();
+                }
+
+                return;
+            }
+
+            if ($e instanceof JustEndException) {
                 if (! $this->coreJobQueueStatusUpdated) {
                     // Update to failed, and it's done.
                     $this->coreJobQueue->updateToFailed($e);

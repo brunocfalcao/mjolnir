@@ -26,6 +26,7 @@ class PlaceOrderJob extends BaseApiableJob
 
     // Specific configuration to allow more retry flexibility.
     public int $workerServerBackoffSeconds = 10;
+
     public int $retries = 20;
     // -----
 
@@ -52,17 +53,21 @@ class PlaceOrderJob extends BaseApiableJob
 
     public function computeApiable()
     {
+        info('computeApiable()');
+
         // Verify if conditions are met to place this order. If not, silently abort.
         $result = $this->verifyConditions();
 
         if ($result !== true) {
-            $this->order->updateToFailed($result);
+            info("[PlaceOrderJob] Updating Order ID {$this->order->id} to cancelled");
 
-            User::admin()->get()->each(function ($user) {
+            $this->order->updateToInvalid($result);
+
+            User::admin()->get()->each(function ($user) use ($result) {
                 $user->pushover(
-                    message: "[PlaceOrderJob] - Conditions not met: {$result}",
+                    message: "[PlaceOrderJob] - Order ID {$this->order->id}, conditions not met: {$result}",
                     title: 'Place Order error',
-                    applicationKey: 'nidavellir_errors'
+                    applicationKey: 'nidavellir_warnings'
                 );
             });
 
@@ -71,6 +76,8 @@ class PlaceOrderJob extends BaseApiableJob
              * because if so, then it might remove all the already present orders.
              * We will check what's going on later, via pushover message.
              */
+            info('Returning ...');
+
             return;
         }
 
@@ -120,21 +127,37 @@ class PlaceOrderJob extends BaseApiableJob
     {
         $orders = $this->order->position->orders;
 
+        $marketOrderFilled = $orders->where('type', 'MARKET')
+            ->where('status', 'FILLED')
+            ->isNotEmpty();
+
+        $profitOrderFilled = $orders->where('type', 'PROFIT')
+            ->where('status', 'FILLED')
+            ->isNotEmpty();
+
+        $marketCancelOrderFilled = $orders->where('type', 'MARKET-CANCEL')
+            ->where('status', 'FILLED')
+            ->isNotEmpty();
+
+        $allLimitOrdersFilled = $orders->where('type', 'LIMIT')
+            ->whereIn('status', ['FILLED', 'PARTIALLY_FILLED'])
+            ->count() == $this->order->position->total_limit_orders;
+
         // Are we placing another MARKET, PROFIT, or MARKET-CANCEL order by mistake?
-        if (in_array($this->order->type, ['MARKET', 'PROFIT', 'MARKET-CANCEL']) &&
-            $orders->where('type', $this->order->type)
-                ->whereNotNull('exchange_order_id')
-                ->isNotEmpty()) {
-            return 'A 2nd order of the same type ('.$this->order->type.') is trying to be created for the same position! Aborting!';
+        if ($this->order->type == 'MARKET' && $marketOrderFilled) {
+            return 'A 2nd MARKET order is trying to be created for the same position! Aborting.';
         }
 
-        // Are we trying to create another limit order more than the total limit orders as PARTIALLY FILLED, FILLED and NEW ?
-        $totalLimitOrders = $this->order->position->total_limit_orders;
-        if ($this->order->type == 'LIMIT' &&
-            $orders->where('type', 'LIMIT')
-                ->whereIn('status', ['PARTIALLY_FILLED', 'FILLED', 'NEW'])
-                ->count() > $totalLimitOrders) {
-            return 'Trying to create a new LIMIT order when all LIMIT orders where already created! Aborting!';
+        if ($this->order->type == 'PROFIT' && $profitOrderFilled) {
+            return 'A 2nd PROFIT order is trying to be created for the same position! Aborting.';
+        }
+
+        if ($this->order->type == 'MARKET-CANCEL' && $marketCancelOrderFilled) {
+            return 'A 2nd MARKET-CANCEL order is trying to be created for the same position! Aborting.';
+        }
+
+        if ($this->order->type == 'LIMIT' && $allLimitOrdersFilled) {
+            return 'An extra LIMIT order is trying to be placed when all limit orders are filled! Aborting';
         }
 
         return true;
@@ -145,6 +168,7 @@ class PlaceOrderJob extends BaseApiableJob
         return $this->order->position->orders()
             ->where('type', 'MARKET')
             ->where('status', 'FILLED')
+            ->whereNotNull('exchange_order_id')
             ->exists();
     }
 
@@ -186,7 +210,7 @@ class PlaceOrderJob extends BaseApiableJob
             ],
         ]);
 
-        $this->order->updateToRollbacked($e->getMessage());
+        $this->position->updateToRollbacked($e->getMessage());
 
         $this->coreJobQueueStatusUpdated = false;
     }
