@@ -32,6 +32,8 @@ class CreateNewPositionsJob extends BaseQueuableJob
     {
         //info('[CreateNewPositionsJob] - Creating '.$this->numPositions.' position(s) to '.$this->account->user->name);
 
+        /*
+        // ===============  TESTING =============
         $testToken = 'FIL';
         $testExchangeSymbol = ExchangeSymbol::where('symbol_id', Symbol::firstWhere('token', $testToken)->id)
             ->where('quote_id', Quote::firstWhere('canonical', 'USDT')->id)
@@ -41,11 +43,12 @@ class CreateNewPositionsJob extends BaseQueuableJob
 
         //info('[CreateNewPositionsJob] - TESTING Exchange Symbol: '.$testExchangeSymbol->symbol->token);
 
-        // TESTING!
         $this->extraData = [
             'exchange_symbol_id' => $testExchangeSymbol->id,
             'direction' => $testExchangeSymbol->direction,
         ];
+        // =============== /TESTING ===============
+        */
 
         $data = array_merge($this->extraData, [
             'account_id' => $this->account->id,
