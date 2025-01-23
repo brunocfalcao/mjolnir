@@ -9,7 +9,7 @@ class TestCommand extends Command
 {
     protected $signature = 'debug:test';
 
-    protected $description = 'Resolves the Binance recvWindow issue by syncing server time with a 25% safety margin';
+    protected $description = 'Testing stuff';
 
     public function handle()
     {

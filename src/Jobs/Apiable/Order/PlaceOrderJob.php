@@ -53,10 +53,12 @@ class PlaceOrderJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        info('computeApiable()');
-
         // Verify if conditions are met to place this order. If not, silently abort.
         $result = $this->verifyConditions();
+
+        if ($this->order->id == 3) {
+            throw new \Exception('Just an exception');
+        }
 
         if ($result !== true) {
             info("[PlaceOrderJob] Updating Order ID {$this->order->id} to cancelled");
