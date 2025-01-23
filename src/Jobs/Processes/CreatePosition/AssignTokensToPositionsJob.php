@@ -12,8 +12,6 @@ use Nidavellir\Thor\Models\Position;
 
 class AssignTokensToPositionsJob extends BaseQueuableJob
 {
-    private ?string $categoryPointer = null; // Pointer to track the last selected category
-
     public Account $account;
 
     public ApiSystem $apiSystem;

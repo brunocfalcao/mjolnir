@@ -16,10 +16,12 @@ class EligibleExchangeSymbolsForPosition
 
         // Get all exchange symbols on active positions.
         $exchangeSymbolsInOpenPositions = self::getActiveExchangeSymbols($position);
+        info("[EligibleExchangeSymbolsForPosition] - Exchangesymbols in open positions: ", $exchangeSymbolsInOpenPositions);
         $exchangeSymbolsInOpenPositions->load(['symbol', 'quote']);
 
         // Get all possible exchange symbols.
         $exchangeSymbolsEligible = self::getEligibleExchangeSymbols($position);
+        info("[EligibleExchangeSymbolsForPosition] - Eligible ExchangeSymbols: ", $exchangeSymbolsEligible);
         $exchangeSymbolsEligible->load(['symbol', 'quote']);
 
         // Reject all exchange symbols with a notional lower than the position notional.
