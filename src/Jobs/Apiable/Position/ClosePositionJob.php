@@ -37,6 +37,10 @@ class ClosePositionJob extends BaseApiableJob
 
         $profitOrder = $this->position->orders->firstWhere('type', 'PROFIT');
 
+        if (!$profitOrder) {
+            return;
+        }
+
         if ($profitOrder->status == 'EXPIRED' && $profitOrder->status == 'CANCELLED') {
             $this->position->update([
                 'error_message' => 'Profit order was expired or cancelled, no PnL calculated. Maybe it was a manual close?',
