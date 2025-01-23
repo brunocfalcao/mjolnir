@@ -25,7 +25,7 @@ class SyncOrdersCommand extends Command
         // Fetch all open positions for the account and process them
         $positions = $this->getOpenPositions();
 
-        info('Open positions: '.$positions->count());
+        //info('Open positions: '.$positions->count());
 
         foreach ($positions as $position) {
             $this->syncOrdersForPosition($position);
@@ -36,7 +36,7 @@ class SyncOrdersCommand extends Command
 
     private function syncOrdersForPosition(Position $position)
     {
-        info('Syncing orders for position id '.$position->id);
+        //info('Syncing orders for position id '.$position->id);
 
         $position->load('account');
         $apiPositions = $position->account->apiQueryPositions()->result;

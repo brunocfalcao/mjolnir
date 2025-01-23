@@ -137,7 +137,7 @@ class OrderApiObserver
                     ]);
                 } else {
                     // Reset WAP trigger. Do not modify the PROFIT order.
-                    info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Setting wap_triggered back to false');
+                    //info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Setting wap_triggered back to false');
                     $order->position->update([
                         'wap_triggered' => false,
                     ]);
@@ -174,8 +174,8 @@ class OrderApiObserver
         // Limit order filled or partially filled? -- Compute WAP.
         if (($order->status == 'FILLED' || $order->status == 'PARTIALLY_FILLED') && $order->getOriginal('status') != 'FILLED' && $order->type == 'LIMIT') {
             // WAP calculation.
-            info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Limit order filled or partially filled, recalculating WAP and readjusting Profit order');
-            info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering CalculateWAPAndAdjustProfitOrderJob::class');
+            //info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Limit order filled or partially filled, recalculating WAP and readjusting Profit order');
+            //info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering CalculateWAPAndAdjustProfitOrderJob::class');
 
             CoreJobQueue::create([
                 'class' => CalculateWAPAndAdjustProfitOrderJob::class,

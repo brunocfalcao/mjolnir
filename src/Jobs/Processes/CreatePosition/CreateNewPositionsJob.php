@@ -30,7 +30,7 @@ class CreateNewPositionsJob extends BaseQueuableJob
 
     public function compute()
     {
-        info('[CreateNewPositionsJob] - Creating '.$this->numPositions.' position(s) to '.$this->account->user->name);
+        //info('[CreateNewPositionsJob] - Creating '.$this->numPositions.' position(s) to '.$this->account->user->name);
 
         $testToken = 'FIL';
         $testExchangeSymbol = ExchangeSymbol::where('symbol_id', Symbol::firstWhere('token', $testToken)->id)
@@ -39,7 +39,7 @@ class CreateNewPositionsJob extends BaseQueuableJob
 
         // $testExchangeSymbol->update(['direction' => 'SHORT']);
 
-        info('[CreateNewPositionsJob] - TESTING Exchange Symbol: '.$testExchangeSymbol->symbol->token);
+        //info('[CreateNewPositionsJob] - TESTING Exchange Symbol: '.$testExchangeSymbol->symbol->token);
 
         // TESTING!
         $this->extraData = [
