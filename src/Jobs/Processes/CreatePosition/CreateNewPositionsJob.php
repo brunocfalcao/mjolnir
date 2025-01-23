@@ -32,7 +32,7 @@ class CreateNewPositionsJob extends BaseQueuableJob
     {
         info('[CreateNewPositionsJob] - Creating '.$this->numPositions.' position(s) to '.$this->account->user->name);
 
-        $testToken = 'SOL';
+        $testToken = 'FIL';
         $testExchangeSymbol = ExchangeSymbol::where('symbol_id', Symbol::firstWhere('token', $testToken)->id)
             ->where('quote_id', Quote::firstWhere('canonical', 'USDT')->id)
             ->first();

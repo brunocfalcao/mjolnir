@@ -74,7 +74,7 @@ class PlaceOrderJob extends BaseApiableJob
             return;
         }
 
-        // info('[PlaceOrderJob] - Order ID: '.$this->order->id.', placing order on API...');
+        info('[PlaceOrderJob] - Order ID: '.$this->order->id.', placing order on API...');
 
         /**
          * Small exception for the profit order. If the quantity is null then
@@ -125,7 +125,7 @@ class PlaceOrderJob extends BaseApiableJob
             $orders->where('type', $this->order->type)
                 ->whereNotNull('exchange_order_id')
                 ->isNotEmpty()) {
-            return 'A 2nd order of the same type ('.$this->order->type.') is trying to be created for the same position!';
+            return 'A 2nd order of the same type ('.$this->order->type.') is trying to be created for the same position! Aborting!';
         }
 
         // Are we trying to create another limit order more than the total limit orders as PARTIALLY FILLED, FILLED and NEW ?
@@ -134,7 +134,7 @@ class PlaceOrderJob extends BaseApiableJob
             $orders->where('type', 'LIMIT')
                 ->whereIn('status', ['PARTIALLY_FILLED', 'FILLED', 'NEW'])
                 ->count() > $totalLimitOrders) {
-            return 'Total limit orders where already created!';
+            return 'Trying to create a new LIMIT order when all LIMIT orders where already created! Aborting!';
         }
 
         return true;
@@ -151,9 +151,11 @@ class PlaceOrderJob extends BaseApiableJob
     private function getNewPriceFromPercentage(float $referencePrice, float $percentage): float
     {
         $change = $referencePrice * ($percentage / 100);
+
+        // For LONG, the price increases. For SHORT, it decreases.
         $newPrice = $this->position->direction == 'LONG'
-            ? $referencePrice + $change
-            : $referencePrice - $change;
+        ? $referencePrice + $change
+        : $referencePrice - $change;
 
         return api_format_price($newPrice, $this->position->exchangeSymbol);
     }
