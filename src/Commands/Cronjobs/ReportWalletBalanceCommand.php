@@ -48,15 +48,15 @@ class ReportWalletBalanceCommand extends Command
             $diffWalletBalance = 0;
 
             if ($newestSnapshot) {
-                $totalWalletBalance = $newestSnapshot->total_wallet_balance;
+                $totalWalletBalance = round($newestSnapshot->total_wallet_balance, 2);
             }
 
             if ($oldestSnapshot) {
-                $previousWalletBalance = $oldestSnapshot->total_wallet_balance;
+                $previousWalletBalance = round($oldestSnapshot->total_wallet_balance, 2);
             }
 
             // Calculate the 24-hour differential.
-            $diffWalletBalance = $totalWalletBalance - $previousWalletBalance;
+            $diffWalletBalance = round($totalWalletBalance - $previousWalletBalance, 2);
 
             // Log the information to the console.
             $this->info("User: {$account->user->name}");
