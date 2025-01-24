@@ -59,10 +59,12 @@ class ReportWalletBalanceCommand extends Command
             $diffWalletBalance = round($totalWalletBalance - $previousWalletBalance, 2);
 
             // Log the information to the console.
+            /*
             $this->info("User: {$account->user->name}");
             $this->info("Total Wallet Balance: {$totalWalletBalance}");
             $this->info("24h Change: {$diffWalletBalance}");
             $this->info('-------------------------');
+            */
 
             // Notify all admin users via pushover.
             User::admin()->get()->each(function ($user) use ($account, $totalWalletBalance, $diffWalletBalance) {
