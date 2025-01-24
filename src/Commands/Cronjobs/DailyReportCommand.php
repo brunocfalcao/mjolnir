@@ -72,11 +72,14 @@ class DailyReportCommand extends Command
                 ->where('status', 'closed')
                 ->count();
 
+            $account->load('quote');
+            $quote = $account->quote->canonical;
+
             // Notify all admin users via pushover.
-            User::admin()->get()->each(function ($user) use ($totalTrades, $account, $totalWalletBalance, $diffWalletBalance) {
+            User::admin()->get()->each(function ($user) use ($quote, $totalTrades, $account, $totalWalletBalance, $diffWalletBalance) {
                 $user->pushover(
-                    message: "Total Wallet Balance: {$totalWalletBalance}\n 24h Change: {$diffWalletBalance}\n Total Trades: {$totalTrades}",
-                    title: "Daily report for {$account->user->name}, account ID {$account->id}",
+                    message: "Total Wallet Balance: {$totalWalletBalance} {$quote}\n 24h Change: {$diffWalletBalance} {$quote}\n Total Trades: {$totalTrades}",
+                    title: "Account report for {$account->user->name}, ID: {$account->id}",
                     applicationKey: 'nidavellir_cronjobs'
                 );
             });
