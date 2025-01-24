@@ -70,7 +70,7 @@ class OrderApiObserver
     public function updated(Order $order): void
     {
         // Just check active positions and non-market/market-cancel orders.
-        if (! $order->position->status != 'active' || $order->type == 'MARKET' || $order->type == 'MARKET-CANCEL') {
+        if ($order->position->status == 'active' && ($order->type != 'MARKET' || $order->type != 'MARKET-CANCEL')) {
             return;
         }
 
