@@ -35,14 +35,6 @@ class SyncOrdersCommand extends Command
 
     private function syncOrdersForPosition(Position $position)
     {
-        // info('Syncing orders for position id '.$position->id);
-
-        $position->load('account');
-        $apiPositions = $position->account->apiQueryPositions()->result;
-
-        $blockUuid = (string) Str::uuid();
-        $index = 1;
-
         foreach ($position
             ->orders
             ->where('type', '<>', 'MARKET')
@@ -53,9 +45,7 @@ class SyncOrdersCommand extends Command
 
                 'arguments' => [
                     'orderId' => $order->id,
-                ],
-                'index' => $index++,
-                'block_uuid' => $blockUuid,
+                ]
             ]);
         }
     }
