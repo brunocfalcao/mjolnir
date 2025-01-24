@@ -50,7 +50,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
                 $selectedExchangeSymbol = EligibleExchangeSymbolsForPosition::getBestExchangeSymbol($position);
 
                 if ($selectedExchangeSymbol) {
-                    info("[AssignTokensToPositionsJob] - Best ExchangeSymbol selected: {$selectedExchangeSymbol->symbol->token}");
+                    //info("[AssignTokensToPositionsJob] - Best ExchangeSymbol selected: {$selectedExchangeSymbol->symbol->token}");
                     $data = [];
 
                     if (! $position->direction) {

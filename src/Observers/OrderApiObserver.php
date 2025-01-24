@@ -71,12 +71,11 @@ class OrderApiObserver
     {
         // Just check active positions and non-market/market-cancel orders.
         if ($order->position->status != 'active') {
-            info('[OrderApiObserver] NOT RUNNING API OBSERVER');
-
+            //info('[OrderApiObserver] NOT RUNNING API OBSERVER');
             return;
         }
 
-        info('[OrderApiObserver] - Running Api Observers');
+        //info('[OrderApiObserver] - Running Api Observers');
 
         $order->load(['position.orders', 'position.exchangeSymbol.symbol']);
 
@@ -90,17 +89,17 @@ class OrderApiObserver
         $token = $order->position->exchangeSymbol->symbol->token;
 
         if ($order->wasChanged('status') && ! empty($order->getOriginal('status')) && $order->getOriginal('status') != $order->status) {
-            info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - status changed from '.$order->getOriginal('status').' to '.$order->status);
+            //info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - status changed from '.$order->getOriginal('status').' to '.$order->status);
             $statusChanged = true;
         }
 
         if ($order->wasChanged('price') && ! empty($order->getOriginal('price')) && $order->getOriginal('price') != $order->price) {
-            info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - price changed from '.$order->getOriginal('price').' to '.$order->price);
+            //info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - price changed from '.$order->getOriginal('price').' to '.$order->price);
             $priceChanged = true;
         }
 
         if ($order->wasChanged('quantity') && ! empty($order->getOriginal('quantity')) && $order->getOriginal('quantity') != $order->quantity) {
-            info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - quantity changed from '.$order->getOriginal('quantity').' to '.$order->quantity);
+            //info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - quantity changed from '.$order->getOriginal('quantity').' to '.$order->quantity);
             $quantityChanged = true;
         }
 
@@ -110,8 +109,8 @@ class OrderApiObserver
         // Non-Profit order price or quantity changed? Resettle order quantity and price.
         if ($priceChanged || $quantityChanged) {
             if ($order->type != 'PROFIT') {
-                info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Order had a price and/or quantity changed. Resettling order');
-                info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ModifyOrderJob::class');
+                //info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Order had a price and/or quantity changed. Resettling order');
+                //info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ModifyOrderJob::class');
                 // Put back the market/limit order back where it was.
                 CoreJobQueue::create([
                     'class' => ModifyOrderJob::class,
@@ -127,8 +126,8 @@ class OrderApiObserver
             // For a profit order we need to verify if it was due to a WAP.
             if ($order->type == 'PROFIT') {
                 if (! $order->position->wap_triggered) {
-                    info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Profit order changed and it was not due to WAP. Resettling order');
-                    info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ModifyOrderJob::class');
+                    //info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Profit order changed and it was not due to WAP. Resettling order');
+                    //info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ModifyOrderJob::class');
                     // The PROFIT order was manually changed, not due to a WAP.
                     CoreJobQueue::create([
                         'class' => ModifyOrderJob::class,
@@ -141,7 +140,7 @@ class OrderApiObserver
                     ]);
                 } else {
                     // Reset WAP trigger. Do not modify the PROFIT order.
-                    info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Setting wap_triggered back to false');
+                    //info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Setting wap_triggered back to false');
                     $order->position->update([
                         'wap_triggered' => false,
                     ]);
@@ -151,8 +150,8 @@ class OrderApiObserver
 
         // Profit order status filled or expired? -- Close position. All done.
         if ($order->type == 'PROFIT' && ($order->status == 'FILLED' || $order->status == 'EXPIRED')) {
-            info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Profit order is filled or expired. We can close the position');
-            info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ClosePositionLifecycleJob::class');
+            //info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Profit order is filled or expired. We can close the position');
+            //info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ClosePositionLifecycleJob::class');
             CoreJobQueue::create([
                 'class' => ClosePositionLifecycleJob::class,
                 'queue' => 'positions',
@@ -164,8 +163,8 @@ class OrderApiObserver
 
         // Order cancelled by mistake? Re-place the order.
         if ($order->status == 'CANCELLED' && $order->getOriginal('status') != 'CANCELLED') {
-            info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Order canceled by mistake. Recreating order');
-            info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering PlaceOrderJob::class');
+            //info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Order canceled by mistake. Recreating order');
+            //info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering PlaceOrderJob::class');
             CoreJobQueue::create([
                 'class' => PlaceOrderJob::class,
                 'queue' => 'orders',
@@ -178,8 +177,8 @@ class OrderApiObserver
         // Limit order filled or partially filled? -- Compute WAP.
         if (($order->status == 'FILLED' || $order->status == 'PARTIALLY_FILLED') && $order->getOriginal('status') != 'FILLED' && $order->type == 'LIMIT') {
             // WAP calculation.
-            info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Limit order filled or partially filled, recalculating WAP and readjusting Profit order');
-            info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering CalculateWAPAndAdjustProfitOrderJob::class');
+            //info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Limit order filled or partially filled, recalculating WAP and readjusting Profit order');
+            //info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering CalculateWAPAndAdjustProfitOrderJob::class');
 
             CoreJobQueue::create([
                 'class' => CalculateWAPAndAdjustProfitOrderJob::class,
