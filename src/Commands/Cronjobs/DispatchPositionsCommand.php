@@ -55,8 +55,14 @@ class DispatchPositionsCommand extends Command
             // Get open positions for the account.
             $openPositions = Position::opened()->where('account_id', $account->id)->get();
 
+            info("[DispatchPositionsCommand] - Open Positions: {$openPositions}");
+
             // Calculate the delta.
             $delta = $account->max_concurrent_trades - $openPositions->count();
+
+            info("[DispatchPositionsCommand] - Max concurrent trades: {$account->max_concurrent_trades}");
+
+            info("[DispatchPositionsCommand] - Opened Positions: {$openPositions}");
 
             info('[DispatchAccountPositionsCommand] - Dispatching '.$delta.' position(s) to '.$account->user->name);
 
