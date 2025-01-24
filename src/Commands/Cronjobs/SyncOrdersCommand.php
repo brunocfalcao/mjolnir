@@ -5,7 +5,6 @@ namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Jobs\Apiable\Order\SyncOrderJob;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Position;
@@ -45,7 +44,7 @@ class SyncOrdersCommand extends Command
 
                 'arguments' => [
                     'orderId' => $order->id,
-                ]
+                ],
             ]);
         }
     }

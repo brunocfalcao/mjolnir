@@ -72,6 +72,7 @@ class OrderApiObserver
         // Just check active positions and non-market/market-cancel orders.
         if ($order->position->status != 'active') {
             info('[OrderApiObserver] NOT RUNNING API OBSERVER');
+
             return;
         }
 
