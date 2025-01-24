@@ -8,6 +8,7 @@ use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchPositionsCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\GetBinancePricesCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\OptimizeCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\RefreshDataCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\ReportWalletBalanceCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\SyncOrdersCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\UpdateAccountsBalancesCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\UpdateRecvwindowSafetyDurationCommand;
@@ -51,6 +52,7 @@ class MjolnirServiceProvider extends ServiceProvider
                 UpdateAccountsBalancesCommand::class,
                 OptimizeCommand::class,
                 GetBinancePricesCommand::class,
+                ReportWalletBalanceCommand::class,
 
                 // Debug.
                 NotifyCommand::class,
