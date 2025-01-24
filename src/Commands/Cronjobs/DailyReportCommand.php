@@ -64,6 +64,7 @@ class DailyReportCommand extends Command
             $this->info("User: {$account->user->name}");
             $this->info("Total Wallet Balance: {$totalWalletBalance}");
             $this->info("24h Change: {$diffWalletBalance}");
+            $this->info("Total trades: {$totalTrades}");
             $this->info('-------------------------');
             */
 
@@ -72,7 +73,7 @@ class DailyReportCommand extends Command
                 ->count();
 
             // Notify all admin users via pushover.
-            User::admin()->get()->each(function ($user) use ($account, $totalWalletBalance, $diffWalletBalance) {
+            User::admin()->get()->each(function ($user) use ($totalTrades, $account, $totalWalletBalance, $diffWalletBalance) {
                 $user->pushover(
                     message: "Total Wallet Balance: {$totalWalletBalance}, 24h Change: {$diffWalletBalance}, Total Trades: {$totalTrades}",
                     title: "Daily report for {$account->user->name}, account ID {$account->id}",
