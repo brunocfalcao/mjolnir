@@ -41,9 +41,6 @@ class SyncOrdersCommand extends Command
         $position->load('account');
         $apiPositions = $position->account->apiQueryPositions()->result;
 
-        // Update position to closing to disable the order api observers.
-        $position->updateToClosing();
-
         $blockUuid = (string) Str::uuid();
         $index = 1;
 
@@ -57,18 +54,6 @@ class SyncOrdersCommand extends Command
 
                 'arguments' => [
                     'orderId' => $order->id,
-                ],
-                'index' => $index++,
-                'block_uuid' => $blockUuid,
-            ]);
-        }
-
-        if ($position->status == 'closing') {
-            CoreJobQueue::create([
-                'class' => ClosePositionLifecycleJob::class,
-                'queue' => 'positions',
-                'arguments' => [
-                    'positionId' => $position->id,
                 ],
                 'index' => $index++,
                 'block_uuid' => $blockUuid,
