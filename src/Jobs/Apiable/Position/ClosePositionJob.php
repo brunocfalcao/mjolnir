@@ -2,14 +2,14 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Apiable\Position;
 
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Mjolnir\Jobs\Apiable\Order\SyncOrderJob;
+use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\Position;
 
 class ClosePositionJob extends BaseApiableJob
 {
@@ -37,7 +37,7 @@ class ClosePositionJob extends BaseApiableJob
 
         $profitOrder = $this->position->orders->firstWhere('type', 'PROFIT');
 
-        if (!$profitOrder) {
+        if (! $profitOrder) {
             return;
         }
 
@@ -62,7 +62,7 @@ class ClosePositionJob extends BaseApiableJob
 
                 'arguments' => [
                     'orderId' => $order->id,
-                ]
+                ],
             ]);
         }
     }

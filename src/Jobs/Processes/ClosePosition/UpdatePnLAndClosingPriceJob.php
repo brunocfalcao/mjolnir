@@ -33,10 +33,10 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
 
         // Was the PROFIT order synced?
         if ($this->position->orders->where('type', 'PROFIT')
-                                  ->whereNotNull('exchange_order_id')
-                                  ->isEmpty()) {
+            ->whereNotNull('exchange_order_id')
+            ->isEmpty()) {
             return;
-        };
+        }
 
         $apiResponse = $this->position->apiQueryTrade();
 
@@ -46,8 +46,8 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
             $closingPrice = $apiResponse->result[0]['price'];
 
             $this->position->update([
-            'realized_pnl' => $pnl,
-            'closing_price' => $closingPrice,
+                'realized_pnl' => $pnl,
+                'closing_price' => $closingPrice,
             ]);
 
             User::admin()->get()->each(function ($user) use ($pnl) {
@@ -65,8 +65,8 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
     public function resolveException(\Throwable $e)
     {
         $this->position->update([
-        'status' => 'failed',
-        'error_message' => $e->getMessage(),
+            'status' => 'failed',
+            'error_message' => $e->getMessage(),
         ]);
     }
 }

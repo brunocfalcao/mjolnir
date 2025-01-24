@@ -36,19 +36,19 @@ class VerifyOrderNotionalOnMarketOrderJob extends BaseApiableJob
 
         $totalLimitOrders = $this->position->total_limit_orders;
 
-        //info('[VerifyOrderNotionalOnMarketOrderJob] - Position Direction: '.$this->position->direction);
+        // info('[VerifyOrderNotionalOnMarketOrderJob] - Position Direction: '.$this->position->direction);
 
-        //info("[VerifyOrderNotionalOnMarketOrderJob] - Minimum Notional for {$this->position->parsedTradingPair}: ".$this->position->exchangeSymbol->min_notional);
+        // info("[VerifyOrderNotionalOnMarketOrderJob] - Minimum Notional for {$this->position->parsedTradingPair}: ".$this->position->exchangeSymbol->min_notional);
 
-        //info('[VerifyOrderNotionalOnMarketOrderJob] - Position Margin: '.$this->position->margin);
+        // info('[VerifyOrderNotionalOnMarketOrderJob] - Position Margin: '.$this->position->margin);
 
-        //info('[VerifyOrderNotionalOnMarketOrderJob] - Position Notional: '.notional($this->position));
+        // info('[VerifyOrderNotionalOnMarketOrderJob] - Position Notional: '.notional($this->position));
 
         $totalTradeQuantity = $this->getTotalTradeQuantity();
 
-        //info("[VerifyOrderNotionalOnMarketOrderJob] - Price: {$this->markPrice}");
-        //info('[VerifyOrderNotionalOnMarketOrderJob] - Divider: '.get_market_order_amount_divider($this->position->total_limit_orders));
-        //info("[VerifyOrderNotionalOnMarketOrderJob] - Limit Orders: {$this->position->total_limit_orders}");
+        // info("[VerifyOrderNotionalOnMarketOrderJob] - Price: {$this->markPrice}");
+        // info('[VerifyOrderNotionalOnMarketOrderJob] - Divider: '.get_market_order_amount_divider($this->position->total_limit_orders));
+        // info("[VerifyOrderNotionalOnMarketOrderJob] - Limit Orders: {$this->position->total_limit_orders}");
 
         $marketOrderQuantity = api_format_quantity(notional($this->position) /
                                $this->markPrice /
@@ -56,9 +56,9 @@ class VerifyOrderNotionalOnMarketOrderJob extends BaseApiableJob
                                    $this->position->total_limit_orders
                                ), $this->position->exchangeSymbol);
 
-        //info('[VerifyOrderNotionalOnMarketOrderJob] - Market Order Quantity: '.$marketOrderQuantity);
+        // info('[VerifyOrderNotionalOnMarketOrderJob] - Market Order Quantity: '.$marketOrderQuantity);
 
-        //info('[VerifyOrderNotionalOnMarketOrderJob] - Market Order Size: '.api_format_price($marketOrderQuantity * $this->markPrice, $this->position->exchangeSymbol).' USDT');
+        // info('[VerifyOrderNotionalOnMarketOrderJob] - Market Order Size: '.api_format_price($marketOrderQuantity * $this->markPrice, $this->position->exchangeSymbol).' USDT');
 
         $marketOrderSize = api_format_price($marketOrderQuantity * $this->markPrice, $this->position->exchangeSymbol);
 

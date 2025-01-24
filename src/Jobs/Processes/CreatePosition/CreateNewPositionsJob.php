@@ -30,7 +30,7 @@ class CreateNewPositionsJob extends BaseQueuableJob
 
     public function compute()
     {
-        //info('[CreateNewPositionsJob] - Creating '.$this->numPositions.' position(s) to '.$this->account->user->name);
+        // info('[CreateNewPositionsJob] - Creating '.$this->numPositions.' position(s) to '.$this->account->user->name);
 
         /*
         // ===============  TESTING =============

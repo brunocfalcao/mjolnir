@@ -57,7 +57,7 @@ class PlaceOrderJob extends BaseApiableJob
         $result = $this->verifyConditions();
 
         if ($result !== true) {
-            //info("[PlaceOrderJob] Updating Order ID {$this->order->id} to cancelled");
+            // info("[PlaceOrderJob] Updating Order ID {$this->order->id} to cancelled");
 
             $this->order->updateToInvalid($result);
 
@@ -74,12 +74,12 @@ class PlaceOrderJob extends BaseApiableJob
              * because if so, then it might remove all the already present orders.
              * We will check what's going on later, via pushover message.
              */
-            //info('Returning ...');
+            // info('Returning ...');
 
             return;
         }
 
-        //info('[PlaceOrderJob] - Order ID: '.$this->order->id.', placing order on API...');
+        // info('[PlaceOrderJob] - Order ID: '.$this->order->id.', placing order on API...');
 
         /**
          * Small exception for the profit order. If the quantity is null then

@@ -63,7 +63,7 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
                                    $this->position->total_limit_orders
                                ), $this->position->exchangeSymbol);
 
-        //info('[DispatchPositionOrdersJob] - MarketOrderQuantity (no rounding): '.$marketOrderQuantity);
+        // info('[DispatchPositionOrdersJob] - MarketOrderQuantity (no rounding): '.$marketOrderQuantity);
 
         /**
          * Now, for each limit order we will MULTIPLY the quantity to obtain
@@ -85,9 +85,9 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
                 'quantity' => $quantity,
             ]);
 
-            //info("[DispatchPositionOrdersJob] - LIMIT order quantity: {$quantity}, Price: {$price}, Percentage Gap: ".($i + 1) * $percentageGap);
-            //info("[DispatchPositionOrdersJob] - LIMIT order quantity NO ROUNDING: {$quantityNoRounding}");
-            //info("[DispatchPositionOrdersJob] - LIMIT order quantity: {$quantity}, Price: {$price}, Percentage Gap: ".($i + 1) * $percentageGap);
+            // info("[DispatchPositionOrdersJob] - LIMIT order quantity: {$quantity}, Price: {$price}, Percentage Gap: ".($i + 1) * $percentageGap);
+            // info("[DispatchPositionOrdersJob] - LIMIT order quantity NO ROUNDING: {$quantityNoRounding}");
+            // info("[DispatchPositionOrdersJob] - LIMIT order quantity: {$quantity}, Price: {$price}, Percentage Gap: ".($i + 1) * $percentageGap);
         }
 
         // Create the market order.
@@ -98,7 +98,7 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
             'quantity' => $marketOrderQuantity,
         ]);
 
-        //info("[DispatchPositionOrdersJob] - MARKET order quantity: {$marketOrderQuantity}");
+        // info("[DispatchPositionOrdersJob] - MARKET order quantity: {$marketOrderQuantity}");
 
         // Create the profit order.
         Order::create([

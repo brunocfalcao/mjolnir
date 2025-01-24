@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Jobs\Apiable\Order\SyncOrderJob;
-use Nidavellir\Mjolnir\Jobs\Processes\ClosePosition\ClosePositionLifecycleJob;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Position;
 
@@ -25,7 +24,7 @@ class SyncOrdersCommand extends Command
         // Fetch all open positions for the account and process them
         $positions = $this->getOpenPositions();
 
-        //info('Open positions: '.$positions->count());
+        // info('Open positions: '.$positions->count());
 
         foreach ($positions as $position) {
             $this->syncOrdersForPosition($position);
@@ -36,7 +35,7 @@ class SyncOrdersCommand extends Command
 
     private function syncOrdersForPosition(Position $position)
     {
-        //info('Syncing orders for position id '.$position->id);
+        // info('Syncing orders for position id '.$position->id);
 
         $position->load('account');
         $apiPositions = $position->account->apiQueryPositions()->result;

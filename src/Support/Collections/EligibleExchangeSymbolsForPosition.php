@@ -16,12 +16,12 @@ class EligibleExchangeSymbolsForPosition
 
         // Get all exchange symbols on active positions.
         $exchangeSymbolsInOpenPositions = self::getActiveExchangeSymbols($position);
-        info("[EligibleExchangeSymbolsForPosition] - Exchangesymbols in open positions: ", $exchangeSymbolsInOpenPositions->pluck('symbol.token')->toArray());
+        info('[EligibleExchangeSymbolsForPosition] - Exchangesymbols in open positions: ', $exchangeSymbolsInOpenPositions->pluck('symbol.token')->toArray());
         $exchangeSymbolsInOpenPositions->load(['symbol', 'quote']);
 
         // Get all possible exchange symbols.
         $exchangeSymbolsEligible = self::getEligibleExchangeSymbols($position);
-        info("[EligibleExchangeSymbolsForPosition] - Eligible ExchangeSymbols: ", $exchangeSymbolsEligible->pluck('symbol.token')->toArray());
+        info('[EligibleExchangeSymbolsForPosition] - Eligible ExchangeSymbols: ', $exchangeSymbolsEligible->pluck('symbol.token')->toArray());
         $exchangeSymbolsEligible->load(['symbol', 'quote']);
 
         // Reject all exchange symbols with a notional lower than the position notional.
@@ -39,7 +39,7 @@ class EligibleExchangeSymbolsForPosition
 
         // Remove the exchange symbols used in positions.
         $exchangeSymbolsAvailable = $exchangeSymbolsEligible->diff($exchangeSymbolsInOpenPositions);
-        info("[EligibleExchangeSymbolsForPosition] - Available ExchangeSymbols: ", $exchangeSymbolsAvailable->pluck('symbol.token')->toArray());
+        info('[EligibleExchangeSymbolsForPosition] - Available ExchangeSymbols: ', $exchangeSymbolsAvailable->pluck('symbol.token')->toArray());
 
         if ($exchangeSymbolsAvailable->isEmpty()) {
             return null;
@@ -143,9 +143,9 @@ class EligibleExchangeSymbolsForPosition
              */
             $maxHalfPositions = $position->account->max_concurrent_trades / 2;
 
-            //info("Total Longs: {$longs}");
-            //info("Total Shorts: {$shorts}");
-            //info("MaxHalfPositions: {$maxHalfPositions}");
+            // info("Total Longs: {$longs}");
+            // info("Total Shorts: {$shorts}");
+            // info("MaxHalfPositions: {$maxHalfPositions}");
 
             if ($longs < $maxHalfPositions) {
                 $selectedExchangeSymbol = $exchangeSymbolsAvailable->firstWhere('direction', 'LONG');
