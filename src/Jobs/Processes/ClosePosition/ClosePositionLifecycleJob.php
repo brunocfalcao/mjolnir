@@ -31,6 +31,8 @@ class ClosePositionLifecycleJob extends BaseQueuableJob
 
     public function compute()
     {
+        $this->position->updateToClosing();
+
         CoreJobQueue::create([
             'class' => CancelOpenOrdersJob::class,
             'queue' => 'positions',
