@@ -3,15 +3,16 @@
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
 use Illuminate\Console\Command;
-use Nidavellir\Thor\Models\User;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\AccountBalanceHistory;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\User;
 
-class ReportWalletBalanceCommand extends Command
+class DailyReportCommand extends Command
 {
-    protected $signature = 'mjolnir:report-wallet-balance';
+    protected $signature = 'mjolnir:daily-report';
 
-    protected $description = 'Reports wallet balance for each account, via pushover';
+    protected $description = 'Makes a daily report (finance, trades, etc)';
 
     public function handle()
     {
@@ -19,9 +20,9 @@ class ReportWalletBalanceCommand extends Command
         $accounts = Account::whereHas('user', function ($query) {
             $query->where('is_trader', true);
         })->with('user')
-          ->active()
-          ->canTrade()
-          ->get();
+            ->active()
+            ->canTrade()
+            ->get();
 
         foreach ($accounts as $account) {
             // Fetch the newest snapshot for the account.
@@ -35,7 +36,7 @@ class ReportWalletBalanceCommand extends Command
                 ->orderBy('created_at')
                 ->first();
 
-            if (!$oldestSnapshot) {
+            if (! $oldestSnapshot) {
                 // If there's no snapshot within the last 24 hours, fall back to the oldest entry.
                 $oldestSnapshot = AccountBalanceHistory::where('account_id', $account->id)
                     ->orderBy('created_at')
@@ -66,11 +67,15 @@ class ReportWalletBalanceCommand extends Command
             $this->info('-------------------------');
             */
 
+            $totalTrades = Position::where('account_id', $account->id)
+                ->where('status', 'closed')
+                ->count();
+
             // Notify all admin users via pushover.
             User::admin()->get()->each(function ($user) use ($account, $totalWalletBalance, $diffWalletBalance) {
                 $user->pushover(
-                    message: "Wallet from {$account->user->name} - Total Wallet Balance: {$totalWalletBalance}, 24h Change: {$diffWalletBalance}",
-                    title: "Wallet Balance Report (Last 24h)",
+                    message: "Total Wallet Balance: {$totalWalletBalance}, 24h Change: {$diffWalletBalance}, Total Trades: {$totalTrades}",
+                    title: "Daily report for {$account->user->name}, account ID {$account->id}",
                     applicationKey: 'nidavellir_cronjobs'
                 );
             });

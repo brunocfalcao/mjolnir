@@ -3,12 +3,12 @@
 namespace Nidavellir\Mjolnir;
 
 use Illuminate\Support\ServiceProvider;
+use Nidavellir\Mjolnir\Commands\Cronjobs\DailyReportCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchCoreJobQueueCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchPositionsCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\GetBinancePricesCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\OptimizeCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\RefreshDataCommand;
-use Nidavellir\Mjolnir\Commands\Cronjobs\ReportWalletBalanceCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\SyncOrdersCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\UpdateAccountsBalancesCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\UpdateRecvwindowSafetyDurationCommand;
@@ -52,7 +52,7 @@ class MjolnirServiceProvider extends ServiceProvider
                 UpdateAccountsBalancesCommand::class,
                 OptimizeCommand::class,
                 GetBinancePricesCommand::class,
-                ReportWalletBalanceCommand::class,
+                DailyReportCommand::class,
 
                 // Debug.
                 NotifyCommand::class,
