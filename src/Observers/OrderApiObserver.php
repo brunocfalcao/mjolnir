@@ -75,6 +75,15 @@ class OrderApiObserver
             return;
         }
 
+        /**
+         * Skip cases where the PROFIT order was partially filled. This means
+         * that the profit order is starting to be filled, but we don't want
+         * to change the profit order because of this observer trigger.
+         */
+        if ($order->type == 'PROFIT' && $order->status == 'PARTIALLY_FILLED') {
+            return;
+        }
+
         // info('[OrderApiObserver] - Running Api Observers');
 
         $order->load(['position.orders', 'position.exchangeSymbol.symbol']);
