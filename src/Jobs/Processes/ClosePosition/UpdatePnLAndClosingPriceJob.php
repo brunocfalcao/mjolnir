@@ -54,7 +54,8 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
                 $user->pushover(
                     message: "{$this->position->parsedTradingPair} ({$this->position->direction}) closed (PnL: {$pnl})",
                     title: 'Position closed',
-                    applicationKey: 'nidavellir_positions'
+                    applicationKey: 'nidavellir_positions',
+                    additionalParameters: ['sound' => 'cashregister ']
                 );
             });
         }
