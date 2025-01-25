@@ -37,9 +37,22 @@ class GetBinancePricesCommand extends Command
         $callbacks = [
             'message' => function ($conn, $msg) {
                 echo now().PHP_EOL;
+
                 $prices = collect(json_decode($msg, true));
 
-                dd($prices[0]['p'], $prices[0]['s']);
+                // Check if it's the start of a new minute
+                $its1minute = now()->second === 0;
+
+                // Check if it's the start of a new 5-minute interval
+                $its5minutes = $its1minute && now()->minute % 5 === 0;
+
+                if ($its1minute) {
+                    echo now()." (1 minute) - {$prices[0]['s']} {$prices[0]['p']}".PHP_EOL;
+                }
+
+                if ($its5minutes) {
+                    echo now()." (5 minutes) - {$prices[0]['s']} {$prices[0]['p']}".PHP_EOL;
+                }
             },
 
             'ping' => function ($conn, $msg) {},
