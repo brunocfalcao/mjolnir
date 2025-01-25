@@ -24,6 +24,10 @@ abstract class BaseQueuableJob extends BaseJob
     public function handle()
     {
         try {
+            // Store the loggable information in the session.
+            session()->put('api_requests_log_loggable_id', $this->coreJobQueue->id);
+            session()->put('api_requests_log_loggable_class', get_class($this->coreJobQueue));
+
             $this->coreJobQueue->startDuration();
 
             // Max retries reached?

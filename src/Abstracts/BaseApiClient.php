@@ -50,6 +50,12 @@ abstract class BaseApiClient
 
             $logData['debug_data'] = $apiRequest->properties->getOr('debug', []);
 
+            // Check if both loggable_id and loggable_class exist in the session
+            if (session()->has(['api_requests_log_loggable_id', 'api_requests_log_loggable_class'])) {
+                $logData['loggable_id'] = session()->get('api_requests_log_loggable_id');
+                $logData['loggable_type'] = session()->get('api_requests_log_loggable_class');
+            }
+
             $this->apiRequestLog = ApiRequestLog::create($logData);
 
             $response = $this->httpRequest->request(
