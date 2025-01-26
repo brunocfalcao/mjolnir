@@ -85,7 +85,7 @@ class OrderApiObserver
             });
 
             return;
-        };
+        }
 
         /**
          * Skip cases where the PROFIT order was NEW and now is PARTIALLY FILLED. This means
