@@ -134,11 +134,6 @@ class OrderApiObserver
                 info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Order had a price and/or quantity changed. Resettling order price from ' . $order->price . ' to ' . $order->getOriginal('price'));
                 info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ModifyOrderJob::class');
 
-                // Temporarily disable the observer for the next instance call.
-                $order->withoutEvents(function () use ($order) {
-                    $order->update(['skip_observer' => true]);
-                });
-
                 // Put back the market/limit order back where it was.
                 CoreJobQueue::create([
                     'class' => ModifyOrderJob::class,
@@ -149,6 +144,11 @@ class OrderApiObserver
                         'price' => $order->getOriginal('price'),
                     ],
                 ]);
+
+                // Temporarily disable the observer for the next instance call.
+                $order->withoutEvents(function () use ($order) {
+                    $order->update(['skip_observer' => true]);
+                });
             }
 
             // For a profit order we need to verify if it was due to a WAP.
@@ -157,11 +157,6 @@ class OrderApiObserver
                      info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Profit order changed and it was not due to WAP. Resettling order');
                      info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ModifyOrderJob::class');
                     // The PROFIT order was manually changed, not due to a WAP.
-
-                    // Temporarily disable the observer for the next instance call.
-                    $order->withoutEvents(function () use ($order) {
-                        $order->update(['skip_observer' => true]);
-                    });
 
                     CoreJobQueue::create([
                         'class' => ModifyOrderJob::class,
@@ -172,6 +167,11 @@ class OrderApiObserver
                             'price' => $order->getOriginal('price'),
                         ],
                     ]);
+
+                    // Temporarily disable the observer for the next instance call.
+                    $order->withoutEvents(function () use ($order) {
+                        $order->update(['skip_observer' => true]);
+                    });
                 } else {
                     // Reset WAP trigger. Do not modify the PROFIT order.
                     // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Setting wap_triggered back to false');
