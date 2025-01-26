@@ -71,7 +71,6 @@ class OrderApiObserver
     {
         // Just check active positions and non-market/market-cancel orders.
         if ($order->position->status != 'active') {
-            // info('[OrderApiObserver] NOT RUNNING API OBSERVER');
             return;
         }
 
@@ -131,8 +130,8 @@ class OrderApiObserver
         // Non-Profit order price or quantity changed? Resettle order quantity and price.
         if ($priceChanged || $quantityChanged) {
             if ($order->type != 'PROFIT') {
-                info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Order had a price and/or quantity changed. Resettling order price from ' . $order->price . ' to ' . $order->getOriginal('price'));
-                info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ModifyOrderJob::class');
+                // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Order had a price and/or quantity changed. Resettling order price from ' . $order->price . ' to ' . $order->getOriginal('price'));
+                // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ModifyOrderJob::class');
 
                 // Put back the market/limit order back where it was.
                 CoreJobQueue::create([
@@ -154,8 +153,8 @@ class OrderApiObserver
             // For a profit order we need to verify if it was due to a WAP.
             if ($order->type == 'PROFIT') {
                 if (! $order->position->wap_triggered) {
-                     info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Profit order changed and it was not due to WAP. Resettling order');
-                     info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ModifyOrderJob::class');
+                    // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Profit order changed and it was not due to WAP. Resettling order');
+                    // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ModifyOrderJob::class');
                     // The PROFIT order was manually changed, not due to a WAP.
 
                     CoreJobQueue::create([
