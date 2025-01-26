@@ -17,6 +17,6 @@ class ADXIndicator extends BaseIndicator
         }
 
         // Major number to keep the trend solid (e.g. >= 20).
-        return $this->data['value'][0] >= 20;
+        return $this->data['value'][0] >= 15;
     }
 }
