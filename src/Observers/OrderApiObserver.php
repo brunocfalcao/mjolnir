@@ -76,6 +76,19 @@ class OrderApiObserver
         }
 
         /**
+         * If we need to skip this observer on this order, then we skip it
+         * and we activate the observer again.
+         */
+        if ($order->skip_observer) {
+            $order->withoutEvents(function () use ($order) {
+                // Perform the query or operation here
+                $order->update(['skip_observer' => false]);
+            });
+
+            return;
+        };
+
+        /**
          * Skip cases where the PROFIT order was NEW and now is PARTIALLY FILLED. This means
          * that the profit order is starting to be filled, but we don't want
          * to change the profit order because of this observer trigger.
@@ -120,6 +133,10 @@ class OrderApiObserver
             if ($order->type != 'PROFIT') {
                 // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Order had a price and/or quantity changed. Resettling order');
                 // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ModifyOrderJob::class');
+
+                // Temporarily disable the observer for this instance
+                $order->skip_observer = true;
+
                 // Put back the market/limit order back where it was.
                 CoreJobQueue::create([
                     'class' => ModifyOrderJob::class,
@@ -138,6 +155,10 @@ class OrderApiObserver
                     // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Profit order changed and it was not due to WAP. Resettling order');
                     // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ModifyOrderJob::class');
                     // The PROFIT order was manually changed, not due to a WAP.
+
+                    // Temporarily disable the observer for this instance
+                    $order->skip_observer = true;
+
                     CoreJobQueue::create([
                         'class' => ModifyOrderJob::class,
                         'queue' => 'orders',
