@@ -33,7 +33,7 @@ class OrderApiObserver
             ->count();
 
         if ($totalEligibleOrders == $order->position->total_limit_orders && $order->type == 'LIMIT') {
-            throw new JustEndException("Excessively creating one more LIMIT order for position {$order->position->id}. Aborting creation.");
+            throw new JustEndException("Excessively creating one more LIMIT order for position {$order->position->parsedTradingPair} (ID: {$order->position->id}). Aborting creation.");
         }
 
         $eligibleMarketOrder = $order->position
@@ -43,7 +43,7 @@ class OrderApiObserver
             ->count();
 
         if ($order->type == 'MARKET' && $eligibleMarketOrder == 1) {
-            throw new JustEndException("Excessively creating one more MARKET order for position {$order->position->id}. Aborting creation.");
+            throw new JustEndException("Excessively creating one more MARKET order for position {$order->position->parsedTradingPair} (ID: {$order->position->id}). Aborting creation.");
         }
 
         $eligibleProfitOrder = $order->position
@@ -53,7 +53,7 @@ class OrderApiObserver
             ->count();
 
         if ($order->type == 'PROFIT' && $eligibleProfitOrder == 1) {
-            throw new JustEndException("Excessively creating one more PROFIT order for position {$order->position->id}. Aborting creation.");
+            throw new JustEndException("Excessively creating one more PROFIT order for position {$order->position->parsedTradingPair} (ID: {$order->position->id}). Aborting creation.");
         }
 
         $eligibleMarketCancelOrder = $order->position
@@ -63,7 +63,7 @@ class OrderApiObserver
             ->count();
 
         if ($order->type == 'MARKET-CANCEL' && $eligibleMarketCancelOrder == 1) {
-            throw new JustEndException("Excessively creating one more MARKET-CANCEL order for position {$order->position->id}. Aborting creation.");
+            throw new JustEndException("Excessively creating one more MARKET-CANCEL order for position {$order->position->parsedTradingPair} (ID: {$order->position->id}). Aborting creation.");
         }
     }
 

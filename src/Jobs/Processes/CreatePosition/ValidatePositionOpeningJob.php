@@ -41,8 +41,6 @@ class ValidatePositionOpeningJob extends BaseQueuableJob
         ]);
 
         $this->position->updateToActive();
-
-        $this->position->load('exchangeSymbol.symbol');
     }
 
     public function resolveException(\Throwable $e)

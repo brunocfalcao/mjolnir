@@ -72,7 +72,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
 
                     $tokens[] = $position->parsedTradingPair;
                 } else {
-                    // Non available exchange symbols. Fail position.
+                    // None available exchange symbols. Fail position.
                     $position->updateToFailed('No exchange symbols available, try again later');
                 }
             }
