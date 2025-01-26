@@ -38,7 +38,7 @@ class VerifyIfTradingPairIsOpenedJob extends BaseApiableJob
 
         // Do we already have an opened position with this trading pair?
         if (array_key_exists($this->position->parsedTradingPair, $apiPositions)) {
-            throw new \Exception('This trading pair already have an opened position! Aborting');
+            throw new \Exception("This trading pair ({$this->position->parsedTradingPair}) already have an opened position! Aborting");
         }
     }
 
