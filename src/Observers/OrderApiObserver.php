@@ -131,7 +131,7 @@ class OrderApiObserver
         // Non-Profit order price or quantity changed? Resettle order quantity and price.
         if ($priceChanged || $quantityChanged) {
             if ($order->type != 'PROFIT') {
-                info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Order had a price and/or quantity changed. Resettling order');
+                info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Order had a price and/or quantity changed. Resettling order price from ' . $order->price . ' to ' . $order-getOriginal('price'));
                 info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ModifyOrderJob::class');
 
                 // Temporarily disable the observer for the next instance call.
