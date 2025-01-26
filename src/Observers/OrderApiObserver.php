@@ -134,7 +134,7 @@ class OrderApiObserver
                 // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Order had a price and/or quantity changed. Resettling order');
                 // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ModifyOrderJob::class');
 
-                // Temporarily disable the observer for this instance
+                // Temporarily disable the observer for the next instance call.
                 $order->withoutEvents(function () use ($order) {
                     $order->update(['skip_observer' => true]);
                 });
@@ -158,7 +158,7 @@ class OrderApiObserver
                     // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ModifyOrderJob::class');
                     // The PROFIT order was manually changed, not due to a WAP.
 
-                    // Temporarily disable the observer for this instance
+                    // Temporarily disable the observer for the next instance call.
                     $order->withoutEvents(function () use ($order) {
                         $order->update(['skip_observer' => true]);
                     });
