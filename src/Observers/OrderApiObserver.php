@@ -135,7 +135,9 @@ class OrderApiObserver
                 // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering ModifyOrderJob::class');
 
                 // Temporarily disable the observer for this instance
-                $order->skip_observer = true;
+                $order->withoutEvents(function () use ($order) {
+                    $order->update(['skip_observer' => true]);
+                });
 
                 // Put back the market/limit order back where it was.
                 CoreJobQueue::create([
@@ -157,7 +159,9 @@ class OrderApiObserver
                     // The PROFIT order was manually changed, not due to a WAP.
 
                     // Temporarily disable the observer for this instance
-                    $order->skip_observer = true;
+                    $order->withoutEvents(function () use ($order) {
+                        $order->update(['skip_observer' => true]);
+                    });
 
                     CoreJobQueue::create([
                         'class' => ModifyOrderJob::class,
