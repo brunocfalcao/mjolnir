@@ -35,7 +35,7 @@ class RunIntegrityChecksCommand extends Command
                 ->pluck('orders')
                 ->flatten();
 
-            if ($exchangeStandbyOrders->count() != $dbStandbyOrders->count() && false) {
+            if ($exchangeStandbyOrders->count() != $dbStandbyOrders->count()) {
                 User::admin()->get()->each(function ($user) use ($account, $exchangeStandbyOrders, $dbStandbyOrders) {
                     $user->pushover(
                         message: "Account ID {$account->id}: Exchange Standby Orders = {$exchangeStandbyOrders->count()}, DB Standby Orders = {$dbStandbyOrders->count()}",
