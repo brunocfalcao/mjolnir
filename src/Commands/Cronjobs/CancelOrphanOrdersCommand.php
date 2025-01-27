@@ -34,9 +34,9 @@ class CancelOrphanOrdersCommand extends Command
             }
 
             foreach ($openedTradingPairs as $openedTradingPair => $openedTradingPairOrders) {
-                $this->info('Opened Trading Pair:' . $openedTradingPair);
+                $this->info('Opened Trading Pair:'.$openedTradingPair);
 
-                if (!array_key_exists($openedTradingPair, $activePositionTradingPairs)) {
+                if (! array_key_exists($openedTradingPair, $activePositionTradingPairs)) {
 
                     /**
                      * Delete all orders from this opened trading pair.
@@ -46,7 +46,6 @@ class CancelOrphanOrdersCommand extends Command
                      * If we don't have that id on the database we make
                      * a straight API call.
                      */
-
                     foreach ($openedTradingPairs[$openedTradingPair] as $orphanOrder) {
                         $order = Order::firstWhere('exchange_order_id', $orphanOrder['orderId']);
                         if ($order) {
@@ -62,16 +61,13 @@ class CancelOrphanOrdersCommand extends Command
 
     /**
      * Groups orders by their symbol.
-     *
-     * @param array $orders
-     * @return array
      */
     private function groupOrdersBySymbol(array $orders): array
     {
         $groupedOrders = [];
         foreach ($orders as $order) {
             $symbol = $order['symbol'];
-            if (!isset($groupedOrders[$symbol])) {
+            if (! isset($groupedOrders[$symbol])) {
                 $groupedOrders[$symbol] = [];
             }
             $groupedOrders[$symbol][] = $order;

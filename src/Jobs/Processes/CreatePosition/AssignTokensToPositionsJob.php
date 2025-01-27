@@ -87,6 +87,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
                     if (in_array($selectedExchangeSymbol->id, $this->account->positions()->active()->pluck('exchange_symbol_id')->toArray())) {
                         $selectedExchangeSymbol->load('symbol');
                         $position->updateToFailed("This exchange symbol {$selectedExchangeSymbol->symbol->token} ID: {$selectedExchangeSymbol->id} is already selected on other active positions for this account, skipping position");
+
                         continue;
                     }
 

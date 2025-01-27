@@ -4,8 +4,8 @@ namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\User;
 
 class RunIntegrityChecksCommand extends Command
 {
@@ -35,15 +35,20 @@ class RunIntegrityChecksCommand extends Command
                 ->pluck('orders')
                 ->flatten();
 
-            $this->info("Account ID {$account->id}: Exchange Standby Orders = {$exchangeStandbyOrders->count()}, DB Standby Orders = {$dbStandbyOrders->count()}");
+            if ($exchangeStandbyOrders->count() != $dbStandbyOrders->count() && false) {
+                User::admin()->get()->each(function ($user) use ($account, $exchangeStandbyOrders, $dbStandbyOrders) {
+                    $user->pushover(
+                        message: "Account ID {$account->id}: Exchange Standby Orders = {$exchangeStandbyOrders->count()}, DB Standby Orders = {$dbStandbyOrders->count()}",
+                        title: 'Integrity Check failed - Total standby orders mismatch',
+                        applicationKey: 'nidavellir_warnings'
+                    );
+                });
+            }
         }
     }
 
     /**
      * Get only orders with status 'NEW' or 'PARTIALLY_FILLED'.
-     *
-     * @param Collection $orders
-     * @return Collection
      */
     protected function getStandbyOrders(Collection $orders): Collection
     {
