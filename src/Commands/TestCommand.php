@@ -3,7 +3,13 @@
 namespace Nidavellir\Mjolnir\Commands;
 
 use Illuminate\Console\Command;
-use Nidavellir\Thor\Models\Order;
+use Illuminate\Support\Facades\DB;
+use Nidavellir\Mjolnir\Support\Collections\EligibleExchangeSymbolsForPosition;
+use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\ExchangeSymbol;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\Symbol;
 
 class TestCommand extends Command
 {
@@ -13,14 +19,41 @@ class TestCommand extends Command
 
     public function handle()
     {
-        $order = Order::find(6); // Assuming you have the order instance
+        // Create a dummy position.
+        DB::table('positions')->truncate();
 
-        if ($order) {
-            $clonedOrder = $order->replicate(); // Clone the current instance
-            $clonedOrder->created_at = now(); // Set a new creation timestamp
-            $clonedOrder->updated_at = now(); // Optionally set an updated timestamp
-            $clonedOrder->save(); // Save the cloned order to the database
+        Position::create([
+            'account_id' => 1,
+        ]);
+
+        // Obtain active positions.
+
+        $account = Account::find(1);
+
+        $positions = $account->apiQueryPositions()->result;
+
+        $dataMapper = new ApiDataMapperProxy($account->apiSystem->canonical);
+
+        $exchangeSymbols = collect();
+
+        foreach ($positions as $pair => $position) {
+            $arrBaseQuote = $dataMapper->identifyBaseAndQuote($pair);
+
+            // Find the right symbol given the base value.
+            foreach (Symbol::all() as $symbol) {
+                if ($symbol->exchangeCanonical($account->apiSystem) == $arrBaseQuote['base']) {
+                    $exchangeSymbols->push(
+                        ExchangeSymbol::where('symbol_id', $symbol->id)
+                            ->where('quote_id', $account->quote->id)
+                            ->first()
+                    );
+                }
+            }
         }
+
+        $exchangeSymbol = EligibleExchangeSymbolsForPosition::getBestExchangeSymbol(Position::find(1), collect());
+
+        dd($exchangeSymbol->symbol->token.'/'.$exchangeSymbol->quote->canonical.' ('.$exchangeSymbol->direction.')');
 
         return 0;
     }

@@ -9,7 +9,7 @@ use Nidavellir\Thor\Models\TradeConfiguration;
 
 class EligibleExchangeSymbolsForPosition
 {
-    public static function getBestExchangeSymbol(Position $position)
+    public static function getBestExchangeSymbol(Position $position, ?Collection $otherExchangeSymbolsToRemove = null)
     {
         // Eager load relationships.
         $position->load(['account.quote', 'exchangeSymbol.symbol']);
@@ -41,11 +41,16 @@ class EligibleExchangeSymbolsForPosition
         $exchangeSymbolsAvailable = $exchangeSymbolsEligible->diff($exchangeSymbolsInOpenPositions);
         // info('[EligibleExchangeSymbolsForPosition] - Available ExchangeSymbols: ', $exchangeSymbolsAvailable->pluck('symbol.token')->toArray());
 
+        // If otherExchangeSymbolsToRemove, then remove them.
+        if ($otherExchangeSymbolsToRemove != null) {
+            $exchangeSymbolsAvailable = $exchangeSymbolsEligible->diff($otherExchangeSymbolsToRemove);
+        }
+
         if ($exchangeSymbolsAvailable->isEmpty()) {
             return null;
         }
 
-        // Eaget load relationships.
+        // Eager load relationships.
         $exchangeSymbolsAvailable->load(['symbol', 'quote']);
 
         // Sort the exchange symbols by the indicator timeframe.
