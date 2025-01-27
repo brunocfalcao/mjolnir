@@ -109,7 +109,6 @@ class CreatePositionLifecycleJob extends BaseQueuableJob
             'block_uuid' => $blockUuid,
         ]);
 
-        /*
         CoreJobQueue::create([
             'class' => DispatchPositionOrdersJob::class,
             'queue' => 'orders',
@@ -119,7 +118,6 @@ class CreatePositionLifecycleJob extends BaseQueuableJob
             'index' => $index++,
             'block_uuid' => $blockUuid,
         ]);
-        */
 
         return $this->position;
     }
