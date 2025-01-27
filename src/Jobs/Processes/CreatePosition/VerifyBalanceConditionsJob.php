@@ -83,7 +83,7 @@ class VerifyBalanceConditionsJob extends BaseApiableJob
 
             // Check if we have all the limit orders filled, then we cannot open the position.
             if ($orders->count() > 0 && $orders->where('type', 'LIMIT')->where('status', 'NEW')->count() == 0) {
-                throw new \Exception("Position {$position->parsedTradingPair} ID {$position->id} have all LIMIT orders filled -- Stopping dispatch positions process");
+                throw new \Exception("Position {$position->parsedTradingPair} ID {$position->id} have all LIMIT orders filled -- Stopping dispatch positions process. No new positions were created");
             }
         }
     }
