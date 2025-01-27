@@ -22,6 +22,7 @@ use Nidavellir\Mjolnir\Commands\Debug\GetAccountBalanceCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\GetBinancePricesCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchPositionsCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\CancelOrphanOrdersCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\RunIntegrityChecksCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchCoreJobQueueCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\UpdateAccountsBalancesCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\UpdateRecvwindowSafetyDurationCommand;
@@ -55,6 +56,7 @@ class MjolnirServiceProvider extends ServiceProvider
                 GetBinancePricesCommand::class,
                 DailyReportCommand::class,
                 CancelOrphanOrdersCommand::class,
+                RunIntegrityChecksCommand::class,
 
                 // Debug.
                 NotifyCommand::class,

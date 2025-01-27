@@ -37,7 +37,22 @@ class CancelOrphanOrdersCommand extends Command
                 $this->info('Opened Trading Pair:' . $openedTradingPair);
 
                 if (!array_key_exists($openedTradingPair, $activePositionTradingPairs)) {
-                    $this->info('Should delete orders from ' . $openedTradingPair);
+
+                    /**
+                     * Delete all orders from this opened trading pair.
+                     * If we have that orderId on the database, we call the
+                     * cancel order directly from that order eloquent model.
+                     *
+                     * If we don't have that id on the database we make
+                     * a straight API call.
+                     */
+
+                    foreach ($openedTradingPairs[$openedTradingPair] as $orphanOrder) {
+                        $order = Order::firstWhere('exchange_order_id', $orphanOrder['orderId']);
+                        if ($order) {
+                            // Delete order.
+                        }
+                    }
                 }
             }
         }
