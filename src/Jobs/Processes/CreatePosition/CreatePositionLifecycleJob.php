@@ -35,6 +35,7 @@ class CreatePositionLifecycleJob extends BaseQueuableJob
             return;
         }
 
+        /*
         CoreJobQueue::create([
             'class' => VerifyIfTradingPairIsOpenedJob::class,
             'queue' => 'positions',
@@ -44,6 +45,7 @@ class CreatePositionLifecycleJob extends BaseQueuableJob
             'index' => $index++,
             'block_uuid' => $blockUuid,
         ]);
+        */
 
         if (! $this->position->margin) {
             CoreJobQueue::create([
