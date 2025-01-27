@@ -82,6 +82,9 @@ abstract class BaseQueuableJob extends BaseJob
                     $this->coreJobQueue->finalizeDuration();
                 }
 
+                // propagate exception.
+                throw $e;
+
                 return;
             }
 
@@ -91,6 +94,9 @@ abstract class BaseQueuableJob extends BaseJob
                     $this->coreJobQueue->updateToFailed($e);
                     $this->coreJobQueue->finalizeDuration();
                 }
+
+                // propagate exception.
+                throw $e;
 
                 return;
             }
@@ -159,6 +165,9 @@ abstract class BaseQueuableJob extends BaseJob
                         applicationKey: 'nidavellir_errors'
                     );
                 });
+
+                // propagate exception.
+                throw $e;
             }
         }
     }

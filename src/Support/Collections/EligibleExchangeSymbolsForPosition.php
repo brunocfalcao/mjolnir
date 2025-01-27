@@ -46,6 +46,7 @@ class EligibleExchangeSymbolsForPosition
             $exchangeSymbolsAvailable = $exchangeSymbolsEligible->diff($otherExchangeSymbolsToRemove);
         }
 
+        // Empty at the end? Return null
         if ($exchangeSymbolsAvailable->isEmpty()) {
             return null;
         }
@@ -97,7 +98,7 @@ class EligibleExchangeSymbolsForPosition
     protected static function getActiveExchangeSymbols(Position $position)
     {
         $activeExchangeSymbolsIds = $position->fromAccount($position->account)
-            ->opened()
+            ->active()
             ->pluck('exchange_symbol_id');
 
         return ExchangeSymbol::whereIn('id', $activeExchangeSymbolsIds)
@@ -136,9 +137,6 @@ class EligibleExchangeSymbolsForPosition
                 ->where('direction', 'SHORT')
                 ->count();
 
-            // $longs = $exchangeSymbolsInOpenPositions->where('direction', 'LONG')->count();
-            // $shorts = $exchangeSymbolsInOpenPositions->where('direction', 'SHORT')->count();
-
             /**
              * We should get a short or a long, but in case there is space for the half
              * then we get a position on that direction. E.g.:
@@ -147,10 +145,6 @@ class EligibleExchangeSymbolsForPosition
              * But, if we have 5 longs open, we can still open one more long.
              */
             $maxHalfPositions = $position->account->max_concurrent_trades / 2;
-
-            // info("Total Longs: {$longs}");
-            // info("Total Shorts: {$shorts}");
-            // info("MaxHalfPositions: {$maxHalfPositions}");
 
             if ($longs < $maxHalfPositions) {
                 $selectedExchangeSymbol = $exchangeSymbolsAvailable->firstWhere('direction', 'LONG');
@@ -163,13 +157,6 @@ class EligibleExchangeSymbolsForPosition
             }
 
             return $selectedExchangeSymbol;
-            /*
-            if ($longs >= $shorts) {
-                return $exchangeSymbolsAvailable->firstWhere('direction', 'SHORT');
-            } else {
-                return $exchangeSymbolsAvailable->firstWhere('direction', 'LONG');
-            }
-            */
         }
 
         // A last fallback. Just get the shortest timeframe exchange symbol.

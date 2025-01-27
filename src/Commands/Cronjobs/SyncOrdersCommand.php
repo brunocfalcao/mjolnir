@@ -47,7 +47,7 @@ class SyncOrdersCommand extends Command
     private function getOpenPositions()
     {
         return Position::opened()
-            ->with('orders') // Eager load orders to prevent N+1 queries
+            ->with('orders')
             ->get();
     }
 }

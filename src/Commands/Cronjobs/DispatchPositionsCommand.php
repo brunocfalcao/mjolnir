@@ -53,7 +53,7 @@ class DispatchPositionsCommand extends Command
 
         foreach ($accounts as $account) {
             // Get open positions for the account.
-            $openPositions = Position::opened()->where('account_id', $account->id)->get();
+            $openPositions = Position::active()->where('account_id', $account->id)->get();
 
             // info("[DispatchPositionsCommand] - Open Positions: {$openPositions}");
 

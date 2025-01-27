@@ -60,7 +60,6 @@ class CreateNewPositionsJob extends BaseQueuableJob
 
         for ($i = 0; $i < $this->numPositions; $i++) {
             $position = Position::create($data);
-
             $positionIds[] = $position->id;
         }
 
