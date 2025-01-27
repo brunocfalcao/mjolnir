@@ -27,7 +27,7 @@ class RunIntegrityChecksCommand extends Command
             $exchangeStandbyOrders = $this->getStandbyOrders($openOrders);
 
             $dbStandbyOrders = $account->positions()
-                ->opened()
+                ->where('positions.status', 'active')
                 ->with(['orders' => function ($query) {
                     $query->active();
                 }])
