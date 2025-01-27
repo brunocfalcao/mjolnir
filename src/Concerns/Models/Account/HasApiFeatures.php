@@ -69,6 +69,17 @@ trait HasApiFeatures
         );
     }
 
+    public function apiQueryOpenOrders(): ApiResponse
+    {
+        $this->apiProperties = $this->apiMapper()->prepareQueryOpenOrdersProperties();
+        $this->apiResponse = $this->withApi()->getCurrentOpenOrders($this->apiProperties);
+
+        return new ApiResponse(
+            response: $this->apiResponse,
+            result: $this->apiMapper()->resolveQueryOpenOrdersResponse($this->apiResponse)
+        );
+    }
+
     public function apiQueryPositions(): ApiResponse
     {
         $this->apiProperties = $this->apiMapper()->prepareQueryPositionsProperties();
