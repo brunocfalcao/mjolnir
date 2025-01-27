@@ -40,7 +40,8 @@ class RunIntegrityChecksCommand extends Command
                     $user->pushover(
                         message: "Account ID {$account->id}: Exchange Standby Orders = {$exchangeStandbyOrders->count()}, DB Standby Orders = {$dbStandbyOrders->count()}",
                         title: 'Integrity Check failed - Total standby orders mismatch',
-                        applicationKey: 'nidavellir_warnings'
+                        applicationKey: 'nidavellir_warnings',
+                        additionalParameters: ['priority' => 2]
                     );
                 });
             }
