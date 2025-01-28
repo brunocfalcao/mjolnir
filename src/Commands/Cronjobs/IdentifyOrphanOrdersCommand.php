@@ -3,6 +3,7 @@
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
 use Illuminate\Console\Command;
+use Nidavellir\Thor\Models\User;
 use Nidavellir\Thor\Models\Account;
 
 class IdentifyOrphanOrdersCommand extends Command
@@ -34,10 +35,14 @@ class IdentifyOrphanOrdersCommand extends Command
             }
 
             foreach ($openedTradingPairs as $openedTradingPair => $openedTradingPairOrders) {
-                $this->info('Opened Trading Pair:'.$openedTradingPair);
-
                 if (! array_key_exists($openedTradingPair, $activePositionTradingPairs)) {
-                    $this->info('Possible orphan orders from '.$openedTradingPair);
+                    User::admin()->get()->each(function ($user) use ($openedTradingPair) {
+                        $user->pushover(
+                            message: "You have possible orphan orders from token {$openedTradingPair}",
+                            title: "Identify possible orphan orders",
+                            applicationKey: 'nidavellir_warnings'
+                        );
+                    });
                 }
             }
         }
