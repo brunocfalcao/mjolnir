@@ -21,6 +21,7 @@ class OptimizeCommand extends Command
         $this->clearCache();
         $this->optimize();
 
+        /*
         User::admin()->get()->each(function ($user) {
             $user->pushover(
                 message: 'Cronjob optimize ran successfully',
@@ -28,6 +29,7 @@ class OptimizeCommand extends Command
                 applicationKey: 'nidavellir_cronjobs'
             );
         });
+        */
     }
 
     private function cleanLogs()
