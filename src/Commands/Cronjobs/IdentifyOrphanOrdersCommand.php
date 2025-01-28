@@ -3,8 +3,8 @@
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
 use Illuminate\Console\Command;
-use Nidavellir\Thor\Models\User;
 use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\User;
 
 class IdentifyOrphanOrdersCommand extends Command
 {
@@ -39,7 +39,7 @@ class IdentifyOrphanOrdersCommand extends Command
                     User::admin()->get()->each(function ($user) use ($openedTradingPair) {
                         $user->pushover(
                             message: "You have possible orphan orders from token {$openedTradingPair}, please check ASAP",
-                            title: "Identify possible orphan orders",
+                            title: 'Identify possible orphan orders',
                             applicationKey: 'nidavellir_warnings'
                         );
                     });
