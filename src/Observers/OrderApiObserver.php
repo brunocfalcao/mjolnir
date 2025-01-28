@@ -219,7 +219,7 @@ class OrderApiObserver
                 'arguments' => [
                     'orderId' => $profitOrder->id,
                     'originalPrice' => $profitOrder->price,
-                    'originalQuantity' => $order->getOriginal('quantity'),
+                    'originalQuantity' => $profitOrder->quantity,
                 ],
             ]);
         }
