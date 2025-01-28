@@ -2,30 +2,31 @@
 
 namespace Nidavellir\Mjolnir;
 
-use Illuminate\Support\ServiceProvider;
-use Nidavellir\Mjolnir\Commands\Cronjobs\DailyReportCommand;
-use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchCoreJobQueueCommand;
-use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchPositionsCommand;
-use Nidavellir\Mjolnir\Commands\Cronjobs\GetBinancePricesCommand;
-use Nidavellir\Mjolnir\Commands\Cronjobs\IdentifyOrphanOrdersCommand;
-use Nidavellir\Mjolnir\Commands\Cronjobs\OptimizeCommand;
-use Nidavellir\Mjolnir\Commands\Cronjobs\RefreshDataCommand;
-use Nidavellir\Mjolnir\Commands\Cronjobs\RunIntegrityChecksCommand;
-use Nidavellir\Mjolnir\Commands\Cronjobs\SyncOrdersCommand;
-use Nidavellir\Mjolnir\Commands\Cronjobs\UpdateAccountsBalancesCommand;
-use Nidavellir\Mjolnir\Commands\Cronjobs\UpdateRecvwindowSafetyDurationCommand;
-use Nidavellir\Mjolnir\Commands\Debug\ClosePositionCommand;
-use Nidavellir\Mjolnir\Commands\Debug\GetAccountBalanceCommand;
-use Nidavellir\Mjolnir\Commands\Debug\NotifyCommand;
-use Nidavellir\Mjolnir\Commands\Debug\PlaceOrderCommand;
-use Nidavellir\Mjolnir\Commands\Debug\QueryOrderCommand;
-use Nidavellir\Mjolnir\Commands\Debug\QueryPositionsCommand;
-use Nidavellir\Mjolnir\Commands\Debug\QueryTradeCommand;
-use Nidavellir\Mjolnir\Commands\TestCommand;
-use Nidavellir\Mjolnir\Observers\OrderApiObserver;
-use Nidavellir\Mjolnir\Observers\PositionApiObserver;
 use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Position;
+use Illuminate\Support\ServiceProvider;
+use Nidavellir\Mjolnir\Commands\TestCommand;
+use Nidavellir\Mjolnir\Observers\OrderApiObserver;
+use Nidavellir\Mjolnir\Commands\Debug\NotifyCommand;
+use Nidavellir\Mjolnir\Observers\PositionApiObserver;
+use Nidavellir\Mjolnir\Commands\Debug\PlaceOrderCommand;
+use Nidavellir\Mjolnir\Commands\Debug\QueryOrderCommand;
+use Nidavellir\Mjolnir\Commands\Debug\QueryTradeCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\OptimizeCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\SyncOrdersCommand;
+use Nidavellir\Mjolnir\Commands\Debug\ClosePositionCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\DailyReportCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\RefreshDataCommand;
+use Nidavellir\Mjolnir\Commands\Debug\QueryPositionsCommand;
+use Nidavellir\Mjolnir\Commands\Debug\GetAccountBalanceCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\GetBinancePricesCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchPositionsCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\RunIntegrityChecksCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchCoreJobQueueCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\IdentifyOrphanOrdersCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\PurgeMySQLBinaryLogsCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\UpdateAccountsBalancesCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\UpdateRecvwindowSafetyDurationCommand;
 
 class MjolnirServiceProvider extends ServiceProvider
 {
@@ -57,6 +58,7 @@ class MjolnirServiceProvider extends ServiceProvider
                 DailyReportCommand::class,
                 IdentifyOrphanOrdersCommand::class,
                 RunIntegrityChecksCommand::class,
+                PurgeMySQLBinaryLogsCommand::class,
 
                 // Debug.
                 NotifyCommand::class,
