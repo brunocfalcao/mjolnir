@@ -5,11 +5,11 @@ namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 use Illuminate\Console\Command;
 use Nidavellir\Thor\Models\Account;
 
-class CancelOrphanOrdersCommand extends Command
+class IdentifyOrphanOrdersCommand extends Command
 {
-    protected $signature = 'mjolnir:cancel-orphan-orders';
+    protected $signature = 'mjolnir:identify-orphan-orders';
 
-    protected $description = 'Cancels orders that are no longer part of active positions, or never were';
+    protected $description = 'Identifies possible orders that are no longer part of active positions, or never were';
 
     public function handle()
     {
@@ -37,21 +37,7 @@ class CancelOrphanOrdersCommand extends Command
                 $this->info('Opened Trading Pair:'.$openedTradingPair);
 
                 if (! array_key_exists($openedTradingPair, $activePositionTradingPairs)) {
-
-                    /**
-                     * Delete all orders from this opened trading pair.
-                     * If we have that orderId on the database, we call the
-                     * cancel order directly from that order eloquent model.
-                     *
-                     * If we don't have that id on the database we make
-                     * a straight API call.
-                     */
-                    foreach ($openedTradingPairs[$openedTradingPair] as $orphanOrder) {
-                        $order = Order::firstWhere('exchange_order_id', $orphanOrder['orderId']);
-                        if ($order) {
-                            // Delete order.
-                        }
-                    }
+                    $this->info('Possible orphan orders from '.$openedTradingPair);
                 }
             }
         }

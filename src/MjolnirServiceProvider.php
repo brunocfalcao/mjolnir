@@ -3,11 +3,11 @@
 namespace Nidavellir\Mjolnir;
 
 use Illuminate\Support\ServiceProvider;
-use Nidavellir\Mjolnir\Commands\Cronjobs\CancelOrphanOrdersCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\DailyReportCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchCoreJobQueueCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\DispatchPositionsCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\GetBinancePricesCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\IdentifyOrphanOrdersCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\OptimizeCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\RefreshDataCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\RunIntegrityChecksCommand;
@@ -55,7 +55,7 @@ class MjolnirServiceProvider extends ServiceProvider
                 OptimizeCommand::class,
                 GetBinancePricesCommand::class,
                 DailyReportCommand::class,
-                CancelOrphanOrdersCommand::class,
+                IdentifyOrphanOrdersCommand::class,
                 RunIntegrityChecksCommand::class,
 
                 // Debug.
