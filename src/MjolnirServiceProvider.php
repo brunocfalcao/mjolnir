@@ -13,6 +13,7 @@ use Nidavellir\Mjolnir\Commands\Debug\PlaceOrderCommand;
 use Nidavellir\Mjolnir\Commands\Debug\QueryOrderCommand;
 use Nidavellir\Mjolnir\Commands\Debug\QueryTradeCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\OptimizeCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\PurgeDataCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\SyncOrdersCommand;
 use Nidavellir\Mjolnir\Commands\Debug\ClosePositionCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\DailyReportCommand;
@@ -58,7 +59,7 @@ class MjolnirServiceProvider extends ServiceProvider
                 DailyReportCommand::class,
                 IdentifyOrphanOrdersCommand::class,
                 RunIntegrityChecksCommand::class,
-                PurgeMySQLBinaryLogsCommand::class,
+                PurgeDataCommand::class,
 
                 // Debug.
                 NotifyCommand::class,
