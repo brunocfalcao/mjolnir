@@ -52,9 +52,15 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
             // Inform the order observer not to put the PROFIT order back on its original values.
             $this->position->update(['wap_triggered' => true]);
 
-            User::admin()->get()->each(function ($user) use ($wap) {
+            // How many orders do we have filled?
+            $totalFilledOrders = $this->position
+                ->orders
+                ->where('type', 'LIMIT')
+                ->where('status', 'FILLED')->count();
+
+            User::admin()->get()->each(function ($user) use ($wap, $totalFilledOrders) {
                 $user->pushover(
-                    message: "{$this->position->parsedTradingPair} ({$this->position->direction}), PROFIT price update: {$wap['price']}, Qty: {$this->originalQuantity} to {$wap['quantity']}",
+                    message: "WAP [{$totalFilledOrders}] - {$this->position->parsedTradingPair} ({$this->position->direction}), {$this->originalPrice} USDT to {$wap['price']} USDT, Qty: {$this->originalQuantity} to {$wap['quantity']}",
                     title: 'WAP triggered',
                     applicationKey: 'nidavellir_orders'
                 );
