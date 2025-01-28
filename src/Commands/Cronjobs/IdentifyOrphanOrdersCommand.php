@@ -38,7 +38,7 @@ class IdentifyOrphanOrdersCommand extends Command
                 if (! array_key_exists($openedTradingPair, $activePositionTradingPairs)) {
                     User::admin()->get()->each(function ($user) use ($openedTradingPair) {
                         $user->pushover(
-                            message: "You have possible orphan orders from token {$openedTradingPair}",
+                            message: "You have possible orphan orders from token {$openedTradingPair}, please check ASAP",
                             title: "Identify possible orphan orders",
                             applicationKey: 'nidavellir_warnings'
                         );
