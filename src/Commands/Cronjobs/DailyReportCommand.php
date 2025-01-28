@@ -63,7 +63,7 @@ class DailyReportCommand extends Command
             // Notify all admin users via pushover.
             $account->user->each(function ($user) use ($quote, $totalTradesToday, $account, $totalWalletBalance, $currentDayProfit) {
                 $user->pushover(
-                    message: "Total Wallet Balance: {$totalWalletBalance} {$quote}\n Today's Profit: {$currentDayProfit} {$quote}\n Trades Closed Today: {$totalTradesToday}",
+                    message: "Wallet Balance: {$totalWalletBalance} {$quote}, Daily Profit: {$currentDayProfit} {$quote}, Daily Trades: {$totalTradesToday}",
                     title: "Account report for {$account->user->name}, ID: {$account->id}",
                     applicationKey: 'nidavellir_cronjobs'
                 );
