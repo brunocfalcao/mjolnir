@@ -52,6 +52,8 @@ trait HasWAPFeatures
             $wapPrice = $wapPrice * (1 - $profitPercentage / 100);
         }
 
+        //TODO: Get position amount, and use that on the quantity.
+
         // Return total quantity and WAP price as an array, and format both numbers.
         return [
             'quantity' => api_format_quantity($totalQuantity, $this->exchangeSymbol),
