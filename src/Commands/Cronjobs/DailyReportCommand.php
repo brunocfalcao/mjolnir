@@ -6,13 +6,12 @@ use Illuminate\Console\Command;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\AccountBalanceHistory;
 use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\User;
 
 class DailyReportCommand extends Command
 {
     protected $signature = 'mjolnir:daily-report';
 
-    protected $description = 'Makes a daily report (finance, trades, etc)';
+    protected $description = 'Reports the daily profit statistics';
 
     public function handle()
     {
@@ -25,60 +24,46 @@ class DailyReportCommand extends Command
             ->get();
 
         foreach ($accounts as $account) {
-            // Fetch the newest snapshot for the account.
-            $newestSnapshot = AccountBalanceHistory::where('account_id', $account->id)
-                ->orderByDesc('created_at')
-                ->first();
-
-            // Fetch the oldest snapshot within the last 24 hours or the oldest available entry.
-            $oldestSnapshot = AccountBalanceHistory::where('account_id', $account->id)
-                ->where('created_at', '>=', now()->subDay())
+            // Fetch the snapshot for the beginning of the current day.
+            $startOfDaySnapshot = AccountBalanceHistory::where('account_id', $account->id)
+                ->where('created_at', '>=', now()->startOfDay())
                 ->orderBy('created_at')
                 ->first();
 
-            if (! $oldestSnapshot) {
-                // If there's no snapshot within the last 24 hours, fall back to the oldest entry.
-                $oldestSnapshot = AccountBalanceHistory::where('account_id', $account->id)
-                    ->orderBy('created_at')
-                    ->first();
-            }
+            // Fetch the latest snapshot for the account.
+            $currentSnapshot = AccountBalanceHistory::where('account_id', $account->id)
+                ->orderByDesc('created_at')
+                ->first();
 
             // Default values for balances.
             $totalWalletBalance = 0;
-            $previousWalletBalance = 0;
-            $diffWalletBalance = 0;
+            $startOfDayBalance = 0;
+            $currentDayProfit = 0;
 
-            if ($newestSnapshot) {
-                $totalWalletBalance = round($newestSnapshot->total_wallet_balance, 2);
+            if ($currentSnapshot) {
+                $totalWalletBalance = round($currentSnapshot->total_wallet_balance, 2);
             }
 
-            if ($oldestSnapshot) {
-                $previousWalletBalance = round($oldestSnapshot->total_wallet_balance, 2);
+            if ($startOfDaySnapshot) {
+                $startOfDayBalance = round($startOfDaySnapshot->total_wallet_balance, 2);
             }
 
-            // Calculate the 24-hour differential.
-            $diffWalletBalance = round($totalWalletBalance - $previousWalletBalance, 2);
+            // Calculate the profit for the current day.
+            $currentDayProfit = round($totalWalletBalance - $startOfDayBalance, 2);
 
-            // Log the information to the console.
-            /*
-            $this->info("User: {$account->user->name}");
-            $this->info("Total Wallet Balance: {$totalWalletBalance}");
-            $this->info("24h Change: {$diffWalletBalance}");
-            $this->info("Total trades: {$totalTrades}");
-            $this->info('-------------------------');
-            */
-
-            $totalTrades = Position::where('account_id', $account->id)
+            // Count trades closed today.
+            $totalTradesToday = Position::where('account_id', $account->id)
                 ->where('status', 'closed')
+                ->where('updated_at', '>=', now()->startOfDay())
                 ->count();
 
             $account->load('quote');
             $quote = $account->quote->canonical;
 
             // Notify all admin users via pushover.
-            User::admin()->get()->each(function ($user) use ($quote, $totalTrades, $account, $totalWalletBalance, $diffWalletBalance) {
+            $account->user->each(function ($user) use ($quote, $totalTradesToday, $account, $totalWalletBalance, $currentDayProfit) {
                 $user->pushover(
-                    message: "Total Wallet Balance: {$totalWalletBalance} {$quote}\n 24h Change: {$diffWalletBalance} {$quote}\n Total Trades: {$totalTrades}",
+                    message: "Total Wallet Balance: {$totalWalletBalance} {$quote}\n Today's Profit: {$currentDayProfit} {$quote}\n Trades Closed Today: {$totalTradesToday}",
                     title: "Account report for {$account->user->name}, ID: {$account->id}",
                     applicationKey: 'nidavellir_cronjobs'
                 );

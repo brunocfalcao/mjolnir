@@ -75,7 +75,7 @@ class PurgeDataCommand extends Command
      */
     protected function sendReport($purgeDate, $deletedJobQueueEntries, $deletedApiRequestLogs)
     {
-        User::admin()->get()->each(function ($user) use ($purgeDate, $deletedJobQueueEntries, $deletedApiRequestLogs) {
+        User::admin()->get()->each(function ($user) use ($deletedJobQueueEntries, $deletedApiRequestLogs) {
             $message = "Purge Summary - core_job_queue: {$deletedJobQueueEntries} entries, api_requests_log: {$deletedApiRequestLogs} entries";
 
             $user->pushover(

@@ -4,7 +4,6 @@ namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
 use Illuminate\Console\Command;
 use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\AccountBalanceHistory;
 
 class NotifyHighMarginRatioCommand extends Command
 {
@@ -29,7 +28,7 @@ class NotifyHighMarginRatioCommand extends Command
 
             if ($marginRatio > $account->margin_ratio_notification_threshold) {
                 $account->user->pushover(
-                    message: "Your account have a high margin ratio: ".$marginRatio."%",
+                    message: 'Your account have a high margin ratio: '.$marginRatio.'%',
                     title: 'Margin ratio alert',
                     applicationKey: 'nidavellir_warnings'
                 );

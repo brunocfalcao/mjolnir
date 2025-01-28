@@ -50,6 +50,7 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
                 'closing_price' => $closingPrice,
             ]);
 
+            /*
             User::admin()->get()->each(function ($user) use ($pnl) {
                 $user->pushover(
                     message: "{$this->position->parsedTradingPair} ({$this->position->direction}) closed (PnL: {$pnl})",
@@ -58,6 +59,7 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
                     additionalParameters: ['sound' => 'cashregister ']
                 );
             });
+            */
         }
 
         return $apiResponse->response;
