@@ -35,6 +35,13 @@ class RunIntegrityChecksCommand extends Command
                 ->pluck('orders')
                 ->flatten();
 
+            /**
+             * INTEGRITY CHECK
+             *
+             * How many total orders to we have on the exchange vs how many
+             * do we have on the local database? If the difference is more
+             * than X orders, it will trigger a notification.
+             */
             if (abs($exchangeStandbyOrders->count() - $dbStandbyOrders->count()) > 1) {
                 User::admin()->get()->each(function ($user) use ($account, $exchangeStandbyOrders, $dbStandbyOrders) {
                     $user->pushover(
