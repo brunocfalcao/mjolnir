@@ -68,11 +68,12 @@ trait HasWAPFeatures
             }
         }
         info('== 9 ==');
-        info('Exchange quantity: ' . $positionQuantity . ' vs total limit orders quantity: ' . $totalQuantity);
+        info('Exchange quantity: '.$positionQuantity.' vs total limit orders quantity: '.$totalQuantity);
 
         // Avoid division by zero
         if ($totalQuantity == 0) {
             info('== 10 ==');
+
             return [
                 'quantity' => null,
                 'price' => null,
@@ -99,6 +100,7 @@ trait HasWAPFeatures
         }
 
         info('== 15 ==');
+
         // Return total quantity and WAP price as an array, and format both numbers.
         return [
             'quantity' => api_format_quantity($totalQuantity, $this->exchangeSymbol),

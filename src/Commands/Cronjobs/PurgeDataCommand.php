@@ -57,7 +57,8 @@ class PurgeDataCommand extends Command
             // Send Pushover notification with report
             $this->sendReport($purgeDate, $deletedJobQueueEntries, $deletedApiRequestLogs);
         } catch (\Exception $e) {
-            $this->error("An error occurred: " . $e->getMessage());
+            $this->error('An error occurred: '.$e->getMessage());
+
             return Command::FAILURE;
         }
 
@@ -67,18 +68,18 @@ class PurgeDataCommand extends Command
     /**
      * Sends a Pushover notification to admin users with the purge summary.
      *
-     * @param string $purgeDate
-     * @param int $deletedJobQueueEntries
-     * @param int $deletedApiRequestLogs
+     * @param  string  $purgeDate
+     * @param  int  $deletedJobQueueEntries
+     * @param  int  $deletedApiRequestLogs
      * @return void
      */
     protected function sendReport($purgeDate, $deletedJobQueueEntries, $deletedApiRequestLogs)
     {
         User::admin()->get()->each(function ($user) use ($purgeDate, $deletedJobQueueEntries, $deletedApiRequestLogs) {
             $message = "Purge Summary:\n"
-                     . "Purge Date: {$purgeDate}\n"
-                     . "Deleted from core_job_queue: {$deletedJobQueueEntries} entries\n"
-                     . "Deleted from api_requests_log: {$deletedApiRequestLogs} entries";
+                     ."Purge Date: {$purgeDate}\n"
+                     ."Deleted from core_job_queue: {$deletedJobQueueEntries} entries\n"
+                     ."Deleted from api_requests_log: {$deletedApiRequestLogs} entries";
 
             $user->pushover(
                 message: $message,

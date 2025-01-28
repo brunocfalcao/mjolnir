@@ -52,7 +52,7 @@ trait __HasWAPFeatures
             $wapPrice = $wapPrice * (1 - $profitPercentage / 100);
         }
 
-        //TODO: Get position amount, and use that on the quantity.
+        // TODO: Get position amount, and use that on the quantity.
 
         // Return total quantity and WAP price as an array, and format both numbers.
         return [
