@@ -11,7 +11,7 @@ class DailyReportCommand extends Command
 {
     protected $signature = 'mjolnir:daily-report';
 
-    protected $description = 'Reports the daily profit statistics';
+    protected $description = 'Reports the daily profit statistics with accurate adjustments for negative PnL';
 
     public function handle()
     {
@@ -42,14 +42,24 @@ class DailyReportCommand extends Command
 
             if ($currentSnapshot) {
                 $totalWalletBalance = round($currentSnapshot->total_wallet_balance, 2);
+                $currentUnrealizedPnL = abs(round($currentSnapshot->total_unrealized_profit, 2));
+            } else {
+                $currentUnrealizedPnL = 0;
             }
 
             if ($startOfDaySnapshot) {
                 $startOfDayBalance = round($startOfDaySnapshot->total_wallet_balance, 2);
+                $startOfDayUnrealizedPnL = abs(round($startOfDaySnapshot->total_unrealized_profit, 2));
+            } else {
+                $startOfDayUnrealizedPnL = 0;
             }
 
+            // Adjust the balances by subtracting the absolute negative PnL.
+            $adjustedStartBalance = $startOfDayBalance - $startOfDayUnrealizedPnL;
+            $adjustedCurrentBalance = $totalWalletBalance - $currentUnrealizedPnL;
+
             // Calculate the profit for the current day.
-            $currentDayProfit = round($totalWalletBalance - $startOfDayBalance, 2);
+            $currentDayProfit = round($adjustedCurrentBalance - $adjustedStartBalance, 2);
 
             // Count trades closed today.
             $totalTradesToday = Position::where('account_id', $account->id)
