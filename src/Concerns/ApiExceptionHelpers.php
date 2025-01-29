@@ -23,25 +23,27 @@ trait ApiExceptionHelpers
             return false;
         }
 
-        $statusCode = $exception->getResponse()->getStatusCode();
+        if ($exception->getResponse()) {
+            $statusCode = $exception->getResponse()->getStatusCode();
 
-        $responseBody = $this->getResponseBody($exception);
+            $responseBody = $this->getResponseBody($exception);
 
-        if (isset($statusCodes[$statusCode])) {
-            $codes = $statusCodes[$statusCode];
+            if (isset($statusCodes[$statusCode])) {
+                $codes = $statusCodes[$statusCode];
 
-            // If specific codes are provided, check if the response code matches
-            if (is_array($codes) && isset($responseBody['code'])) {
-                return in_array($responseBody['code'], $codes);
+                // If specific codes are provided, check if the response code matches
+                if (is_array($codes) && isset($responseBody['code'])) {
+                    return in_array($responseBody['code'], $codes);
+                }
+
+                // Handle all responses for this status code if no specific codes are provided
+                return is_null($codes);
             }
 
-            // Handle all responses for this status code if no specific codes are provided
-            return is_null($codes);
-        }
-
-        // If the status code is directly present as an integer in the array, handle it
-        if (in_array($statusCode, $statusCodes, true)) {
-            return true;
+            // If the status code is directly present as an integer in the array, handle it
+            if (in_array($statusCode, $statusCodes, true)) {
+                return true;
+            }
         }
 
         return false;
