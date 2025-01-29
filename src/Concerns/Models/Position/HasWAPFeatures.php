@@ -45,8 +45,21 @@ trait HasWAPFeatures
             $positionFromExchange = $positions[$this->parsedTradingPair];
             // Obtain position amount.
             $positionQuantity = abs($positionFromExchange['positionAmt']);
+
+            $decimalPlaces = 8;
+            $positionQuantityStr = number_format($positionQuantity, $decimalPlaces, '.', '');
+            $totalQuantityStr = number_format($totalQuantity, $decimalPlaces, '.', '');
+
+            User::admin()->get()->each(function ($user) use ($positionQuantityStr, $totalQuantityStr) {
+                $user->pushover(
+                    message: "DEBUG -- WAP quantity comparison: {$positionQuantityStr} vs {$totalQuantityStr}",
+                    title: 'WAP quantity comparison (debug)',
+                    applicationKey: 'nidavellir_warnings'
+                );
+            });
+
             // Is there a difference between both?
-            if ($positionQuantity != $totalQuantity) {
+            if ($positionQuantityStr != $totalQuantityStr) {
                 // Pushover to inform.
                 User::admin()->get()->each(function ($user) use ($positionQuantity, $totalQuantity) {
                     $user->pushover(

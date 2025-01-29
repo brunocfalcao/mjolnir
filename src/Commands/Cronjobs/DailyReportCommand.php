@@ -11,7 +11,7 @@ class DailyReportCommand extends Command
 {
     protected $signature = 'mjolnir:daily-report';
 
-    protected $description = 'Reports the daily profit statistics with accurate adjustments for negative PnL';
+    protected $description = 'Reports the daily profit statistics based on wallet balance difference';
 
     public function handle()
     {
@@ -42,24 +42,14 @@ class DailyReportCommand extends Command
 
             if ($currentSnapshot) {
                 $totalWalletBalance = round($currentSnapshot->total_wallet_balance, 2);
-                $currentUnrealizedPnL = abs(round($currentSnapshot->total_unrealized_profit, 2));
-            } else {
-                $currentUnrealizedPnL = 0;
             }
 
             if ($startOfDaySnapshot) {
                 $startOfDayBalance = round($startOfDaySnapshot->total_wallet_balance, 2);
-                $startOfDayUnrealizedPnL = abs(round($startOfDaySnapshot->total_unrealized_profit, 2));
-            } else {
-                $startOfDayUnrealizedPnL = 0;
             }
 
-            // Adjust the balances by subtracting the absolute negative PnL.
-            $adjustedStartBalance = $startOfDayBalance - $startOfDayUnrealizedPnL;
-            $adjustedCurrentBalance = $totalWalletBalance - $currentUnrealizedPnL;
-
-            // Calculate the profit for the current day.
-            $currentDayProfit = round($adjustedCurrentBalance - $adjustedStartBalance, 2);
+            // Calculate the profit for the current day based on total wallet balance difference.
+            $currentDayProfit = round($totalWalletBalance - $startOfDayBalance, 2);
 
             // Count trades closed today.
             $totalTradesToday = Position::where('account_id', $account->id)
@@ -71,13 +61,11 @@ class DailyReportCommand extends Command
             $quote = $account->quote->canonical;
 
             // Notify all admin users via pushover.
-            $account->user->each(function ($user) use ($quote, $totalTradesToday, $account, $totalWalletBalance, $currentDayProfit) {
-                $user->pushover(
-                    message: "Wallet Balance: {$totalWalletBalance} {$quote}, Daily Profit: {$currentDayProfit} {$quote}, Daily Trades: {$totalTradesToday}",
-                    title: "Account report for {$account->user->name}, ID: {$account->id}",
-                    applicationKey: 'nidavellir_cronjobs'
-                );
-            });
+            $account->user->pushover(
+                message: "Wallet Balance: {$totalWalletBalance} {$quote}, Daily Profit: {$currentDayProfit} {$quote}, Daily Trades: {$totalTradesToday}",
+                title: "Account report for {$account->user->name}, ID: {$account->id}",
+                applicationKey: 'nidavellir_cronjobs'
+            );
         }
 
         return 0;
