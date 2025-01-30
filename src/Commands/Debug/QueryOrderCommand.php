@@ -19,7 +19,7 @@ class QueryOrderCommand extends Command
         // Query the order by the exchange_order_id column
         $order = Order::where('exchange_order_id', $exchangeOrderId)->firstOrFail();
 
-        $result = $order->apiQuery();
+        $result = $order->apiQuery()->result;
 
         // Dump the order information
         $this->line(print_r($result, true));
