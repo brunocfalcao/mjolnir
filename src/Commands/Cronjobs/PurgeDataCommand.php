@@ -40,22 +40,24 @@ class PurgeDataCommand extends Command
             // Purge MySQL binary logs
             DB::unprepared("PURGE BINARY LOGS BEFORE '{$purgeDate}';");
             $binaryLogStatus = "Successfully purged MySQL binary logs older than 2 days (before {$purgeDate}).";
-            $this->info($binaryLogStatus);
 
             // Purge data from core_job_queue table
             $deletedJobQueueEntries = DB::table('core_job_queue')
                 ->where('created_at', '<', $purgeDate)
                 ->delete();
-            $this->info("Deleted {$deletedJobQueueEntries} entries from core_job_queue older than 2 days.");
 
             // Purge data from api_requests_log table
             $deletedApiRequestLogs = DB::table('api_requests_log')
                 ->where('created_at', '<', $purgeDate)
                 ->delete();
-            $this->info("Deleted {$deletedApiRequestLogs} entries from api_requests_log older than 2 days.");
+
+            // Purge data from api_requests_log table
+            $deletedOrderHistoryLogs = DB::table('order_history')
+                ->where('created_at', '<', $purgeDate)
+                ->delete();
 
             // Send Pushover notification with report
-            $this->sendReport($purgeDate, $deletedJobQueueEntries, $deletedApiRequestLogs);
+            $this->sendReport($purgeDate, $deletedJobQueueEntries, $deletedApiRequestLogs, $deletedOrderHistoryLogs);
         } catch (\Exception $e) {
             $this->error('An error occurred: '.$e->getMessage());
 
@@ -73,10 +75,10 @@ class PurgeDataCommand extends Command
      * @param  int  $deletedApiRequestLogs
      * @return void
      */
-    protected function sendReport($purgeDate, $deletedJobQueueEntries, $deletedApiRequestLogs)
+    protected function sendReport($purgeDate, $deletedJobQueueEntries, $deletedApiRequestLogs, $deletedOrderHistoryLogs)
     {
-        User::admin()->get()->each(function ($user) use ($deletedJobQueueEntries, $deletedApiRequestLogs) {
-            $message = "Purge Summary - core_job_queue: {$deletedJobQueueEntries} entries, api_requests_log: {$deletedApiRequestLogs} entries";
+        User::admin()->get()->each(function ($user) use ($deletedJobQueueEntries, $deletedApiRequestLogs, $deletedOrderHistoryLogs) {
+            $message = "Purge Summary - core_job_queue: {$deletedJobQueueEntries} entries, api_requests_log: {$deletedApiRequestLogs} entries, order_history: {$deletedOrderHistoryLogs}";
 
             $user->pushover(
                 message: $message,
