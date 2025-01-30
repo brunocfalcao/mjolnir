@@ -51,7 +51,7 @@ trait HasWAPFeatures
             $totalQuantityStr = number_format($totalQuantity, $decimalPlaces, '.', '');
 
             // Is there a difference between both?
-            if ($positionQuantityStr != $totalQuantityStr) {
+            if ($positionQuantity != $totalQuantity) {
                 // Pushover to inform.
                 User::admin()->get()->each(function ($user) use ($positionQuantity, $totalQuantity) {
                     $user->pushover(
