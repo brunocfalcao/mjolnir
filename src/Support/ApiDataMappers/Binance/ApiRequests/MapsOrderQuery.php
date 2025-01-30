@@ -50,7 +50,7 @@ trait MapsOrderQuery
             'type' => $result['type'],
             'side' => $result['side'],
 
-            '_raw' => $raw
+            '_raw' => $raw,
         ];
 
         return $data;

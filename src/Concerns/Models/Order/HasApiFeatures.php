@@ -6,6 +6,8 @@ use GuzzleHttp\Psr7\Response;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiResponse;
+use Nidavellir\Thor\Models\OrderHistory;
+use Nidavellir\Thor\Models\User;
 
 trait HasApiFeatures
 {
@@ -67,6 +69,21 @@ trait HasApiFeatures
             'price' => $apiResponse->result['price'],
             'api_result' => $apiResponse->result,
         ]);
+
+        // Add Order to the order history.
+        try {
+            OrderHistory::create(array_merge([
+                'order_id' => $this->id,
+            ], $apiResponse->result['_raw']));
+        } catch (\Throwable $e) {
+            User::admin()->get()->each(function ($user) use ($e) {
+                $user->pushover(
+                    message: 'Order history error: '.$e->getMessage(),
+                    title: 'Order history saving error',
+                    applicationKey: 'nidavellir_errors'
+                );
+            });
+        }
 
         return $apiResponse;
     }
