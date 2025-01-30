@@ -96,6 +96,11 @@ class OrderApiObserver
             return;
         }
 
+        // Skip observers for market and market-cancel orders.
+        if ($order->type == 'MARKET' || $order->type == 'MARKET-CANCEL') {
+            return;
+        }
+
         // info('[OrderApiObserver] - Running Api Observers');
 
         $order->load(['position.orders', 'position.exchangeSymbol.symbol']);

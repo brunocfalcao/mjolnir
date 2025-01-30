@@ -31,7 +31,9 @@ class SyncOrdersCommand extends Command
     {
         foreach ($position
             ->orders
+            /*
             ->where('type', '<>', 'MARKET')
+            */
             ->whereNotNull('exchange_order_id') as $order) {
             CoreJobQueue::create([
                 'class' => SyncOrderJob::class,
