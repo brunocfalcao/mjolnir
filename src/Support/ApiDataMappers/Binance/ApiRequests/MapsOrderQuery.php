@@ -26,6 +26,8 @@ trait MapsOrderQuery
     {
         $result = json_decode($response->getBody(), true);
 
+        $raw = $result;
+
         $price = $result['avgPrice'] != 0 ? $result['avgPrice'] : $result['price'];
         $quantity = $result['executedQty'] != 0 ? $result['executedQty'] : $result['origQty'];
 
@@ -47,6 +49,8 @@ trait MapsOrderQuery
             'quantity' => $quantity,
             'type' => $result['type'],
             'side' => $result['side'],
+
+            '_raw' => $raw
         ];
 
         return $data;
