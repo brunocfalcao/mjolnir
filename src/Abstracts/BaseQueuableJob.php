@@ -2,6 +2,7 @@
 
 namespace Nidavellir\Mjolnir\Abstracts;
 
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Psr7\Response;
 use Nidavellir\Mjolnir\Exceptions\JustEndException;
 use Nidavellir\Mjolnir\Exceptions\JustResolveException;
@@ -66,6 +67,13 @@ abstract class BaseQueuableJob extends BaseJob
 
             // All good.
         } catch (\Throwable $e) {
+            if ($e instanceof ConnectException) {
+                // For connection exception, we just need to retry again the job.
+                $this->coreJobQueue->updateToRetry(now()->addSeconds($this->workerServerBackoffSeconds));
+
+                return;
+            }
+
             if ($e instanceof JustResolveException) {
                 // Last try to make things like a rollback.
                 if (method_exists($this, 'resolveException')) {
