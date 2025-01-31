@@ -68,9 +68,8 @@ abstract class BaseQueuableJob extends BaseJob
             // All good.
         } catch (\Throwable $e) {
             if ($e instanceof ConnectException) {
-                // For connection exception, we just need to retry again the job.
+                // For connection exceptions, we just need to retry again the job.
                 $this->coreJobQueue->updateToRetry(now()->addSeconds($this->workerServerBackoffSeconds));
-
                 return;
             }
 
