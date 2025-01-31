@@ -68,6 +68,26 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
             }
         }
 
+        // PnL negative? Something happened. Stop opening new positions.
+        if ($pnl < 0) {
+            $accounts = Account::whereHas('user', function ($query) {
+                $query->where('is_trader', true); // Ensure the user is a trader
+            })->with('user')
+            ->active()
+            ->canTrade()
+            ->get();
+
+            $accounts->each->unTrade();
+
+            User::admin()->get()->each(function ($user) use ($pnl) {
+                $user->pushover(
+                    message: "A PnL was recorded NEGATIVE. Stopping new positions from being opened. Please check ASAP!",
+                    title: 'PnL negative! Something was wrong!',
+                    applicationKey: 'nidavellir_errors'
+                );
+            });
+        }
+
         return $apiResponse->response;
     }
 
