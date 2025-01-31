@@ -59,7 +59,7 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
                 ->count() >= 3) {
                 User::admin()->get()->each(function ($user) use ($pnl) {
                     $user->pushover(
-                        message: "Heavy profit position {$this->position->parsedTradingPair} ({$this->position->direction}) closed (PnL: {$pnl})",
+                        message: "Heavy profit {$this->position->parsedTradingPair} ({$this->position->direction}) closed (PnL: {$pnl})",
                         title: 'Heavy profit position closed',
                         applicationKey: 'nidavellir_positions',
                         additionalParameters: ['sound' => 'cashregister ']
