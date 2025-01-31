@@ -50,16 +50,22 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
                 'closing_price' => $closingPrice,
             ]);
 
-            /*
-            User::admin()->get()->each(function ($user) use ($pnl) {
-                $user->pushover(
-                    message: "{$this->position->parsedTradingPair} ({$this->position->direction}) closed (PnL: {$pnl})",
-                    title: 'Position closed',
-                    applicationKey: 'nidavellir_positions',
-                    additionalParameters: ['sound' => 'cashregister ']
-                );
-            });
-            */
+            // If the position had more than 3 limit orders filled, notify.
+            $this->position->load('orders');
+            if ($this->position
+                    ->orders
+                    ->where('type', 'LIMIT')
+                    ->where('status', 'FILLED')
+                    ->count() >= 3) {
+                User::admin()->get()->each(function ($user) use ($pnl) {
+                    $user->pushover(
+                        message: "Heavy profit position {$this->position->parsedTradingPair} ({$this->position->direction}) closed (PnL: {$pnl})",
+                        title: 'Heavy profit position closed',
+                        applicationKey: 'nidavellir_positions',
+                        additionalParameters: ['sound' => 'cashregister ']
+                    );
+                });
+            }
         }
 
         return $apiResponse->response;
