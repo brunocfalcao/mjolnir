@@ -53,10 +53,10 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
             // If the position had more than 3 limit orders filled, notify.
             $this->position->load('orders');
             if ($this->position
-                    ->orders
-                    ->where('type', 'LIMIT')
-                    ->where('status', 'FILLED')
-                    ->count() >= 3) {
+                ->orders
+                ->where('type', 'LIMIT')
+                ->where('status', 'FILLED')
+                ->count() >= 3) {
                 User::admin()->get()->each(function ($user) use ($pnl) {
                     $user->pushover(
                         message: "Heavy profit position {$this->position->parsedTradingPair} ({$this->position->direction}) closed (PnL: {$pnl})",
@@ -73,15 +73,15 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
             $accounts = Account::whereHas('user', function ($query) {
                 $query->where('is_trader', true); // Ensure the user is a trader
             })->with('user')
-            ->active()
-            ->canTrade()
-            ->get();
+                ->active()
+                ->canTrade()
+                ->get();
 
             $accounts->each->unTrade();
 
-            User::admin()->get()->each(function ($user) use ($pnl) {
+            User::admin()->get()->each(function ($user) {
                 $user->pushover(
-                    message: "A PnL was recorded NEGATIVE. Stopping new positions from being opened. Please check ASAP!",
+                    message: 'A PnL was recorded NEGATIVE. Stopping new positions from being opened. Please check ASAP!',
                     title: 'PnL negative! Something was wrong!',
                     applicationKey: 'nidavellir_errors'
                 );
