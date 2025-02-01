@@ -61,6 +61,7 @@ class GetBinancePricesCommand extends Command
             },
 
             'ping' => function ($conn, $msg) {
+                $conn->send(json_encode(['pong' => $msg]));
             },
         ];
 
