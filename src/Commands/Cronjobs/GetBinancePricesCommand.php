@@ -61,10 +61,6 @@ class GetBinancePricesCommand extends Command
                     $this->savePricesOnExchangeSymbolsAndHistory($prices);
                 }
             },
-
-            'ping' => function ($conn, $msg) {
-                $conn->send(json_encode(['pong' => $msg]));
-            },
         ];
 
         $websocketProxy->markPrices($callbacks);
