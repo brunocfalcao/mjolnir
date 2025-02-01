@@ -51,12 +51,11 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
             ]);
 
             // If the position had more than 3 limit orders filled, notify.
-            $this->position->load('orders');
             if ($this->position
                 ->orders
                 ->where('type', 'LIMIT')
                 ->where('status', 'FILLED')
-                ->count() >= 3) {
+                ->count() >= 2) {
                 User::admin()->get()->each(function ($user) use ($pnl) {
                     $user->pushover(
                         message: "Heavy profit {$this->position->parsedTradingPair} ({$this->position->direction}) closed (PnL: {$pnl})",
