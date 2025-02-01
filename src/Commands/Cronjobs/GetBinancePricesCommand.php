@@ -38,7 +38,7 @@ class GetBinancePricesCommand extends Command
         // Define WebSocket callbacks
         $callbacks = [
             'message' => function ($conn, $msg) {
-                echo now().PHP_EOL;
+                //echo now().PHP_EOL;
 
                 $prices = collect(json_decode($msg, true));
 
@@ -60,7 +60,8 @@ class GetBinancePricesCommand extends Command
                 }
             },
 
-            'ping' => function ($conn, $msg) {},
+            'ping' => function ($conn, $msg) {
+            },
         ];
 
         $websocketProxy->markPrices($callbacks);
