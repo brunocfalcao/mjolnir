@@ -58,11 +58,22 @@ abstract class BaseApiClient
 
             $this->apiRequestLog = ApiRequestLog::create($logData);
 
+            // Start the duration measurement process.
+            $startTime = microtime(true);
+            $logData['started_at'] = now();
+
             $response = $this->httpRequest->request(
                 $apiRequest->method,
                 $apiRequest->path,
                 $options
             );
+
+            // Complete the duration measurement process.
+            $endTime = microtime(true);
+            $logData['completed_at'] = now(); // Laravel helper for current datetime
+
+            $duration = intval((microtime(true) - $startTime) * 1000);
+            $logData['duration'] = $duration;
 
             $logData['http_response_code'] = $response->getStatusCode();
             $logData['response'] = json_decode($response->getBody(), true);
