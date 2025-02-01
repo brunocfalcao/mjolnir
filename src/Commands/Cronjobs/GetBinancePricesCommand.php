@@ -8,6 +8,8 @@ use Nidavellir\Mjolnir\Support\Proxies\ApiWebsocketProxy;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\ExchangeSymbol;
+use Nidavellir\Thor\Models\PriceHistory;
 
 class GetBinancePricesCommand extends Command
 {
@@ -46,12 +48,15 @@ class GetBinancePricesCommand extends Command
                 // Check if it's the start of a new 5-minute interval
                 $its5minutes = $its1minute && now()->minute % 5 === 0;
 
+                // Readjust prices with a new array like 'BTCUSDT' => 110510, ...
+                $prices = collect($prices)->pluck('p', 's')->all();
+
                 if ($its1minute) {
-                    echo now()." (1 minute) - {$prices[0]['s']} {$prices[0]['p']}".PHP_EOL;
+                    // For now, nothing to do.
                 }
 
                 if ($its5minutes) {
-                    echo now()." (5 minutes) - {$prices[0]['s']} {$prices[0]['p']}".PHP_EOL;
+                    $this->savePricesOnExchangeSymbolsAndHistory($prices);
                 }
             },
 
@@ -59,5 +64,27 @@ class GetBinancePricesCommand extends Command
         ];
 
         $websocketProxy->markPrices($callbacks);
+    }
+
+    public function savePricesOnExchangeSymbolsAndHistory(array $prices)
+    {
+        ExchangeSymbol::all()->each(function ($exchangeSymbol) use ($prices) {
+
+            $pair = $exchangeSymbol->parsedTradingPair('binance');
+
+            if (array_key_exists($pair, $prices)) {
+                // Save price on the exchange_symbols table.
+                $exchangeSymbol->update([
+                    'last_mark_price' => $prices[$pair],
+                    'price_last_synced_at' => now(),
+                ]);
+
+                // Save price on the price history.
+                PriceHistory::create([
+                    'exchange_symbol_id' => $exchangeSymbol->id,
+                    'mark_price' => $prices[$pair],
+                ]);
+            }
+        });
     }
 }

@@ -55,11 +55,11 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
                 ->orders
                 ->where('type', 'LIMIT')
                 ->where('status', 'FILLED')
-                ->count() >= 2) {
+                ->count() >= 1) {
                 User::admin()->get()->each(function ($user) use ($pnl) {
                     $user->pushover(
-                        message: "Heavy profit {$this->position->parsedTradingPair} ({$this->position->direction}) closed (PnL: {$pnl})",
-                        title: 'Heavy profit position closed',
+                        message: "Higher profit {$this->position->parsedTradingPair} ({$this->position->direction}) closed (PnL: {$pnl})",
+                        title: 'Higher profit position closed',
                         applicationKey: 'nidavellir_positions',
                         additionalParameters: ['sound' => 'cashregister ']
                     );

@@ -55,7 +55,7 @@ trait HasWAPFeatures
                 // Pushover to inform.
                 User::admin()->get()->each(function ($user) use ($positionQuantity, $totalQuantity) {
                     $user->pushover(
-                        message: "WAP quantity difference (Position {$this->parsedTradingPair} ID: {$this->id}) - Exchange quantity: {$positionQuantity}, DB total orders (M+L) quantity: {$totalQuantity}",
+                        message: "WAP difference ({$this->parsedTradingPair} ID: {$this->id}) - Exchange: {$positionQuantity}, DB (M+L): {$totalQuantity}",
                         title: 'WAP quantity difference alert',
                         applicationKey: 'nidavellir_warnings'
                     );
