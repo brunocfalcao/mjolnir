@@ -52,10 +52,12 @@ class GetBinancePricesCommand extends Command
                 $prices = collect($prices)->pluck('p', 's')->all();
 
                 if ($its1minute) {
+                    echo "1 minuted passed at " . now() . PHP_EOL;
                     // For now, nothing to do.
                 }
 
                 if ($its5minutes) {
+                    echo "5 minutes passed at " . now() . PHP_EOL;
                     $this->savePricesOnExchangeSymbolsAndHistory($prices);
                 }
             },
