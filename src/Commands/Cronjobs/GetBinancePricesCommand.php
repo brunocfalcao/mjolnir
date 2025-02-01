@@ -51,6 +51,8 @@ class GetBinancePricesCommand extends Command
                 // Readjust prices with a new array like 'BTCUSDT' => 110510, ...
                 $prices = collect($prices)->pluck('p', 's')->all();
 
+                $this->savePricesOnExchangeSymbol($prices);
+
                 if ($its1minute) {
                     echo "1 minuted passed at " . now() . PHP_EOL;
                     // For now, nothing to do.
@@ -58,15 +60,18 @@ class GetBinancePricesCommand extends Command
 
                 if ($its5minutes) {
                     echo "5 minutes passed at " . now() . PHP_EOL;
-                    $this->savePricesOnExchangeSymbolsAndHistory($prices);
+                    $this->savePricesOnExchangeSymbolsHistory($prices);
                 }
+            },
+
+            'ping' => function ($conn, $msg) {
             },
         ];
 
         $websocketProxy->markPrices($callbacks);
     }
 
-    public function savePricesOnExchangeSymbolsAndHistory(array $prices)
+    public function savePricesOnExchangeSymbol(array $prices)
     {
         ExchangeSymbol::all()->each(function ($exchangeSymbol) use ($prices) {
 
@@ -78,7 +83,17 @@ class GetBinancePricesCommand extends Command
                     'last_mark_price' => $prices[$pair],
                     'price_last_synced_at' => now(),
                 ]);
+            }
+        });
+    }
 
+    public function savePricesOnExchangeSymbolsHistory(array $prices)
+    {
+        ExchangeSymbol::all()->each(function ($exchangeSymbol) use ($prices) {
+
+            $pair = $exchangeSymbol->parsedTradingPair('binance');
+
+            if (array_key_exists($pair, $prices)) {
                 // Save price on the price history.
                 PriceHistory::create([
                     'exchange_symbol_id' => $exchangeSymbol->id,
