@@ -44,8 +44,20 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
         // Obtain the current mark price.
         $this->markPrice = $this->position->exchangeSymbol->apiQueryMarkPrice($this->account);
 
+        // Mandatory to have the mark price for the position, to make calculations.
         if (! $this->markPrice) {
             throw new \Exception('Mark price not fetched for position ID '.$this->position->id.'. Cancelling position');
+        }
+
+        /**
+         * Last verification to see if we have more than the max number of concurrent positions open.
+         * This might happen in rare scenarios where the bot is closing and opening positions super
+         * fast, like when the market is crashing or boosting.
+         */
+        $openPositions = Position::active()->where('account_id', $account->id)->get()->count();
+
+        if ($openPositions > $this->account->max_concurrent_trades) {
+            throw new \Exception('Last open positions check failed: Total opened positions:' . $openPositions . '. Aborting orders dispatch!');
         }
 
         /**
