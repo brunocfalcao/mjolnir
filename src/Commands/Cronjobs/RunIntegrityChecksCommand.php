@@ -59,10 +59,10 @@ class RunIntegrityChecksCommand extends Command
              */
             $positions = $account->apiQueryPositions()->result;
 
-            if ($positions->count() > $account->max_concurrent_trades) {
+            if (count($positions) > $account->max_concurrent_trades) {
                 User::admin()->get()->each(function ($user) use ($account, $positions) {
                     $user->pushover(
-                        message: "Account ID {$account->id}: Max positions exceeded. Exchange opened positions: " . $positions->count() . ', Max concurrent positions: '. $account->max_concurrent_trades,
+                        message: "Account ID {$account->id}: Max positions exceeded. Exchange opened positions: " . count($positions) . ', Max concurrent positions: '. $account->max_concurrent_trades,
                         title: 'Integrity Check failed - Max concurrent positions exceeded',
                         applicationKey: 'nidavellir_warnings'
                     );
