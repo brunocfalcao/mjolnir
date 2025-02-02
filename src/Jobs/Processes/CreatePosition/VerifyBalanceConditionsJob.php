@@ -39,10 +39,12 @@ class VerifyBalanceConditionsJob extends BaseApiableJob
         $this->verifyMinimumBalance();
 
         // Does the total negative PnL surpasses the account negative PnL threshold?
-        $this->verifyNegativePnLThreshold();
+        // For now we don't use this method.
+        //$this->verifyNegativePnLThreshold();
 
         // To we have at least one position with all limit orders filled?
-        $this->checkAtLeastOnePositionWithAllLimitOrdersFilled();
+        // For now we don't use this method.
+        //$this->checkAtLeastOnePositionWithAllLimitOrdersFilled();
 
         return $response->result[$this->account->quote->canonical];
     }
@@ -50,14 +52,14 @@ class VerifyBalanceConditionsJob extends BaseApiableJob
     protected function verifyMinimumBalance()
     {
         if ($this->balance[$this->account->quote->canonical]['availableBalance'] < $this->account->minimum_balance) {
-            throw new \Exception('Cancelling Position opening: Account less than the minimum balance');
+            $this->coreJobQueue->updateToFailed('Cancelling Position opening: Account less than the minimum balance', true);
         }
     }
 
     protected function verifyQuoteBalance()
     {
         if (! array_key_exists($this->account->quote->canonical, $this->balance)) {
-            throw new \Exception('Cancelling Position opening: No quote balance for this account');
+            $this->coreJobQueue->updateToFailed('Cancelling Position opening: No quote balance for this account', true);
         }
     }
 
@@ -66,7 +68,7 @@ class VerifyBalanceConditionsJob extends BaseApiableJob
         $quoteBalance = $this->balance[$this->account->quote->canonical];
 
         if (abs($quoteBalance['crossUnPnl']) > $quoteBalance['balance'] * $this->account->negative_pnl_stop_threshold / 100) {
-            throw new \Exception('Cancelling Position opening: Negative PnL exceeds account max negative pnl threshold');
+            $this->coreJobQueue->updateToFailed('Cancelling Position opening: Negative PnL exceeds account max negative pnl threshold', true);
         }
     }
 
@@ -75,18 +77,16 @@ class VerifyBalanceConditionsJob extends BaseApiableJob
         // Get all positions for the account with the "opened" scope applied, eager loading the 'orders' relationship
         $positions = Position::opened()
             ->where('account_id', $this->account->id)
-            ->with('orders') // Eager load 'orders'
+            ->with('orders')
             ->get();
 
         foreach ($positions as $position) {
             $orders = $position->orders;
 
-            /*
             // Check if we have all the limit orders filled, then we cannot open the position.
             if ($orders->count() > 0 && $orders->where('type', 'LIMIT')->where('status', 'NEW')->count() == 0) {
-                throw new \Exception("Position {$position->parsedTradingPair} ID {$position->id} have all LIMIT orders filled -- Stopping dispatch positions process. No new positions were created");
+                $this->coreJobQueue->updateToFailed("Position {$position->parsedTradingPair} ID {$position->id} have all LIMIT orders filled -- Stopping dispatch positions process. No new positions were created", true);
             }
-            */
         }
     }
 }
