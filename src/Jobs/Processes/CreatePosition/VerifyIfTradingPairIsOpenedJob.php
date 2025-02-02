@@ -42,9 +42,4 @@ class VerifyIfTradingPairIsOpenedJob extends BaseApiableJob
             $this->coreJobQueue->updateToFailed("This trading pair ({$this->position->parsedTradingPair}) already have an opened position! Aborting", true);
         }
     }
-
-    public function resolveException(\Throwable $e)
-    {
-        $this->position->updateToFailed($e);
-    }
 }
