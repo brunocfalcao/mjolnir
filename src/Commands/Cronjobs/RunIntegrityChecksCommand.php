@@ -42,7 +42,7 @@ class RunIntegrityChecksCommand extends Command
              * do we have on the local database? If the difference is more
              * than X orders, it will trigger a notification.
              */
-            if (abs($exchangeStandbyOrders->count() - $dbStandbyOrders->count()) > 3) {
+            if (abs($exchangeStandbyOrders->count() - $dbStandbyOrders->count()) > 5) {
                 User::admin()->get()->each(function ($user) use ($account, $exchangeStandbyOrders, $dbStandbyOrders) {
                     $user->pushover(
                         message: "Account ID {$account->id}: Exchange Standby Orders = {$exchangeStandbyOrders->count()}, DB Standby Orders = {$dbStandbyOrders->count()}",
