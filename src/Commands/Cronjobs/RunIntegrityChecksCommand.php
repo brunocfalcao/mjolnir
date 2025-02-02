@@ -62,11 +62,13 @@ class RunIntegrityChecksCommand extends Command
             if (count($positions) > $account->max_concurrent_trades) {
                 User::admin()->get()->each(function ($user) use ($account, $positions) {
                     $user->pushover(
-                        message: "Account ID {$account->id}: Max positions exceeded. Exchange opened positions: " . count($positions) . ', Max concurrent positions: '. $account->max_concurrent_trades,
+                        message: "Account ID {$account->id}: Max positions exceeded. Exchange opened positions: ".count($positions).', Max concurrent positions: '.$account->max_concurrent_trades,
                         title: 'Integrity Check failed - Max concurrent positions exceeded',
                         applicationKey: 'nidavellir_warnings'
                     );
                 });
+
+                // TODO: Immediately close exceeding positions with least PnL. Use abs(PnL) to get the lowest ones.
             }
         }
     }

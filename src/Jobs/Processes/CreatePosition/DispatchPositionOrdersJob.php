@@ -57,7 +57,7 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
         $openPositions = Position::active()->where('account_id', $this->account->id)->get()->count();
 
         if ($openPositions > $this->account->max_concurrent_trades) {
-            throw new \Exception('Last open positions check failed: Total opened positions:' . $openPositions . '. Aborting orders dispatch!');
+            throw new \Exception('Last open positions check failed: Total opened positions:'.$openPositions.'. Aborting orders dispatch!');
         }
 
         /**

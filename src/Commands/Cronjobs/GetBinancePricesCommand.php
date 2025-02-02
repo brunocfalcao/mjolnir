@@ -38,7 +38,7 @@ class GetBinancePricesCommand extends Command
         // Define WebSocket callbacks
         $callbacks = [
             'message' => function ($conn, $msg) {
-                //echo now().PHP_EOL;
+                // echo now().PHP_EOL;
 
                 $prices = collect(json_decode($msg, true));
 
@@ -54,18 +54,17 @@ class GetBinancePricesCommand extends Command
                 $this->savePricesOnExchangeSymbol($prices);
 
                 if ($its1minute) {
-                    echo "1 minuted passed at " . now() . PHP_EOL;
+                    echo '1 minuted passed at '.now().PHP_EOL;
                     // For now, nothing to do.
                 }
 
                 if ($its5minutes) {
-                    echo "5 minutes passed at " . now() . PHP_EOL;
+                    echo '5 minutes passed at '.now().PHP_EOL;
                     $this->savePricesOnExchangeSymbolsHistory($prices);
                 }
             },
 
-            'ping' => function ($conn, $msg) {
-            },
+            'ping' => function ($conn, $msg) {},
         ];
 
         $websocketProxy->markPrices($callbacks);

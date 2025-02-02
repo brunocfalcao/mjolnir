@@ -40,11 +40,11 @@ class VerifyBalanceConditionsJob extends BaseApiableJob
 
         // Does the total negative PnL surpasses the account negative PnL threshold?
         // For now we don't use this method.
-        //$this->verifyNegativePnLThreshold();
+        // $this->verifyNegativePnLThreshold();
 
         // To we have at least one position with all limit orders filled?
         // For now we don't use this method.
-        //$this->checkAtLeastOnePositionWithAllLimitOrdersFilled();
+        // $this->checkAtLeastOnePositionWithAllLimitOrdersFilled();
 
         return $response->result[$this->account->quote->canonical];
     }
