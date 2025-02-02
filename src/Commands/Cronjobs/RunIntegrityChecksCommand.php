@@ -51,6 +51,23 @@ class RunIntegrityChecksCommand extends Command
                     );
                 });
             }
+
+            /**
+             * INTEGRITY CHECK
+             *
+             * Do we have more positions on the exchange than the maximum concurrent positions?
+             */
+            $positions = $account->apiQueryPositions();
+
+            if ($positions->count() > $account->max_concurrent_trades) {
+                User::admin()->get()->each(function ($user) use ($account, $positions) {
+                    $user->pushover(
+                        message: "Account ID {$account->id}: Max positions exceeded. Exchange opened positions: " . $positions->count() . ', Max concurrent positions: '. $account->max_concurrent_trades,
+                        title: 'Integrity Check failed - Max concurrent positions exceeded',
+                        applicationKey: 'nidavellir_warnings'
+                    );
+                });
+            }
         }
     }
 
