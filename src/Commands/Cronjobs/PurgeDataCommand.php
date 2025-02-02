@@ -64,7 +64,7 @@ class PurgeDataCommand extends Command
                 ->delete();
 
             // Send Pushover notification with report
-            $this->sendReport($purgeDate2DaysAgo, $purgeDate10DaysAgo, $purgeDate1MonthAgo, $deletedJobQueueEntries, $deletedApiRequestLogs, $deletedOrderHistoryLogs, $deletedPriceHistoryLogs);
+            //$this->sendReport($purgeDate2DaysAgo, $purgeDate10DaysAgo, $purgeDate1MonthAgo, $deletedJobQueueEntries, $deletedApiRequestLogs, $deletedOrderHistoryLogs, $deletedPriceHistoryLogs);
         } catch (\Exception $e) {
             $this->error('An error occurred: '.$e->getMessage());
 
