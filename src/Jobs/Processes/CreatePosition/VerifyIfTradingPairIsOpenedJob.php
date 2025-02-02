@@ -39,7 +39,7 @@ class VerifyIfTradingPairIsOpenedJob extends BaseApiableJob
         // Do we already have an opened position with this trading pair?
         if (array_key_exists($this->position->parsedTradingPair, $apiPositions)) {
             $this->position->updateToFailed("This trading pair ({$this->position->parsedTradingPair}) already have an opened position! Aborting");
-            $this->coreJobQueue->updateToFailed("This trading pair ({$this->position->parsedTradingPair}) already have an opened position! Aborting");
+            $this->coreJobQueue->updateToFailed("This trading pair ({$this->position->parsedTradingPair}) already have an opened position! Aborting", true);
         }
     }
 
