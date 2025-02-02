@@ -50,6 +50,26 @@ trait HasWAPFeatures
             $positionQuantityStr = number_format($positionQuantity, $decimalPlaces, '.', '');
             $totalQuantityStr = number_format($totalQuantity, $decimalPlaces, '.', '');
 
+            if ((string) $positionQuantity != (string) $totalQuantity) {
+                User::admin()->get()->each(function ($user) use ($positionQuantity, $totalQuantity) {
+                    $user->pushover(
+                        message: "WAP STRING COMPARISON ({$this->parsedTradingPair} ID: {$this->id}) - Exchange: {$positionQuantity}, DB (M+L): {$totalQuantity}",
+                        title: 'WAP quantity difference alert',
+                        applicationKey: 'nidavellir_warnings'
+                    );
+                });
+            }
+
+            if ((float) $positionQuantity != (float) $totalQuantity) {
+                User::admin()->get()->each(function ($user) use ($positionQuantity, $totalQuantity) {
+                    $user->pushover(
+                        message: "WAP FLOAT COMPARISON ({$this->parsedTradingPair} ID: {$this->id}) - Exchange: {$positionQuantity}, DB (M+L): {$totalQuantity}",
+                        title: 'WAP quantity difference alert',
+                        applicationKey: 'nidavellir_warnings'
+                    );
+                });
+            }
+
             // Is there a difference between both?
             if ($positionQuantity != $totalQuantity) {
                 // Pushover to inform.
