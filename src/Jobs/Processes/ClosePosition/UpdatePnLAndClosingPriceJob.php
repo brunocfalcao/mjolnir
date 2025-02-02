@@ -40,6 +40,8 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
 
         $apiResponse = $this->position->apiQueryTrade();
 
+        $pnl = 0;
+
         if (isset($apiResponse->result[0])) {
             // Fetch PnL and closing price.
             $pnl = $apiResponse->result[0]['realizedPnl'];
