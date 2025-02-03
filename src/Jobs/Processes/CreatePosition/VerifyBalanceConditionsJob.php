@@ -46,6 +46,8 @@ class VerifyBalanceConditionsJob extends BaseApiableJob
         // For now we don't use this method.
         // $this->checkAtLeastOnePositionWithAllLimitOrdersFilled();
 
+        // TODO: At least half of the positions with all limit orders filled? -- stop opening positions.
+
         return $response->result[$this->account->quote->canonical];
     }
 
