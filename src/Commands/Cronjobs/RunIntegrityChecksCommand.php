@@ -58,7 +58,6 @@ class RunIntegrityChecksCommand extends Command
              * Do we have more positions on the exchange than the maximum concurrent positions?
              */
 
-            /*
             $positions = $account->apiQueryPositions()->result;
 
             if (count($positions) > $account->max_concurrent_trades) {
@@ -69,10 +68,7 @@ class RunIntegrityChecksCommand extends Command
                         applicationKey: 'nidavellir_warnings'
                     );
                 });
-
-                // TODO: Immediately close exceeding positions with least PnL. Use abs(PnL) to get the lowest ones.
             }
-            */
         }
     }
 
