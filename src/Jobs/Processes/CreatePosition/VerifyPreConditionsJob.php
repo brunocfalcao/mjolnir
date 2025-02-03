@@ -98,7 +98,7 @@ class VerifyPreConditionsJob extends BaseApiableJob
     {
         $quoteBalance = $this->balance[$this->account->quote->canonical];
 
-        if (abs($quoteBalance['crossUnPnl']) > $quoteBalance['balance'] * $this->account->negative_pnl_stop_threshold_percentage / 100) {
+        if (abs($quoteBalance['crossUnPnl']) > $quoteBalance['balance'] * $this->account->negative_pnl_stop_threshold / 100) {
             $this->coreJobQueue->updateToFailed('Cancelling Position opening: Negative PnL exceeds account max negative pnl threshold', true);
         }
     }
