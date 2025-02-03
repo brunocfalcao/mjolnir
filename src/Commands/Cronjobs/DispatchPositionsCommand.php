@@ -80,8 +80,6 @@ class DispatchPositionsCommand extends Command
                 /**
                  * Create as much positions as the delta using this job.
                  */
-
-                /*
                 CoreJobQueue::create([
                     'class' => CreateNewPositionsJob::class,
                     'queue' => 'positions',
@@ -92,7 +90,6 @@ class DispatchPositionsCommand extends Command
                     'index' => 2,
                     'block_uuid' => $blockUuid,
                 ]);
-                */
             }
         }
 

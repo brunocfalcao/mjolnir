@@ -65,17 +65,8 @@ class VerifyPreConditionsJob extends BaseApiableJob
             }
         }
 
-        // Debugging:
-        info('Total positions: '.$positions->count());
-        info('Total short positions: '.$positions->where('direction', 'SHORT')->count());
-        info('Total long positions: '.$positions->where('direction', 'LONG')->count());
-
-        info('Total LONG all limit filled positions: '.$longsFilled);
-        info('Total SHORT all limit filled positions: '.$shortsFilled);
-
         // Do we have as much shorts or longs filled as the one-directon positions from the account?
         if ($positions->where('direction', 'LONG')->count() == $longsFilled || $positions->where('direction', 'SHORT')->count() == $shortsFilled) {
-            info('Cancelling new positions because condition is okay');
             $this->coreJobQueue->updateToFailed('Cancelling opening positions, because all account same-direction positions have all limit orders filled', true);
         }
     }
