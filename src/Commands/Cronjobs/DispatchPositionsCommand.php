@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Jobs\Processes\CreatePosition\CreateNewPositionsJob;
-use Nidavellir\Mjolnir\Jobs\Processes\CreatePosition\VerifyBalanceConditionsJob;
+use Nidavellir\Mjolnir\Jobs\Processes\CreatePosition\VerifyPreConditionsJob;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\ExchangeSymbol;
@@ -55,16 +55,8 @@ class DispatchPositionsCommand extends Command
             // Get open positions for the account.
             $openPositions = Position::active()->where('account_id', $account->id)->get();
 
-            // info("[DispatchPositionsCommand] - Open Positions: {$openPositions}");
-
             // Calculate the delta.
             $delta = $account->max_concurrent_trades - $openPositions->count();
-
-            // info("[DispatchPositionsCommand] - Max concurrent trades: {$account->max_concurrent_trades}");
-
-            // info("[DispatchPositionsCommand] - Opened Positions: {$openPositions}");
-
-            // info('[DispatchAccountPositionsCommand] - Dispatching '.$delta.' position(s) to '.$account->user->name);
 
             $blockUuid = (string) Str::uuid();
 
@@ -76,7 +68,7 @@ class DispatchPositionsCommand extends Command
                  * the position to be opened.
                  */
                 CoreJobQueue::create([
-                    'class' => VerifyBalanceConditionsJob::class,
+                    'class' => VerifyPreConditionsJob::class,
                     'queue' => 'positions',
                     'arguments' => [
                         'accountId' => $account->id,
@@ -88,6 +80,8 @@ class DispatchPositionsCommand extends Command
                 /**
                  * Create as much positions as the delta using this job.
                  */
+
+                /*
                 CoreJobQueue::create([
                     'class' => CreateNewPositionsJob::class,
                     'queue' => 'positions',
@@ -98,6 +92,7 @@ class DispatchPositionsCommand extends Command
                     'index' => 2,
                     'block_uuid' => $blockUuid,
                 ]);
+                */
             }
         }
 

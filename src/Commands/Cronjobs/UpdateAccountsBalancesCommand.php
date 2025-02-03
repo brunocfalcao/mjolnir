@@ -20,7 +20,6 @@ class UpdateAccountsBalancesCommand extends Command
             $query->where('is_trader', true);
         })->with('user')
             ->active()
-            ->canTrade()
             ->get();
 
         foreach ($accounts as $account) {

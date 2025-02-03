@@ -9,7 +9,7 @@ use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\Position;
 
-class VerifyBalanceConditionsJob extends BaseApiableJob
+class VerifyPreConditionsJob extends BaseApiableJob
 {
     public Account $account;
 
@@ -40,15 +40,44 @@ class VerifyBalanceConditionsJob extends BaseApiableJob
 
         // Does the total negative PnL surpasses the account negative PnL threshold?
         // For now we don't use this method.
-        // $this->verifyNegativePnLThreshold();
+        $this->verifyNegativePnLThreshold();
 
-        // To we have at least one position with all limit orders filled?
-        // For now we don't use this method.
-        // $this->checkAtLeastOnePositionWithAllLimitOrdersFilled();
-
-        // TODO: At least half of the positions with all limit orders filled? -- stop opening positions.
+        // Do we have all same-direction positions from the account with all limit orders filled?
+        $this->checkAllPositionsFromSameDirectionFullyFilled();
 
         return $response->result[$this->account->quote->canonical];
+    }
+
+    protected function checkAllPositionsFromSameDirectionFullyFilled()
+    {
+        $positions = Position::opened()->where('account_id', $this->account->id)->get();
+
+        $longsFilled = 0;
+        $shortsFilled = 0;
+
+        foreach ($positions as $position) {
+            if ($position->hasAllFilledLimitOrders()) {
+                if ($position->direction == 'LONG') {
+                    $longsFilled++;
+                } else {
+                    $shortsFilled++;
+                }
+            }
+        }
+
+        // Debugging:
+        info('Total positions: '.$positions->count());
+        info('Total short positions: '.$positions->where('direction', 'SHORT')->count());
+        info('Total long positions: '.$positions->where('direction', 'LONG')->count());
+
+        info('Total LONG all limit filled positions: '.$longsFilled);
+        info('Total SHORT all limit filled positions: '.$shortsFilled);
+
+        // Do we have as much shorts or longs filled as the one-directon positions from the account?
+        if ($positions->where('direction', 'LONG')->count() == $longsFilled || $positions->where('direction', 'SHORT')->count() == $shortsFilled) {
+            info('Cancelling new positions because condition is okay');
+            $this->coreJobQueue->updateToFailed('Cancelling opening positions, because all account same-direction positions have all limit orders filled', true);
+        }
     }
 
     protected function verifyMinimumBalance()
@@ -69,7 +98,7 @@ class VerifyBalanceConditionsJob extends BaseApiableJob
     {
         $quoteBalance = $this->balance[$this->account->quote->canonical];
 
-        if (abs($quoteBalance['crossUnPnl']) > $quoteBalance['balance'] * $this->account->negative_pnl_stop_threshold / 100) {
+        if (abs($quoteBalance['crossUnPnl']) > $quoteBalance['balance'] * $this->account->negative_pnl_stop_threshold_percentage / 100) {
             $this->coreJobQueue->updateToFailed('Cancelling Position opening: Negative PnL exceeds account max negative pnl threshold', true);
         }
     }

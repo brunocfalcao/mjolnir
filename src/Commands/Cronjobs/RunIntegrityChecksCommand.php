@@ -57,7 +57,6 @@ class RunIntegrityChecksCommand extends Command
              *
              * Do we have more positions on the exchange than the maximum concurrent positions?
              */
-
             $positions = $account->apiQueryPositions()->result;
 
             if (count($positions) > $account->max_concurrent_trades) {
