@@ -27,7 +27,7 @@ class PlaceOrderJob extends BaseApiableJob
     // Specific configuration to allow more retry flexibility.
     public int $workerServerBackoffSeconds = 10;
 
-    public int $retries = 20;
+    public int $retries = 3;
     // -----
 
     public function __construct(int $orderId)
