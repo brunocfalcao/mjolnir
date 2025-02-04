@@ -3,14 +3,15 @@
 namespace Nidavellir\Mjolnir\Jobs\Processes\CreatePosition;
 
 use Illuminate\Support\Str;
-use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
-use Nidavellir\Mjolnir\Jobs\Apiable\Order\PlaceOrderJob;
+use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Thor\Models\Order;
-use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\TradeConfiguration;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Jobs\Apiable\Order\PlaceOrderJob;
 
 class DispatchPositionOrdersJob extends BaseQueuableJob
 {
