@@ -19,7 +19,6 @@ class DailyReportCommand extends Command
         $accounts = Account::whereHas('user', function ($query) {
             $query->where('is_trader', true);
         })->with('user')
-            ->active()
             ->canTrade()
             ->get();
 

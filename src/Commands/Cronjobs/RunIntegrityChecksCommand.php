@@ -18,7 +18,6 @@ class RunIntegrityChecksCommand extends Command
         $accounts = Account::whereHas('user', function ($query) {
             $query->where('is_trader', true);
         })->with('user')
-            ->active()
             ->canTrade()
             ->get();
 
@@ -59,7 +58,7 @@ class RunIntegrityChecksCommand extends Command
              */
             $positions = $account->apiQueryPositions()->result;
 
-            if (count($positions) > $account->max_concurrent_trades) {
+            if (count($positions) > $account->max_concurrent_trades && $account->max_concurrent_trades > 0) {
                 User::admin()->get()->each(function ($user) use ($account, $positions) {
                     $user->pushover(
                         message: "Account ID {$account->id}: Max positions exceeded. Exchange opened positions: ".count($positions).', Max concurrent positions: '.$account->max_concurrent_trades,
@@ -78,6 +77,6 @@ class RunIntegrityChecksCommand extends Command
     {
         return $orders->filter(function ($order) {
             return in_array($order['status'], ['NEW', 'PARTIALLY_FILLED']);
-        })->values(); // Reindex the collection after filtering.
+        })->values();
     }
 }

@@ -43,7 +43,7 @@ class VerifyPreConditionsJob extends BaseApiableJob
         $this->verifyNegativePnLThreshold();
 
         // Do we have all same-direction positions from the account with all limit orders filled?
-        $this->checkAllPositionsFromSameDirectionFullyFilled();
+        //$this->checkAllPositionsFromSameDirectionFullyFilled();
 
         return $response->result[$this->account->quote->canonical];
     }
@@ -91,24 +91,6 @@ class VerifyPreConditionsJob extends BaseApiableJob
 
         if (abs($quoteBalance['crossUnPnl']) > $quoteBalance['balance'] * $this->account->negative_pnl_stop_threshold / 100) {
             $this->coreJobQueue->updateToFailed('Cancelling Position opening: Negative PnL exceeds account max negative pnl threshold', true);
-        }
-    }
-
-    protected function checkAtLeastOnePositionWithAllLimitOrdersFilled()
-    {
-        // Get all positions for the account with the "opened" scope applied, eager loading the 'orders' relationship
-        $positions = Position::opened()
-            ->where('account_id', $this->account->id)
-            ->with('orders')
-            ->get();
-
-        foreach ($positions as $position) {
-            $orders = $position->orders;
-
-            // Check if we have all the limit orders filled, then we cannot open the position.
-            if ($orders->count() > 0 && $orders->where('type', 'LIMIT')->where('status', 'NEW')->count() == 0) {
-                $this->coreJobQueue->updateToFailed("Position {$position->parsedTradingPair} ID {$position->id} have all LIMIT orders filled -- Stopping dispatch positions process. No new positions were created", true);
-            }
         }
     }
 }

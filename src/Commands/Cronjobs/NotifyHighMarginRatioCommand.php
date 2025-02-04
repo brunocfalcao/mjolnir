@@ -16,7 +16,6 @@ class NotifyHighMarginRatioCommand extends Command
         $accounts = Account::whereHas('user', function ($query) {
             $query->where('is_trader', true); // Ensure the user is a trader
         })->with('user')
-            ->active()
             ->canTrade()
             ->get();
 
