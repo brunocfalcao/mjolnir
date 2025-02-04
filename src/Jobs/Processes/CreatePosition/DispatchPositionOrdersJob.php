@@ -42,12 +42,9 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
         ];
 
         // Update total limit orders.
-        if (!$this->position->total_limit_orders) {
-            $this->position->update([
-                'total_limit_orders' => TradeConfiguration::default()->first()->total_limit_orders
-            ]);
-        }
-
+        $this->position->update([
+            'total_limit_orders' => TradeConfiguration::default()->first()->total_limit_orders
+        ]);
 
         // Obtain the current mark price.
         $this->markPrice = $this->position->exchangeSymbol->apiQueryMarkPrice($this->account);
