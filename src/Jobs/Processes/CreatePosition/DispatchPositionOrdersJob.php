@@ -160,6 +160,7 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
         ]);
     }
 
+    /*
     protected function getAveragePrice(float $percentage): float
     {
         $change = $this->markPrice * ($percentage / 100);
@@ -168,6 +169,26 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
         $newPrice = $this->position->direction == 'LONG'
         ? $this->markPrice - $change
         : $this->markPrice + $change;
+
+        return api_format_price($newPrice, $this->position->exchangeSymbol);
+    }
+    */
+
+    protected function getAveragePrice(float $percentage): float
+    {
+        $newPrice = $this->markPrice;
+
+        if ($this->position->direction == 'LONG') {
+            // Move downward iteratively, applying the percentage decrease
+            for ($i = 0; $i < 5; $i++) {
+                $newPrice -= $newPrice * ($percentage / 100);
+            }
+        } else {
+            // Move upward iteratively, applying the percentage increase
+            for ($i = 0; $i < 5; $i++) {
+                $newPrice += $newPrice * ($percentage / 100);
+            }
+        }
 
         return api_format_price($newPrice, $this->position->exchangeSymbol);
     }
