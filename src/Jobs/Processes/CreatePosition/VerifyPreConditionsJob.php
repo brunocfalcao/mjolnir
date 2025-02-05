@@ -43,7 +43,7 @@ class VerifyPreConditionsJob extends BaseApiableJob
         $this->verifyNegativePnLThreshold();
 
         // Do we have all same-direction positions from the account with all limit orders filled?
-        //$this->checkAllPositionsFromSameDirectionFullyFilled();
+        // $this->checkAllPositionsFromSameDirectionFullyFilled();
 
         return $response->result[$this->account->quote->canonical];
     }
@@ -89,7 +89,7 @@ class VerifyPreConditionsJob extends BaseApiableJob
     {
         $quoteBalance = $this->balance[$this->account->quote->canonical];
 
-        if (abs($quoteBalance['crossUnPnl']) > $quoteBalance['balance'] * $this->account->negative_pnl_stop_threshold / 100) {
+        if (abs($quoteBalance['crossUnPnl']) > $quoteBalance['balance'] * $this->account->negative_pnl_stop_threshold_percentage / 100) {
             $this->coreJobQueue->updateToFailed('Cancelling Position opening: Negative PnL exceeds account max negative pnl threshold', true);
         }
     }

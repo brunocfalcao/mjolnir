@@ -34,15 +34,6 @@ class DispatchPositionsCommand extends Command
             return;
         }
 
-        // The BTC exchange symbol shouldn't be tradeable. Enforce it.
-        $btc = ExchangeSymbol::where('symbol_id', Symbol::firstWhere('token', 'BTC')->id)
-            ->where('is_tradeable', true)
-            ->first();
-
-        if ($btc) {
-            $btc->update(['is_tradeable' => false]);
-        }
-
         // Only process accounts belonging to traders.
         $accounts = Account::whereHas('user', function ($query) {
             $query->where('is_trader', true); // Ensure the user is a trader
