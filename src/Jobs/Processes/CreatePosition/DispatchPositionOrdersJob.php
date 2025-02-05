@@ -42,9 +42,11 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
             'opposite' => $isLong ? 'SELL' : 'BUY',
         ];
 
+        $tradeConfiguration = TradeConfiguration::default()->first();
+
         // Update total limit orders.
         $this->position->update([
-            'total_limit_orders' => TradeConfiguration::default()->first()->total_limit_orders,
+            'total_limit_orders' => $tradeConfiguration->total_limit_orders,
         ]);
 
         // Obtain the current mark price.
@@ -87,11 +89,16 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
          * Now, for each limit order we will MULTIPLY the quantity to obtain
          * the correct quantity for the limit order.
          */
-        $percentageGap = $this->position->percentage_gap;
+        $percentageGap = $this->position->direction == 'LONG' ?
+            $tradeConfiguration->percentage_gap_long :
+            $tradeConfiguration->percentage_gap_short;
 
         for ($i = 0; $i < $this->position->total_limit_orders; $i++) {
             $quantity = api_format_quantity($marketOrderQuantity * (2 ** ($i + 1)), $this->position->ExchangeSymbol);
-            $price = $this->getAveragePrice(($i + 1) * $percentageGap);
+
+            if ($this->position->direction == 'LONG') {
+                $price = $this->getAveragePrice(($i + 1) * $percentageGap);
+            }
 
             $quantityNoRounding = $marketOrderQuantity * (2 ** ($i + 1));
 
@@ -160,7 +167,6 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
         ]);
     }
 
-    /*
     protected function getAveragePrice(float $percentage): float
     {
         $change = $this->markPrice * ($percentage / 100);
@@ -169,26 +175,6 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
         $newPrice = $this->position->direction == 'LONG'
         ? $this->markPrice - $change
         : $this->markPrice + $change;
-
-        return api_format_price($newPrice, $this->position->exchangeSymbol);
-    }
-    */
-
-    protected function getAveragePrice(float $percentage): float
-    {
-        $newPrice = $this->markPrice;
-
-        if ($this->position->direction == 'LONG') {
-            // Move downward iteratively, applying the percentage decrease
-            for ($i = 0; $i < 5; $i++) {
-                $newPrice -= $newPrice * ($percentage / 100);
-            }
-        } else {
-            // Move upward iteratively, applying the percentage increase
-            for ($i = 0; $i < 5; $i++) {
-                $newPrice += $newPrice * ($percentage / 100);
-            }
-        }
 
         return api_format_price($newPrice, $this->position->exchangeSymbol);
     }
