@@ -95,11 +95,7 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
 
         for ($i = 0; $i < $this->position->total_limit_orders; $i++) {
             $quantity = api_format_quantity($marketOrderQuantity * (2 ** ($i + 1)), $this->position->ExchangeSymbol);
-
-            if ($this->position->direction == 'LONG') {
-                $price = $this->getAveragePrice(($i + 1) * $percentageGap);
-            }
-
+            $price = $this->getAveragePrice(($i + 1) * $percentageGap);
             $quantityNoRounding = $marketOrderQuantity * (2 ** ($i + 1));
 
             Order::create([
