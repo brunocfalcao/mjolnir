@@ -75,7 +75,7 @@ abstract class BaseQueuableJob extends BaseJob
             }
 
             // If it's a cURL network error, we can also retry the job again.
-            if ($e instanceof RequestException && strpos($e->getMessage(), 'cURL error') != false) {
+            if ($e instanceof RequestException && strpos($e->getMessage(), 'cURL error') !== false) {
                 // For connection exceptions, we just need to retry again the job.
                 $this->coreJobQueue->updateToRetry(now()->addSeconds($this->workerServerBackoffSeconds));
                 return;
