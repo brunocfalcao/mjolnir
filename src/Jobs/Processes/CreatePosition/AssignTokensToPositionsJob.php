@@ -86,7 +86,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
                     // Verify if this exchange symbol is already present on active trades for this account.
                     if (in_array($selectedExchangeSymbol->id, $this->account->positions()->active()->pluck('exchange_symbol_id')->toArray())) {
                         $selectedExchangeSymbol->load('symbol');
-                        $position->updateToFailed("This exchange symbol {$selectedExchangeSymbol->symbol->token} ID: {$selectedExchangeSymbol->id} is already selected on other active positions for this account, skipping position");
+                        $position->updateToCancelled("This exchange symbol {$selectedExchangeSymbol->symbol->token} ID: {$selectedExchangeSymbol->id} is already selected on other active positions for this account, skipping position");
 
                         continue;
                     }
@@ -114,7 +114,7 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
                     $tokens[] = $position->parsedTradingPair;
                 } else {
                     // None available exchange symbols. Fail position.
-                    $position->updateToFailed('No exchange symbols available, try again later');
+                    $position->updateToCancelled('No exchange symbols available, try again later');
                 }
             }
         }

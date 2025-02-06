@@ -53,13 +53,7 @@ class GetBinancePricesCommand extends Command
 
                 $this->savePricesOnExchangeSymbol($prices);
 
-                if ($its1minute) {
-                    echo '1 minuted passed at '.now().PHP_EOL;
-                    // For now, nothing to do.
-                }
-
                 if ($its5minutes) {
-                    echo '5 minutes passed at '.now().PHP_EOL;
                     $this->savePricesOnExchangeSymbolsHistory($prices);
                 }
             },

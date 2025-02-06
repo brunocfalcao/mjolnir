@@ -93,9 +93,6 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
 
     public function resolveException(\Throwable $e)
     {
-        $this->position->update([
-            'status' => 'failed',
-            'error_message' => $e->getMessage(),
-        ]);
+        $this->position->updateToFailed($e->getMessage());
     }
 }
