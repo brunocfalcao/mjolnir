@@ -2,14 +2,14 @@
 
 namespace Nidavellir\Mjolnir\Abstracts;
 
-use GuzzleHttp\Psr7\Response;
-use Nidavellir\Thor\Models\User;
-use Psr\Http\Message\ResponseInterface;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7\Response;
 use Nidavellir\Mjolnir\Exceptions\JustEndException;
 use Nidavellir\Mjolnir\Exceptions\JustResolveException;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\User;
+use Psr\Http\Message\ResponseInterface;
 
 abstract class BaseQueuableJob extends BaseJob
 {
@@ -71,6 +71,7 @@ abstract class BaseQueuableJob extends BaseJob
             if ($e instanceof ConnectException) {
                 // For connection exceptions, we just need to retry again the job.
                 $this->coreJobQueue->updateToRetry(now()->addSeconds($this->workerServerBackoffSeconds));
+
                 return;
             }
 
@@ -78,6 +79,7 @@ abstract class BaseQueuableJob extends BaseJob
             if ($e instanceof RequestException && strpos($e->getMessage(), 'cURL error') !== false) {
                 // For connection exceptions, we just need to retry again the job.
                 $this->coreJobQueue->updateToRetry(now()->addSeconds($this->workerServerBackoffSeconds));
+
                 return;
             }
 

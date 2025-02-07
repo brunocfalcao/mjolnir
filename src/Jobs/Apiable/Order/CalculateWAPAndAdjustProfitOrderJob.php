@@ -65,6 +65,15 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
                     applicationKey: 'nidavellir_orders'
                 );
             });
+
+            /**
+             * Now verify if all limit orders are filled. If so, we need to
+             * activate a stop loss after a specific duration, to avoid extra
+             * loses, in case the market continues to crash. Better to less on
+             * loss than to be fully liquidated.
+             */
+            if ($position->allLimitOrdersFilled()) {
+            }
         } else {
             throw new \Exception('A WAP calculation was requested but there was an error. Position ID: '.$this->position->id);
         }

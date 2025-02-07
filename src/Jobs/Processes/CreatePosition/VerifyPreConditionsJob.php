@@ -45,7 +45,7 @@ class VerifyPreConditionsJob extends BaseApiableJob
         // Do we have all same-direction positions from the account with all limit orders filled?
         // $this->checkAllPositionsFromSameDirectionFullyFilled();
 
-        return $response->result[$this->account->quote->canonical];
+        return $response->result[$this->account->quote->account_canonical];
     }
 
     protected function checkAllPositionsFromSameDirectionFullyFilled()
@@ -56,7 +56,7 @@ class VerifyPreConditionsJob extends BaseApiableJob
         $shortsFilled = 0;
 
         foreach ($positions as $position) {
-            if ($position->hasAllFilledLimitOrders()) {
+            if ($position->hasAllLimitOrdersFilled()) {
                 if ($position->direction == 'LONG') {
                     $longsFilled++;
                 } else {
@@ -73,21 +73,21 @@ class VerifyPreConditionsJob extends BaseApiableJob
 
     protected function verifyMinimumBalance()
     {
-        if ($this->balance[$this->account->quote->canonical]['availableBalance'] < $this->account->minimum_balance) {
-            $this->coreJobQueue->updateToFailed('Cancelling Position opening: Account less than the minimum balance', true);
+        if ($this->balance[$this->account->quote->account_canonical]['availableBalance'] < $this->account->minimum_balance) {
+            $this->coreJobQueue->updateToFailed('Cancelling Position opening: Account less than the minimum balance. Current '.$this->account->quote->account_canonical.' balance: '.$this->balance[$this->account->quote->account_canonical]['availableBalance'], true);
         }
     }
 
     protected function verifyQuoteBalance()
     {
-        if (! array_key_exists($this->account->quote->canonical, $this->balance)) {
+        if (! array_key_exists($this->account->quote->account_canonical, $this->balance)) {
             $this->coreJobQueue->updateToFailed('Cancelling Position opening: No quote balance for this account', true);
         }
     }
 
     protected function verifyNegativePnLThreshold()
     {
-        $quoteBalance = $this->balance[$this->account->quote->canonical];
+        $quoteBalance = $this->balance[$this->account->quote->account_canonical];
 
         if (abs($quoteBalance['crossUnPnl']) > $quoteBalance['balance'] * $this->account->negative_pnl_stop_threshold_percentage / 100) {
             $this->coreJobQueue->updateToFailed('Cancelling Position opening: Negative PnL exceeds account max negative pnl threshold', true);

@@ -5,7 +5,7 @@ namespace Nidavellir\Mjolnir\Concerns\Models\Position;
 trait HasTradingFeatures
 {
     // Does this position have all limit orders filled?
-    public function hasAllFilledLimitOrders()
+    public function hasAllLimitOrdersFilled()
     {
         $this->load('orders');
 
