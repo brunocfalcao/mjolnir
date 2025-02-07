@@ -72,7 +72,7 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
              * loses, in case the market continues to crash. Better to less on
              * loss than to be fully liquidated.
              */
-            if ($position->allLimitOrdersFilled()) {
+            if ($this->position->allLimitOrdersFilled()) {
             }
         } else {
             throw new \Exception('A WAP calculation was requested but there was an error. Position ID: '.$this->position->id);
