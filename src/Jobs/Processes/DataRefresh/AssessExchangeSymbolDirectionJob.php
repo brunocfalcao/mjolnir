@@ -88,6 +88,28 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
             // Update the indicators only if the exchange symbol is upsertable.
             if ($this->exchangeSymbol->isUpsertable()) {
+
+                /**
+                 * If the direction is contrary to the current direction, it can
+                 * only change if the timeframe is higher than the index on the
+                 * timeframes array. This will cancel timeframes that are too
+                 * short to change the direction of the token, avoiding false
+                 * reversals.
+                 */
+                /*
+                if ($newSide != $this->exchangeSymbol->direction) {
+                    $timeframes = $this->exchangeSymbol->tradeConfiguration->indicator_timeframes;
+                    $leastTimeFrameIndex = $this->exchangeSymbol->tradeConfiguration->least_changing_timeframe_index;
+                    $currentTimeFrameIndex = array_search($this->timeFrame, $timeframes);
+
+                    if ($leastTimeFrameIndex < $currentTimeFrameIndex) {
+                        $this->processNextTimeFrameOrConclude();
+
+                        return;
+                    }
+                }
+                */
+
                 $this->updateSideAndNotify($newSide);
 
                 $this->exchangeSymbol->update([
