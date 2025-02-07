@@ -41,6 +41,6 @@ class ModifyOrderJob extends BaseApiableJob
     public function computeApiable()
     {
         // Resettle order, with the same price and quantity.
-        return $this->order->apiModify($this->quantity, $this->price)->response;
+        $this->order->apiModify($this->quantity, $this->price);
     }
 }

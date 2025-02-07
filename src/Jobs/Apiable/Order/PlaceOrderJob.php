@@ -117,8 +117,6 @@ class PlaceOrderJob extends BaseApiableJob
         $this->order->apiSync();
 
         // info('[PlaceOrderJob] - Order ID: '.$this->order->id.', order placed and synced with exchange id '.$this->order->exchange_order_id);
-
-        return $apiResponse->response;
     }
 
     public function verifyConditions()

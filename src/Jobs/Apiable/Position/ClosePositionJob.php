@@ -59,11 +59,15 @@ class ClosePositionJob extends BaseApiableJob
             CoreJobQueue::create([
                 'class' => SyncOrderJob::class,
                 'queue' => 'orders',
-
                 'arguments' => [
                     'orderId' => $order->id,
                 ],
             ]);
         }
+    }
+
+    public function resolveException(\Throwable $e)
+    {
+        $this->position->updateToFailed($e);
     }
 }

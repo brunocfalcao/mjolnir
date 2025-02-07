@@ -33,7 +33,5 @@ class SyncOrderJob extends BaseApiableJob
     public function computeApiable()
     {
         $apiResponse = $this->order->apiSync();
-
-        return $apiResponse->response;
     }
 }

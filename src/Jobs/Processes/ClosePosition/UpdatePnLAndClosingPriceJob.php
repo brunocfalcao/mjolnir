@@ -87,8 +87,6 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
                 );
             });
         }
-
-        return $apiResponse->response;
     }
 
     public function resolveException(\Throwable $e)

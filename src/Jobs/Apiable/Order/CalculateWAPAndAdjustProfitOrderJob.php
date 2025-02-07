@@ -61,7 +61,7 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
             User::admin()->get()->each(function ($user) use ($wap, $totalFilledOrders) {
                 $user->pushover(
                     message: "WAP [{$totalFilledOrders}] - {$this->position->parsedTradingPair} ({$this->position->direction}), Qty: {$this->originalQuantity} to {$wap['quantity']}, Price: {$this->originalPrice} to {$wap['price']} USDT",
-                    title: 'WAP triggered',
+                    title: "WAP triggered",
                     applicationKey: 'nidavellir_orders'
                 );
             });
@@ -72,7 +72,7 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
              * loses, in case the market continues to crash. Better to less on
              * loss than to be fully liquidated.
              */
-            if ($this->position->allLimitOrdersFilled()) {
+            if ($this->position->hasAllLimitOrdersFilled()) {
             }
         } else {
             throw new \Exception('A WAP calculation was requested but there was an error. Position ID: '.$this->position->id);
