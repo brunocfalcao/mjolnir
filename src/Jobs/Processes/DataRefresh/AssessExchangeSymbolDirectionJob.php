@@ -106,6 +106,9 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
                     if ($leastTimeFrameIndex >= $currentTimeFrameIndex) {
                         /**
+                         * No deal. We cannot change the indicator since the timeframe is not high enough to
+                         * conclude the direction.
+                         *
                          * Do not clean indicator data in case we don't find the same conclusion in a higher timeframe.
                          * This will allow the indicator to stay with the same direction until an opposite direction
                          * is concluded in a higher timeframe. Until then, we don't change the direction.
