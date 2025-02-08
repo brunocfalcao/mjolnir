@@ -17,10 +17,13 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
     public string $timeFrame;
 
+    public bool $shouldCleanIndicatorData;
+
     public int $retries = 20;
 
-    public function __construct(int $exchangeSymbolId)
+    public function __construct(int $exchangeSymbolId, bool $shouldCleanIndicatorData = true)
     {
+        $this->shouldCleanIndicatorData = $shouldCleanIndicatorData;
         $this->exchangeSymbol = ExchangeSymbol::findOrFail($exchangeSymbolId);
         $this->rateLimiter = RateLimitProxy::make('taapi')->withAccount(Account::admin('taapi'));
         $this->exceptionHandler = BaseExceptionHandler::make('taapi');
@@ -96,19 +99,25 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
                  * short to change the direction of the token, avoiding false
                  * reversals.
                  */
-                /*
-                if ($newSide != $this->exchangeSymbol->direction) {
+                if ($newSide != $this->exchangeSymbol->direction && $this->exchangeSymbol->direction != null) {
                     $timeframes = $this->exchangeSymbol->tradeConfiguration->indicator_timeframes;
                     $leastTimeFrameIndex = $this->exchangeSymbol->tradeConfiguration->least_changing_timeframe_index;
                     $currentTimeFrameIndex = array_search($this->timeFrame, $timeframes);
 
-                    if ($leastTimeFrameIndex < $currentTimeFrameIndex) {
+                    if ($leastTimeFrameIndex >= $currentTimeFrameIndex) {
+                        /**
+                         * Do not clean indicator data in case we don't find the same conclusion in a higher timeframe.
+                         * This will allow the indicator to stay with the same direction until an opposite direction
+                         * is concluded in a higher timeframe. Until then, we don't change the direction.
+                         */
+                        $this->shouldCleanIndicatorData = false;
+
+                        // We need to try to process the next timeframe, but we don't clean the exchange symbol.
                         $this->processNextTimeFrameOrConclude();
 
                         return;
                     }
                 }
-                */
 
                 $this->updateSideAndNotify($newSide);
 
@@ -151,19 +160,22 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
                 'arguments' => [
                     'exchangeSymbolId' => $this->exchangeSymbol->id,
+                    'shouldCleanIndicatorData' => $this->shouldCleanIndicatorData,
                 ],
                 'index' => 2,
                 'block_uuid' => $blockUuid,
             ]);
         } else {
-            // No conclusion reached: Disable exchange symbol.
-            $this->exchangeSymbol->update([
-                'direction' => null,
-                'is_tradeable' => false,
-                'indicators' => null,
-                'indicator_timeframe' => null,
-                'indicators_last_synced_at' => null,
-            ]);
+            if ($this->shouldCleanIndicatorData) {
+                // No conclusion reached: Disable exchange symbol.
+                $this->exchangeSymbol->update([
+                    'direction' => null,
+                    'is_tradeable' => false,
+                    'indicators' => null,
+                    'indicator_timeframe' => null,
+                    'indicators_last_synced_at' => null,
+                ]);
+            }
         }
     }
 

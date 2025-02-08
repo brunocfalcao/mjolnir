@@ -61,7 +61,7 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
             User::admin()->get()->each(function ($user) use ($wap, $totalFilledOrders) {
                 $user->pushover(
                     message: "WAP [{$totalFilledOrders}] - {$this->position->parsedTradingPair} ({$this->position->direction}), Qty: {$this->originalQuantity} to {$wap['quantity']}, Price: {$this->originalPrice} to {$wap['price']} USDT",
-                    title: "WAP triggered",
+                    title: 'WAP triggered',
                     applicationKey: 'nidavellir_orders'
                 );
             });
