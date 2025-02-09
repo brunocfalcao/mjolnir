@@ -34,7 +34,7 @@ class UpdateRemainingPositionDataJob extends BaseQueuableJob
         }
 
         if (! $this->position->profit_percentage) {
-            $data['profit_percentage'] = TradeConfiguration::default()->first()->profit_percentage;
+            $data['profit_percentage'] = $this->account->profit_percentage;
         }
 
         if (! $this->position->direction) {

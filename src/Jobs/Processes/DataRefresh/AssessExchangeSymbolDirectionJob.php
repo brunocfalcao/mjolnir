@@ -10,6 +10,7 @@ use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\Indicator;
+use Nidavellir\Thor\Models\User;
 
 class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 {
@@ -104,7 +105,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
                     $leastTimeFrameIndex = $this->exchangeSymbol->tradeConfiguration->least_changing_timeframe_index;
                     $currentTimeFrameIndex = array_search($this->timeFrame, $timeframes);
 
-                    if ($leastTimeFrameIndex >= $currentTimeFrameIndex) {
+                    if ($leastTimeFrameIndex > $currentTimeFrameIndex) {
                         /**
                          * No deal. We cannot change the indicator since the timeframe is not high enough to
                          * conclude the direction.
@@ -114,6 +115,17 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
                          * is concluded in a higher timeframe. Until then, we don't change the direction.
                          */
                         $this->shouldCleanIndicatorData = false;
+
+                        User::admin()->get()->each(function ($user) use ($timeframes, $newSide, $leastTimeFrameIndex) {
+
+                            $currentTimeFrame = $this->timeFrame;
+                            $leastTimeFrame = $timeframes[$leastTimeFrameIndex];
+                            $user->pushover(
+                                message: "{$this->exchangeSymbol->symbol->token} indicator tried to switch to {$newSide} on a {$currentTimeFrame} timeframe, but needs to be at least a {$leastTimeFrame} timeframe",
+                                title: "{$this->exchangeSymbol->symbol->token} indicator opposite side conclusion invalidated",
+                                applicationKey: 'nidavellir_warnings'
+                            );
+                        });
 
                         // We need to try to process the next timeframe, but we don't clean the exchange symbol.
                         $this->processNextTimeFrameOrConclude();
