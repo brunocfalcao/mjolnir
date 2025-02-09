@@ -78,7 +78,7 @@ class SelectPositionMarginJob extends BaseApiableJob
             round(
                 $this->balance *
                 ($this->account->max_balance_percentage / 100) *
-                $this->account->sizePercentage / 100
+                $sizePercentage / 100
             )
         );
 
