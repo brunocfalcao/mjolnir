@@ -30,7 +30,29 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
         $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
     }
 
-    public function computeApiable() {}
+    public function computeApiable()
+    {
+        // Verify if we still have this position open.
+        $apiPositions = $this->account->apiQueryPositions()->result;
+        if (array_key_exists($this->position->parsedTradingPair, $apiPositions)) {
+            // Place stop order, with the percentage given from the account.
+            $stopPercentage = $this->account->stop_order_threshold_percentage;
+
+            // Get mark price.
+            $markPrice = $this->position->exchangeSymbol->apiQueryMarkPrice($this->account);
+
+            // Calculate new price for the stop order given the percentage.
+            if ($this->position->direction == 'LONG') {
+                // For LONG positions, the stop price is below the mark price.
+                $stopPrice = api_format_price($markPrice * (1 - ($stopPercentage / 100)), $this->position->exchangeSymbol);
+            } else {
+                // For SHORT positions, the stop price is above the mark price.
+                $stopPrice = api_format_price($markPrice * (1 + ($stopPercentage / 100)), $this->position->exchangeSymbol);
+            }
+
+            // Time to create a new order, type 'STOP-LOSS'.
+        }
+    }
 
     public function resolveException(\Throwable $e)
     {

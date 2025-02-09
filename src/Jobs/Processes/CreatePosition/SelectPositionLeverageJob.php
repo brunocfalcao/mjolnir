@@ -35,7 +35,12 @@ class SelectPositionLeverageJob extends BaseQueuableJob
         }
 
         // Extract the max margin ratio from the account (interpreted as max leverage)
-        $maxLeverage = $this->account->max_leverage;
+
+        if ($this->position->direction == 'LONG') {
+            $maxLeverage = $this->account->max_leverage_long;
+        } else {
+            $maxLeverage = $this->account->max_leverage_short;
+        }
 
         // Fetch the position's margin
         $margin = $this->position->margin;
