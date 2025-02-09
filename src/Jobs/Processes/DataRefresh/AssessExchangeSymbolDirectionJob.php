@@ -3,15 +3,13 @@
 namespace Nidavellir\Mjolnir\Jobs\Processes\DataRefresh;
 
 use Illuminate\Support\Str;
-use Nidavellir\Thor\Models\User;
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\Indicator;
-use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Thor\Models\ApplicationLog;
-use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\ExchangeSymbol;
+use Nidavellir\Thor\Models\Indicator;
 
 class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 {
@@ -107,6 +105,17 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
                     $currentTimeFrameIndex = array_search($this->timeFrame, $timeframes);
 
                     if ($leastTimeFrameIndex > $currentTimeFrameIndex) {
+                        $str = $this->exchangeSymbol->symbol->token . ' ' .
+                           $this->exchangeSymbol->direction . ' to ' . $newSide . ' : ' .
+                           'Least timeframe: ' . $timeframes[$leastTimeFrameIndex] . ' and got ' .
+                           $timeframes[$currentTimeFrameIndex];
+
+                        $this->exchangeSymbol->logs()->create([
+                            'action_canonical' => 'indicator.direction.not-approved',
+                            'description' => 'A direction change was not approved',
+                            'return_data_text' => $str
+                        ]);
+
                         /**
                          * No deal. We cannot change the indicator since the timeframe is not high enough to
                          * conclude the direction.
@@ -116,15 +125,6 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
                          * is concluded in a higher timeframe. Until then, we don't change the direction.
                          */
                         $this->shouldCleanIndicatorData = false;
-
-                        $currentTimeFrame = $this->timeFrame;
-                        $leastTimeFrame = $timeframes[$leastTimeFrameIndex];
-
-                        $this->exchangeSymbol->logs()->create([
-                            'action_canonical' => 'indicator.direction.not-approved',
-                            'description' => 'A direction change was not approved',
-                            'return_data_text' => "{$this->exchangeSymbol->symbol->token} indicator tried to switch to {$newSide} on a {$currentTimeFrame} timeframe, but needs to be at least a {$leastTimeFrame} timeframe",
-                        ]);
 
                         // We need to try to process the next timeframe, but we don't clean the exchange symbol.
                         $this->processNextTimeFrameOrConclude();
