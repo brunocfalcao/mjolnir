@@ -67,11 +67,18 @@ class SelectPositionMarginJob extends BaseApiableJob
         // info('[SelectPositionMarginJob] - Position size percentage: '.$this->account->position_size_percentage);
 
         // The available balance will then be sliced for this account size percentage.
+
+        if ($this->position->direction == 'LONG') {
+            $sizePercentage = $this->account->position_size_percentage_long;
+        } else {
+            $sizePercentage = $this->account->position_size_percentage_short;
+        }
+
         $margin = remove_trailing_zeros(
             round(
                 $this->balance *
                 ($this->account->max_balance_percentage / 100) *
-                $this->account->position_size_percentage / 100
+                $this->account->sizePercentage / 100
             )
         );
 
