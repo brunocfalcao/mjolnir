@@ -105,15 +105,15 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
                     $currentTimeFrameIndex = array_search($this->timeFrame, $timeframes);
 
                     if ($leastTimeFrameIndex > $currentTimeFrameIndex) {
-                        $str = $this->exchangeSymbol->symbol->token . ' ' .
-                           $this->exchangeSymbol->direction . ' to ' . $newSide . ' : ' .
-                           'Least timeframe: ' . $timeframes[$leastTimeFrameIndex] . ' and got ' .
+                        $str = $this->exchangeSymbol->symbol->token.' '.
+                           $this->exchangeSymbol->direction.' to '.$newSide.' : '.
+                           'Least timeframe: '.$timeframes[$leastTimeFrameIndex].' and got '.
                            $timeframes[$currentTimeFrameIndex];
 
                         $this->exchangeSymbol->logs()->create([
                             'action_canonical' => 'indicator.direction.not-approved',
                             'description' => 'A direction change was not approved',
-                            'return_data_text' => $str
+                            'return_data_text' => $str,
                         ]);
 
                         /**
