@@ -35,6 +35,8 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
 
     public function computeApiable()
     {
+        info('Starting computeApiable()');
+
         $dataMapper = new ApiDataMapperProxy($this->account->apiSystem->canonical);
 
         // Verify if we still have this position open.
