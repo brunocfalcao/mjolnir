@@ -67,6 +67,7 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
                 $stopPrice = api_format_price($markPrice * (1 + ($stopPercentage / 100)), $this->position->exchangeSymbol);
             }
 
+            info('Creating Eloquent Order instance for ' . $this->position->parsedTradingPair);
             // Time to create a new order, type 'STOP-LOSS'.
             $order = Order::create([
                 'position_id' => $this->position->id,
@@ -75,6 +76,8 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
                 'status' => 'NEW',
                 'price' => $stopPrice,
             ]);
+
+            info('Finished creating Eloquent Order instance for ' . $this->position->parsedTradingPair);
 
             /*
             CoreJobQueue::create([
