@@ -2,14 +2,16 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Apiable\Order;
 
+use Nidavellir\Thor\Models\User;
+use Nidavellir\Thor\Models\Order;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\Order;
-use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\User;
+use Nidavellir\Mjolnir\Jobs\Apiable\Position\PlaceStopMarketOrderJob;
 
 class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
 {
@@ -73,6 +75,24 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
              * loss than to be fully liquidated.
              */
             if ($this->position->hasAllLimitOrdersFilled()) {
+                $dispatchAt = now()->addMinutes((int) $this->account->stop_order_trigger_duration_minutes);
+
+                CoreJobQueue::create([
+                    'class' => PlaceStopMarketOrderJob::class,
+                    'queue' => 'orders',
+                    'arguments' => [
+                        'positionId' => $this->position->id,
+                    ],
+                    'dispatch_after' => $dispatchAt
+                ]);
+
+                User::admin()->get()->each(function ($user) use ($dispatchAt) {
+                    $user->pushover(
+                        message: "Stop Market order triggered for {$this->position->parsedTradingPair} to be placed at {$dispatchAt->format('H:i:s')}",
+                        title: "Stop Market Order Scheduled - {$this->position->parsedTradingPair}",
+                        applicationKey: 'nidavellir_warnings'
+                    );
+                });
             }
         } else {
             throw new \Exception('A WAP calculation was requested but there was an error. Position ID: '.$this->position->id);
