@@ -70,7 +70,7 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
                 'position_id' => $this->position->id,
                 'side' => $side,
                 'type' => 'STOP-MARKET',
-                'status' => 'new',
+                'status' => 'NEW',
                 'price' => $stopPrice,
             ]);
 
