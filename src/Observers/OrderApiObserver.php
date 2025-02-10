@@ -73,6 +73,7 @@ class OrderApiObserver
             ->count();
 
         info($order->type);
+        info($eligibleStopMarketOrder);
 
         if ($order->type == 'STOP-MARKET' && $eligibleStopMarketOrder >= 1) {
             throw new JustEndException("Excessively creating one more STOP-MARKET order for position {$order->position->parsedTradingPair} (ID: {$order->position->id}). Aborting creation.");
