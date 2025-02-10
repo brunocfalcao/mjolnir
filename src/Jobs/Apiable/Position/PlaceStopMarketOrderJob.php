@@ -34,6 +34,8 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
 
     public function computeApiable()
     {
+        $dataMapper = new ApiDataMapperProxy($this->account->apiSystem->canonical);
+
         // Verify if we still have this position open.
         $apiPositions = $this->account->apiQueryPositions()->result;
 
@@ -48,11 +50,16 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
             // Get mark price.
             $markPrice = $this->position->exchangeSymbol->apiQueryMarkPrice($this->account);
 
+            // Set side.
+            $side = null;
+
             // Calculate new price for the stop order given the percentage.
             if ($this->position->direction == 'LONG') {
+                $side = 'SELL';
                 // For LONG positions, the stop price is below the mark price.
                 $stopPrice = api_format_price($markPrice * (1 - ($stopPercentage / 100)), $this->position->exchangeSymbol);
             } else {
+                $side = 'BUY';
                 // For SHORT positions, the stop price is above the mark price.
                 $stopPrice = api_format_price($markPrice * (1 + ($stopPercentage / 100)), $this->position->exchangeSymbol);
             }
@@ -60,11 +67,13 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
             // Time to create a new order, type 'STOP-LOSS'.
             $order = Order::create([
                 'position_id' => $this->position->id,
+                'side' => $side,
                 'type' => 'STOP-MARKET',
                 'status' => 'new',
                 'price' => $stopPrice,
             ]);
 
+            /*
             CoreJobQueue::create([
                 'class' => PlaceOrderJob::class,
                 'queue' => 'orders',
@@ -72,6 +81,7 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
                     'orderId' => $order->id,
                 ],
             ]);
+            */
         } else {
             info('Position DO NOT exist for ' . $this->position->parsedTradingPair);
         }
