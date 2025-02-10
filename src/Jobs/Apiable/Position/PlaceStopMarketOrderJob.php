@@ -26,29 +26,21 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
 
     public function __construct(int $positionId)
     {
-        info('job construct()');
         $this->position = Position::findOrFail($positionId);
         $this->account = $this->position->account;
         $this->apiSystem = $this->account->apiSystem;
         $this->rateLimiter = RateLimitProxy::make($this->apiSystem->canonical)->withAccount($this->account);
         $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
-        info('end job construct()');
     }
 
     public function computeApiable()
     {
-        info('Starting computeApiable()');
-
         $dataMapper = new ApiDataMapperProxy($this->account->apiSystem->canonical);
 
         // Verify if we still have this position open.
         $apiPositions = $this->account->apiQueryPositions()->result;
 
-        info('Placing stop market order for ' . $this->position->parsedTradingPair);
-
         if (array_key_exists($this->position->parsedTradingPair, $apiPositions)) {
-            info('Position exists for ' . $this->position->parsedTradingPair);
-
             // Place stop order, with the percentage given from the account.
             $stopPercentage = $this->account->stop_order_threshold_percentage;
 
@@ -69,7 +61,6 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
                 $stopPrice = api_format_price($markPrice * (1 + ($stopPercentage / 100)), $this->position->exchangeSymbol);
             }
 
-            info('Creating Eloquent Order instance for ' . $this->position->parsedTradingPair);
             // Time to create a new order, type 'STOP-LOSS'.
             $order = Order::create([
                 'position_id' => $this->position->id,
@@ -79,9 +70,6 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
                 'price' => $stopPrice,
             ]);
 
-            info('Finished creating Eloquent Order instance for ' . $this->position->parsedTradingPair);
-
-            /*
             CoreJobQueue::create([
                 'class' => PlaceOrderJob::class,
                 'queue' => 'orders',
@@ -89,9 +77,6 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
                     'orderId' => $order->id,
                 ],
             ]);
-            */
-        } else {
-            info('Position DO NOT exist for ' . $this->position->parsedTradingPair);
         }
     }
 

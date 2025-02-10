@@ -186,26 +186,35 @@ class PlaceOrderJob extends BaseApiableJob
             return;
         }
 
-        // Start position rollbacking.
-        $this->position->updateToRollbacking($e->getMessage());
+        /**
+         * We only rollback positions that are being created, not the ones
+         * that are already active.
+         */
+        if ($this->position->status == 'new') {
+            // Start position rollbacking.
+            $this->position->updateToRollbacking($e->getMessage());
 
-        CoreJobQueue::create([
-            'class' => CancelOpenOrdersJob::class,
-            'queue' => 'orders',
-            'arguments' => [
-                'positionId' => $this->order->position->id,
-            ],
-        ]);
+            CoreJobQueue::create([
+                'class' => CancelOpenOrdersJob::class,
+                'queue' => 'orders',
+                'arguments' => [
+                    'positionId' => $this->order->position->id,
+                ],
+            ]);
 
-        CoreJobQueue::create([
-            'class' => ClosePositionJob::class,
-            'queue' => 'positions',
-            'arguments' => [
-                'positionId' => $this->order->position->id,
-            ],
-        ]);
+            CoreJobQueue::create([
+                'class' => ClosePositionJob::class,
+                'queue' => 'positions',
+                'arguments' => [
+                    'positionId' => $this->order->position->id,
+                ],
+            ]);
 
-        $this->position->updateToRollbacked($e->getMessage());
+            $this->position->updateToRollbacked($e->getMessage());
+        } else {
+            // Update this order to failed, only. Send pushover message.
+            $this->order->updateToFailed($e);
+        }
 
         $this->coreJobQueueStatusUpdated = false;
     }

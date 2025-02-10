@@ -20,7 +20,10 @@ trait MapsPlaceOrder
 
         $properties->set('options.symbol', $parsedSymbol);
         $properties->set('options.side', $this->sideType($order->side));
-        $properties->set('options.quantity', (string) $order->quantity);
+
+        if ($order->type != 'STOP-MARKET') {
+            $properties->set('options.quantity', (string) $order->quantity);
+        }
 
         switch ($order->type) {
             case 'PROFIT':
@@ -41,6 +44,7 @@ trait MapsPlaceOrder
             case 'STOP-MARKET':
                 $properties->set('options.type', 'STOP_MARKET');
                 $properties->set('options.timeinforce', 'GTC');
+                $properties->set('options.closePosition', 'true');
                 $properties->set('options.stopPrice', $order->price);
                 break;
         }
