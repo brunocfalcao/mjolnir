@@ -65,6 +65,16 @@ class OrderApiObserver
         if ($order->type == 'MARKET-CANCEL' && $eligibleMarketCancelOrder == 1) {
             throw new JustEndException("Excessively creating one more MARKET-CANCEL order for position {$order->position->parsedTradingPair} (ID: {$order->position->id}). Aborting creation.");
         }
+
+        $eligibleStopMarketOrder = $order->position
+            ->orders
+            ->where('type', 'STOP-MARKET')
+            ->whereIn('status', ['NEW', 'FILLED'])
+            ->count();
+
+        if ($order->type == 'STOP-MARKET' && $eligibleStopMarketOrder == 1) {
+            throw new JustEndException("Excessively creating one more STOP-MARKET order for position {$order->position->parsedTradingPair} (ID: {$order->position->id}). Aborting creation.");
+        }
     }
 
     public function updated(Order $order): void
@@ -96,8 +106,8 @@ class OrderApiObserver
             return;
         }
 
-        // Skip observers for market and market-cancel orders.
-        if ($order->type == 'MARKET' || $order->type == 'MARKET-CANCEL') {
+        // Skip observers for stop-market, market and market-cancel orders.
+        if ($order->type == 'STOP-MARKET' || $order->type == 'MARKET' || $order->type == 'MARKET-CANCEL') {
             return;
         }
 

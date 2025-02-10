@@ -4,9 +4,11 @@ namespace Nidavellir\Mjolnir\Jobs\Apiable\Position;
 
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Jobs\Apiable\Order\PlaceOrderJob;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\User;
@@ -32,6 +34,9 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
 
     public function computeApiable()
     {
+        info('here');
+        return;
+
         // Verify if we still have this position open.
         $apiPositions = $this->account->apiQueryPositions()->result;
         if (array_key_exists($this->position->parsedTradingPair, $apiPositions)) {
@@ -51,6 +56,20 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
             }
 
             // Time to create a new order, type 'STOP-LOSS'.
+            $order = Order::create([
+                'position_id' => $this->position->id,
+                'type' => 'STOP-MARKET',
+                'status' => 'new',
+                'price' => $stopPrice,
+            ]);
+
+            CoreJobQueue::create([
+                'class' => PlaceOrderJob::class,
+                'queue' => 'orders',
+                'arguments' => [
+                    'orderId' => $order->id,
+                ],
+            ]);
         }
     }
 

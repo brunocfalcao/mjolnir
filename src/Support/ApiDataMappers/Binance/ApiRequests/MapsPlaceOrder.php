@@ -37,6 +37,12 @@ trait MapsPlaceOrder
             case 'MARKET-CANCEL':
                 $properties->set('options.type', 'MARKET');
                 break;
+
+            case 'STOP-MARKET':
+                $properties->set('options.type', 'STOP_MARKET');
+                $properties->set('options.timeinforce', 'GTC');
+                $properties->set('options.stopPrice', $order->price);
+                break;
         }
 
         return $properties;

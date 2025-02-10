@@ -74,7 +74,6 @@ class PlaceOrderJob extends BaseApiableJob
              * because if so, then it might remove all the already present orders.
              * We will check what's going on later, via pushover message.
              */
-            // info('Returning ...');
 
             return;
         }
