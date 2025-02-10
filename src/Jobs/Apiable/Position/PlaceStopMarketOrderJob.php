@@ -26,11 +26,13 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
 
     public function __construct(int $positionId)
     {
+        info('job construct()');
         $this->position = Position::findOrFail($positionId);
         $this->account = $this->position->account;
         $this->apiSystem = $this->account->apiSystem;
         $this->rateLimiter = RateLimitProxy::make($this->apiSystem->canonical)->withAccount($this->account);
         $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
+        info('end job construct()');
     }
 
     public function computeApiable()
