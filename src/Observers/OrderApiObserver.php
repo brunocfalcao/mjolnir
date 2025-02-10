@@ -42,7 +42,7 @@ class OrderApiObserver
             ->whereIn('status', ['NEW', 'FILLED'])
             ->count();
 
-        if ($order->type == 'MARKET' && $eligibleMarketOrder == 1) {
+        if ($order->type == 'MARKET' && $eligibleMarketOrder >= 1) {
             throw new JustEndException("Excessively creating one more MARKET order for position {$order->position->parsedTradingPair} (ID: {$order->position->id}). Aborting creation.");
         }
 
@@ -52,7 +52,7 @@ class OrderApiObserver
             ->whereIn('status', ['NEW', 'FILLED', 'PARTIALLY_FILLED'])
             ->count();
 
-        if ($order->type == 'PROFIT' && $eligibleProfitOrder == 1) {
+        if ($order->type == 'PROFIT' && $eligibleProfitOrder >= 1) {
             throw new JustEndException("Excessively creating one more PROFIT order for position {$order->position->parsedTradingPair} (ID: {$order->position->id}). Aborting creation.");
         }
 
@@ -62,7 +62,7 @@ class OrderApiObserver
             ->whereIn('status', ['NEW', 'FILLED'])
             ->count();
 
-        if ($order->type == 'MARKET-CANCEL' && $eligibleMarketCancelOrder == 1) {
+        if ($order->type == 'MARKET-CANCEL' && $eligibleMarketCancelOrder >= 1) {
             throw new JustEndException("Excessively creating one more MARKET-CANCEL order for position {$order->position->parsedTradingPair} (ID: {$order->position->id}). Aborting creation.");
         }
 
@@ -72,7 +72,7 @@ class OrderApiObserver
             ->whereIn('status', ['NEW', 'FILLED'])
             ->count();
 
-        if ($order->type == 'STOP-MARKET' && $eligibleStopMarketOrder == 1) {
+        if ($order->type == 'STOP-MARKET' && $eligibleStopMarketOrder >= 1) {
             throw new JustEndException("Excessively creating one more STOP-MARKET order for position {$order->position->parsedTradingPair} (ID: {$order->position->id}). Aborting creation.");
         }
     }
