@@ -68,6 +68,12 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
                 'type' => 'STOP-MARKET',
                 'status' => 'NEW',
                 'price' => $stopPrice,
+                'quantity' => $this->position
+                                   ->orders
+                                   ->where('type', 'PROFIT')
+                                   ->where('status', 'NEW')
+                                   ->first()
+                                   ->quantity
             ]);
 
             CoreJobQueue::create([
