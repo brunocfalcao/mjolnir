@@ -3,10 +3,10 @@
 namespace Nidavellir\Mjolnir\Commands\Debug;
 
 use Illuminate\Console\Command;
-use Nidavellir\Thor\Models\User;
-use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Mjolnir\Jobs\Apiable\Position\PlaceStopMarketOrderJob;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\User;
 
 class PlaceStopMarketOrderCommand extends Command
 {
@@ -28,7 +28,7 @@ class PlaceStopMarketOrderCommand extends Command
             'arguments' => [
                 'positionId' => $position->id,
             ],
-            'dispatch_after' => $dispatchAt
+            'dispatch_after' => $dispatchAt,
         ]);
 
         User::admin()->get()->each(function ($user) use ($dispatchAt, $position) {

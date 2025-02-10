@@ -2,16 +2,16 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Apiable\Order;
 
-use Nidavellir\Thor\Models\User;
-use Nidavellir\Thor\Models\Order;
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Mjolnir\Jobs\Apiable\Position\PlaceStopMarketOrderJob;
+use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\Order;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\User;
 
 class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
 {
@@ -60,13 +60,15 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
                 ->where('type', 'LIMIT')
                 ->where('status', 'FILLED')->count();
 
-            User::admin()->get()->each(function ($user) use ($wap, $totalFilledOrders) {
-                $user->pushover(
-                    message: "WAP [{$totalFilledOrders}] - {$this->position->parsedTradingPair} ({$this->position->direction}), Qty: {$this->originalQuantity} to {$wap['quantity']}, Price: {$this->originalPrice} to {$wap['price']} USDT",
-                    title: 'WAP triggered',
-                    applicationKey: 'nidavellir_orders'
-                );
-            });
+            if ($totalFilledOrders >= $this->account->filled_orders_to_notify) {
+                User::admin()->get()->each(function ($user) use ($wap, $totalFilledOrders) {
+                    $user->pushover(
+                        message: "WAP [{$totalFilledOrders}] - {$this->position->parsedTradingPair} ({$this->position->direction}), Qty: {$this->originalQuantity} to {$wap['quantity']}, Price: {$this->originalPrice} to {$wap['price']} USDT",
+                        title: 'WAP triggered',
+                        applicationKey: 'nidavellir_orders'
+                    );
+                });
+            }
 
             /**
              * Now verify if all limit orders are filled. If so, we need to
@@ -83,7 +85,7 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
                     'arguments' => [
                         'positionId' => $this->position->id,
                     ],
-                    'dispatch_after' => $dispatchAt
+                    'dispatch_after' => $dispatchAt,
                 ]);
 
                 User::admin()->get()->each(function ($user) use ($dispatchAt) {

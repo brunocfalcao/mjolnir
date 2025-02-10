@@ -2,17 +2,17 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Apiable\Position;
 
-use Nidavellir\Thor\Models\User;
-use Nidavellir\Thor\Models\Order;
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Mjolnir\Jobs\Apiable\Order\PlaceOrderJob;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
+use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\Order;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\User;
 
 class PlaceStopMarketOrderJob extends BaseApiableJob
 {
@@ -69,11 +69,11 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
                 'status' => 'NEW',
                 'price' => $stopPrice,
                 'quantity' => $this->position
-                                   ->orders
-                                   ->where('type', 'PROFIT')
-                                   ->where('status', 'NEW')
-                                   ->first()
-                                   ->quantity
+                    ->orders
+                    ->where('type', 'PROFIT')
+                    ->where('status', 'NEW')
+                    ->first()
+                    ->quantity,
             ]);
 
             CoreJobQueue::create([
