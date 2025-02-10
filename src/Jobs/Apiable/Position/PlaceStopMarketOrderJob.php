@@ -34,12 +34,14 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        info('here');
-        return;
-
         // Verify if we still have this position open.
         $apiPositions = $this->account->apiQueryPositions()->result;
+
+        info('Placing stop market order for ' . $this->position->parsedTradingPair);
+
         if (array_key_exists($this->position->parsedTradingPair, $apiPositions)) {
+            info('Position exists for ' . $this->position->parsedTradingPair);
+
             // Place stop order, with the percentage given from the account.
             $stopPercentage = $this->account->stop_order_threshold_percentage;
 
@@ -70,6 +72,8 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
                     'orderId' => $order->id,
                 ],
             ]);
+        } else {
+            info('Position DO NOT exist for ' . $this->position->parsedTradingPair);
         }
     }
 
