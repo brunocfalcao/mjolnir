@@ -15,6 +15,8 @@ class OrderApiObserver
 {
     public function creating(Order $order): void
     {
+        info('INSIDE OBSERVER');
+
         // Assign a UUID before creating the order
         $order->uuid = (string) Str::uuid();
 
