@@ -40,8 +40,10 @@ class MjolnirServiceProvider extends ServiceProvider
 
     protected function registerApiObservers()
     {
+        info('** Applying observers **');
         Order::observe(OrderApiObserver::class);
         Position::observe(PositionApiObserver::class);
+        info('** Finished applying observers **');
     }
 
     protected function registerCommands()
