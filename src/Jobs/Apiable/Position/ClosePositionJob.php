@@ -2,14 +2,15 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Apiable\Position;
 
-use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
-use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Jobs\Apiable\Order\SyncOrderJob;
-use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Thor\Models\User;
 use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Thor\Models\Position;
+use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Mjolnir\Jobs\Apiable\Order\SyncOrderJob;
 
 class ClosePositionJob extends BaseApiableJob
 {
@@ -30,7 +31,22 @@ class ClosePositionJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        $this->position->apiClose();
+        $residualAmountPresent = false;
+
+        try {
+            $this->position->apiClose();
+        } catch (\Throwable $e) {
+            // Trigger residual amount notification.
+            $residualAmountPresent = true;
+
+            User::admin()->get()->each(function ($user) {
+                $user->pushover(
+                    message: "Could not close position for {$this->position->parsedTradingPair}, residual amount present, please close manually",
+                    title: "Error closing position for {$this->position->parsedTradingPair}",
+                    applicationKey: 'nidavellir_warnings'
+                );
+            });
+        }
 
         // Verify if the profit order was expired.
         $this->position->load('orders');
@@ -63,6 +79,10 @@ class ClosePositionJob extends BaseApiableJob
                     'orderId' => $order->id,
                 ],
             ]);
+        }
+
+        if ($residualAmountPresent) {
+            $this->coreJobQueue->updateToFailed("Could not close position for {$this->position->parsedTradingPair}, residual amount present", true);
         }
     }
 

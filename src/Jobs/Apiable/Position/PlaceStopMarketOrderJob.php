@@ -83,6 +83,14 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
                     'orderId' => $order->id,
                 ],
             ]);
+
+            User::admin()->get()->each(function ($user) use ($stopPrice) {
+                $user->pushover(
+                    message: "Stop-loss placed for {$this->position->parsedTradingPair} at price {$stopPrice}",
+                    title: 'Stop-loss order placing error',
+                    applicationKey: 'nidavellir_errors'
+                );
+            });
         }
     }
 
