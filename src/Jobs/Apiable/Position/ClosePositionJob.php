@@ -2,15 +2,15 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Apiable\Position;
 
-use Nidavellir\Thor\Models\User;
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Mjolnir\Jobs\Apiable\Order\SyncOrderJob;
+use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\User;
 
 class ClosePositionJob extends BaseApiableJob
 {
@@ -82,7 +82,20 @@ class ClosePositionJob extends BaseApiableJob
         }
 
         if ($residualAmountPresent) {
-            $this->coreJobQueue->updateToFailed("Could not close position for {$this->position->parsedTradingPair}, residual amount present", true);
+            // Get residual amount present on the position, and close it.
+            $apiPositions = $this->account->apiQueryPositions()->result;
+
+            $residualAmount = 0;
+
+            if (array_key_exists($this->position->parsedTradingPair, $apiPositions)) {
+                $positionFromExchange = $positions[$this->position->parsedTradingPair];
+                if ($positionFromExchange['positionAmt'] != 0) {
+                    $residualAmount = abs($positionFromExchange['positionAmt']);
+                }
+            }
+
+            $this->coreJobQueue->updateToFailed("Could not close position for {$this->position->parsedTradingPair}, residual amount present ({$residualAmount} USDT). Position marked as failed", true);
+            $this->position->updateToFailed('Position was marked as failed, because it needs to be manually closed due to residual amount present');
         }
     }
 
