@@ -106,4 +106,13 @@ trait HasApiFeatures
 
         return $finalResponse;
     }
+
+    public function apiCancel(): ApiResponse
+    {
+        /**
+         * Cancels an order. Mostly used for scenarios where we need to cancel
+         * the profit order (take-profit order), and recreate a new one due
+         * to a new WAP calculation.
+         */
+    }
 }

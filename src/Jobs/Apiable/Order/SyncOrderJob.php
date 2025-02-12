@@ -2,13 +2,14 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Apiable\Order;
 
+use Nidavellir\Thor\Models\User;
+use Nidavellir\Thor\Models\Order;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\Order;
-use Nidavellir\Thor\Models\Position;
 
 class SyncOrderJob extends BaseApiableJob
 {
@@ -33,5 +34,21 @@ class SyncOrderJob extends BaseApiableJob
     public function computeApiable()
     {
         $apiResponse = $this->order->apiSync();
+    }
+
+
+    public function resolveException(\Throwable $e)
+    {
+        /**
+         * A sync order job is not a big issue. Something went wrong but it's
+         * repeated each minute(s).
+         */
+        User::admin()->get()->each(function ($user) {
+            $user->pushover(
+                message: "There was an error trying to sync {$this->position->parsedTradingPair}, order ID {$this->order->id}, it will be retried later",
+                title: "Error syncing an order from {$this->position->parsedTradingPair}",
+                applicationKey: 'nidavellir_warnings'
+            );
+        });
     }
 }
