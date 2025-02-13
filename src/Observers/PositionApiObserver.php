@@ -28,13 +28,27 @@ class PositionApiObserver
                 })->first();
 
             if ($magnetOrder) {
-                User::admin()->get()->each(function ($user) use ($position, $magnetOrder) {
+                $magnetOrder->update(['is_magnetized' => true]);
+                User::admin()->get()->each(function ($user) use ($position) {
                     $user->pushover(
-                        message: "Magnet activated for position {$position->parsedTradingPair}, ID: {$position->id} at price {$magnetOrder->magnet_activation_price}",
-                        title: "Magnet activated for position {$position->parsedTradingPair}",
+                        message: "Magnet ACTIVATED for position {$position->parsedTradingPair}, ID: {$position->id} at price {$position->last_mark_price}",
+                        title: "Magnet ACTIVATED for position {$position->parsedTradingPair}",
                         applicationKey: 'nidavellir_positions'
                     );
                 });
+            }
+
+            if ($magnetOrder->is_magnetized) {
+                if (($order->side == 'BUY' && $magnetOrder->magnet_trigger_price <= $position->last_mark_price) ||
+                    ($order->side == 'SELL' && $magnetOrder->magnet_trigger_price >= $position->last_mark_price)) {
+                    User::admin()->get()->each(function ($user) use ($position) {
+                        $user->pushover(
+                            message: "Magnet TRIGGERED for position {$position->parsedTradingPair}, ID: {$position->id} at price {$position->last_mark_price}",
+                            title: "Magnet TRIGGERED for position {$position->parsedTradingPair}",
+                            applicationKey: 'nidavellir_positions'
+                        );
+                    });
+                }
             }
         }
     }
