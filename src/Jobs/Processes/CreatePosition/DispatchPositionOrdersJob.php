@@ -103,7 +103,7 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
          * the limit order and an immediate market order of the quantity of
          * the limit order).
          */
-        $magnetPercentage = TradeConfiguration::default()->first()->magnet_zone_percentage;
+        $magnetPercentage = TradeConfiguration::default()->first()->magnet_zone_percentage / 100;
 
         /**
          * The magnet activation is alway 50% of the magnet percentage zone. Then
