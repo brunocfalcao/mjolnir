@@ -116,13 +116,10 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
             $quantity = api_format_quantity($marketOrderQuantity * (2 ** ($i + 1)), $this->position->ExchangeSymbol);
             $price = $this->getAveragePrice(($i + 1) * $percentageGap);
 
-            // Define activation and trigger multipliers based on BUY or SELL
             if ($side['same'] == 'BUY') {
-                // Price is lower; magnet activation and trigger happen above the limit price
                 $magnetActivationPrice = api_format_price($price * (1 + (0.5 * $magnetPercentage)), $this->position->exchangeSymbol);
                 $magnetTriggerPrice = api_format_price($price * (1 + $magnetPercentage), $this->position->exchangeSymbol);
             } else { // SELL order
-                // Price is higher; magnet activation and trigger happen below the limit price
                 $magnetActivationPrice = api_format_price($price * (1 - (0.5 * $magnetPercentage)), $this->position->exchangeSymbol);
                 $magnetTriggerPrice = api_format_price($price * (1 - $magnetPercentage), $this->position->exchangeSymbol);
             }
