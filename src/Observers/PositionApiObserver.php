@@ -15,8 +15,8 @@ class PositionApiObserver
 
     public function updated(Position $position)
     {
-        if ($position->wasChanged('realized_pnl')) {
-            // Send a notification.
+        if ($position->wasChanged('last_mark_price')) {
+            // Compute magnet zones.
         }
     }
 }

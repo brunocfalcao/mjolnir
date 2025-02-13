@@ -13,4 +13,10 @@ trait HasTradingFeatures
             ->where('status', 'FILLED')
             ->count() == $this->total_limit_orders;
     }
+
+    public function profitOrder()
+    {
+        return $this->orders
+                    ->firstWhere('type', 'PROFIT');
+    }
 }

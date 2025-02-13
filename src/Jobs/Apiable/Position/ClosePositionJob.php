@@ -88,7 +88,7 @@ class ClosePositionJob extends BaseApiableJob
             $residualAmount = 0;
 
             if (array_key_exists($this->position->parsedTradingPair, $apiPositions)) {
-                $positionFromExchange = $positions[$this->position->parsedTradingPair];
+                $positionFromExchange = $apiPositions[$this->position->parsedTradingPair];
                 if ($positionFromExchange['positionAmt'] != 0) {
                     $residualAmount = abs($positionFromExchange['positionAmt']);
                 }

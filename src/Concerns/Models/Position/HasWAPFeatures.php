@@ -46,10 +46,6 @@ trait HasWAPFeatures
             // Obtain position amount.
             $positionQuantity = abs($positionFromExchange['positionAmt']);
 
-            $decimalPlaces = 8;
-            $positionQuantityStr = number_format($positionQuantity, $decimalPlaces, '.', '');
-            $totalQuantityStr = number_format($totalQuantity, $decimalPlaces, '.', '');
-
             // Is there a difference between both? -- Cast to strings.
             if ((string) $positionQuantity != (string) $totalQuantity) {
                 // Pushover to inform.
