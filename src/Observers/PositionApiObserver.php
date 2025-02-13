@@ -39,8 +39,8 @@ class PositionApiObserver
             }
 
             if ($magnetOrder->is_magnetized) {
-                if (($order->side == 'BUY' && $magnetOrder->magnet_trigger_price <= $position->last_mark_price) ||
-                    ($order->side == 'SELL' && $magnetOrder->magnet_trigger_price >= $position->last_mark_price)) {
+                if (($magnetOrder->side == 'BUY' && $magnetOrder->magnet_trigger_price <= $position->last_mark_price) ||
+                    ($magnetOrder->side == 'SELL' && $magnetOrder->magnet_trigger_price >= $position->last_mark_price)) {
                     User::admin()->get()->each(function ($user) use ($position) {
                         $user->pushover(
                             message: "Magnet TRIGGERED for position {$position->parsedTradingPair}, ID: {$position->id} at price {$position->last_mark_price}",
