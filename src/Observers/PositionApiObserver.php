@@ -16,7 +16,7 @@ class PositionApiObserver
 
     public function updated(Position $position)
     {
-        if ($position->wasChanged('last_mark_price')) {
+        if ($position->wasChanged('last_mark_price') && $position->magnet_activation_price != null) {
             $magnetOrder = $position->orders()
                 ->where('type', 'LIMIT')
                 ->where('status', 'NEW')
