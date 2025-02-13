@@ -58,8 +58,7 @@ class GetBinancePricesCommand extends Command
                 }
             },
 
-            'ping' => function ($conn, $msg) {
-            },
+            'ping' => function ($conn, $msg) {},
         ];
 
         $websocketProxy->markPrices($callbacks);

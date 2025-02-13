@@ -17,6 +17,6 @@ trait HasTradingFeatures
     public function profitOrder()
     {
         return $this->orders
-                    ->firstWhere('type', 'PROFIT');
+            ->firstWhere('type', 'PROFIT');
     }
 }

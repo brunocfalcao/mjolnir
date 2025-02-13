@@ -240,7 +240,7 @@ class OrderApiObserver
                     'originalQuantity' => $profitOrder->quantity,
                 ],
                 // Lets give time for the exchange to sync everything.
-                'dispatch_after' => now()->addSeconds(15)
+                'dispatch_after' => now()->addSeconds(15),
             ]);
         }
     }

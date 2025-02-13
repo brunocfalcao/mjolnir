@@ -2,8 +2,8 @@
 
 namespace Nidavellir\Mjolnir\Observers;
 
-use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\ExchangeSymbol;
+use Nidavellir\Thor\Models\Position;
 
 class ExchangeSymbolApiObserver
 {
@@ -12,7 +12,6 @@ class ExchangeSymbolApiObserver
         /**
          * Update the price on the position that have this exchange symbol
          */
-
         if ($exchangeSymbol->wasChanged('last_mark_price')) {
             Position::opened()
                 ->where('exchange_symbol_id', $exchangeSymbol->id)
