@@ -93,10 +93,39 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
             $tradeConfiguration->percentage_gap_long :
             $tradeConfiguration->percentage_gap_short;
 
+        /**
+         * Lets get the magnet zone percentage, so we can calculate both
+         * the activation and trigger price. The activation is when the
+         * price reaches this amount, it will place is_magnetized=true.
+         *
+         * The trigger price is if the price rebounds to this price, then
+         * it will automatically trigger the magnetization (cancelation of
+         * the limit order and an immediate market order of the quantity of
+         * the limit order).
+         */
+        $magnetPercentage = TradeConfiguration::default()->first()->magnet_zone_percentage;
+
+        /**
+         * The magnet activation is alway 50% of the magnet percentage zone. Then
+         * the magnet trigger is the limit price +/- the magnet percentage.
+         *
+         * Both will be recorded on the orders type=LIMIT, and checked every
+         * second.
+         */
         for ($i = 0; $i < $this->position->total_limit_orders; $i++) {
             $quantity = api_format_quantity($marketOrderQuantity * (2 ** ($i + 1)), $this->position->ExchangeSymbol);
             $price = $this->getAveragePrice(($i + 1) * $percentageGap);
-            $quantityNoRounding = $marketOrderQuantity * (2 ** ($i + 1));
+
+            // Define activation and trigger multipliers based on BUY or SELL
+            if ($side['same'] == 'BUY') {
+                // Price is lower; magnet activation and trigger happen above the limit price
+                $magnetActivationPrice = api_format_price($price * (1 + (0.5 * $magnetPercentage)), $this->position->exchangeSymbol);
+                $magnetTriggerPrice = api_format_price($price * (1 + $magnetPercentage), $this->position->exchangeSymbol);
+            } else { // SELL order
+                // Price is higher; magnet activation and trigger happen below the limit price
+                $magnetActivationPrice = api_format_price($price * (1 - (0.5 * $magnetPercentage)), $this->position->exchangeSymbol);
+                $magnetTriggerPrice = api_format_price($price * (1 - $magnetPercentage), $this->position->exchangeSymbol);
+            }
 
             Order::create([
                 'position_id' => $this->position->id,
@@ -104,11 +133,9 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
                 'side' => $side['same'],
                 'price' => $price,
                 'quantity' => $quantity,
+                'magnet_activation_price' => $magnetActivationPrice,
+                'magnet_trigger_price' => $magnetTriggerPrice
             ]);
-
-            // info("[DispatchPositionOrdersJob] - LIMIT order quantity: {$quantity}, Price: {$price}, Percentage Gap: ".($i + 1) * $percentageGap);
-            // info("[DispatchPositionOrdersJob] - LIMIT order quantity NO ROUNDING: {$quantityNoRounding}");
-            // info("[DispatchPositionOrdersJob] - LIMIT order quantity: {$quantity}, Price: {$price}, Percentage Gap: ".($i + 1) * $percentageGap);
         }
 
         // Create the market order.
