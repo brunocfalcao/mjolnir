@@ -16,6 +16,7 @@ class PositionApiObserver
 
     public function updated(Position $position)
     {
+        info('ApiObserver for position ' . $position->id);
         if ($position->wasChanged('last_mark_price')) {
             info('Verifying magnet activation for position ' . $position->id);
             /**
