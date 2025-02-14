@@ -3,15 +3,16 @@
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
 use Illuminate\Console\Command;
-use Nidavellir\Mjolnir\Jobs\Apiable\Position\AssessMagnetActivationJob;
-use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
-use Nidavellir\Mjolnir\Support\Proxies\ApiWebsocketProxy;
-use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
 use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\PriceHistory;
+use Nidavellir\Thor\Models\ExchangeSymbol;
+use Nidavellir\Mjolnir\Support\Proxies\ApiWebsocketProxy;
+use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
+use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
+use Nidavellir\Mjolnir\Jobs\Apiable\Position\AssessMagnetActivationJob;
+use Nidavellir\Mjolnir\Jobs\Processes\CreateMagnetOrder\CreateMagnetOrderLifecycleJob;
 
 class GetBinancePricesCommand extends Command
 {
