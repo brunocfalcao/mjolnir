@@ -8,7 +8,6 @@ trait HasMagnetizationFeatures
 {
     public function assessMagnetActivation()
     {
-        info('assessing magnetization activation for position id ' . $this->id);
         $magnetOrder = $this->orders()
             ->where('type', 'LIMIT')
             ->where('status', 'NEW')
@@ -37,8 +36,7 @@ trait HasMagnetizationFeatures
 
     public function assessMagnetTrigger()
     {
-        info('assessing magnetization trigger for position id ' . $this->id);
-        foreach ($this->orders->where('is_magnetized') as $magnetOrder) {
+        foreach ($this->orders()->where('is_magnetized')->get() as $magnetOrder) {
             if (($magnetOrder->side == 'BUY' && $magnetOrder->magnet_trigger_price <= $this->last_mark_price) ||
             ($magnetOrder->side == 'SELL' && $magnetOrder->magnet_trigger_price >= $this->last_mark_price)) {
                 User::admin()->get()->each(function ($user) {
