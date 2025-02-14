@@ -8,7 +8,6 @@ use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
 use Nidavellir\Mjolnir\Support\Proxies\ApiWebsocketProxy;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
 use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\Position;
@@ -22,17 +21,12 @@ class GetBinancePricesCommand extends Command
 
     public ApiDataMapperProxy $dataMapper;
 
-    public ApiSystem $apiSystem;
-
-    public string $canonical;
-
     public function handle()
     {
         $this->dataMapper = new ApiDataMapperProxy('binance');
 
         // Load credentials and initialize WebSocket proxy using ApiSystem canonical
         $account = Account::admin('binance');
-
         $credentials = new ApiCredentials($account->credentials);
 
         // Instantiate the WebSocket proxy dynamically based on the ApiSystem canonical
@@ -41,21 +35,36 @@ class GetBinancePricesCommand extends Command
         // Define WebSocket callbacks
         $callbacks = [
             'message' => function ($conn, $msg) {
-                $prices = collect(json_decode($msg, true));
+                $decoded = json_decode($msg, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    \Log::error('Invalid JSON received in Binance prices message.', ['msg' => $msg]);
+                    return;
+                }
 
+                $prices = collect($decoded);
+
+                $currentTime = now();
                 // Check if it's the start of a new minute
-                $its1minute = now()->second === 0;
+                $its1minute = $currentTime->second === 0;
 
                 // Check if it's the start of a new 5-minute interval
-                $its5minutes = $its1minute && now()->minute % 5 === 0;
+                $its5minutes = $its1minute && $currentTime->minute % 5 === 0;
 
-                // Readjust prices with a new array like 'BTCUSDT' => 110510, ...
-                $prices = collect($prices)->pluck('p', 's')->all();
+                // Check if the current second is a multiple of 5
+                $its5seconds = $currentTime->second % 5 === 0;
 
-                $this->savePricesOnExchangeSymbolAndPositions($prices);
+                // Reformat prices: 'BTCUSDT' => 110510, ...
+                $prices = $prices->pluck('p', 's')->all();
+
+                // Update exchange symbol prices each second
+                $this->savePricesOnExchangeSymbols($prices);
 
                 if ($its1minute) {
-                    echo 'Prices statuses OK at '.now().PHP_EOL;
+                    echo 'Prices statuses OK at ' . $currentTime . PHP_EOL;
+                }
+
+                if ($its5seconds) {
+                    $this->savePricesOnPositions();
                 }
 
                 if ($its5minutes) {
@@ -64,61 +73,67 @@ class GetBinancePricesCommand extends Command
             },
 
             'ping' => function ($conn, $msg) {
+                // Optionally handle ping messages if necessary.
             },
         ];
 
         $websocketProxy->markPrices($callbacks);
     }
 
-    public function savePricesOnExchangeSymbolAndPositions(array $prices)
+    public function savePricesOnExchangeSymbols(array $prices)
     {
-        ExchangeSymbol::all()->each(function ($exchangeSymbol) use ($prices) {
+        // Use chunking to avoid loading all records at once.
+        ExchangeSymbol::chunk(100, function ($exchangeSymbols) use ($prices) {
+            foreach ($exchangeSymbols as $exchangeSymbol) {
+                $pair = $exchangeSymbol->parsedTradingPair('binance');
 
-            $pair = $exchangeSymbol->parsedTradingPair('binance');
-
-            if (array_key_exists($pair, $prices)) {
-                // Save price on the exchange_symbols table.
-                $exchangeSymbol->update([
-                    'last_mark_price' => $prices[$pair],
-                    'price_last_synced_at' => now(),
-                ]);
-
-                Position::opened()
-                    ->where('exchange_symbol_id', $exchangeSymbol->id)
-                    ->get()
-                    ->each(function ($position) use ($exchangeSymbol) {
-                        $position->last_mark_price = $exchangeSymbol->last_mark_price;
-                        $position->save();
-
-                        // Assess if we need to activate the magnetization.
-                        CoreJobQueue::create([
-                            'class' => AssessMagnetActivationJob::class,
-                            'queue' => 'positions',
-                            'arguments' => [
-                                'positionId' => $position->id,
-                            ],
-                        ]);
-
-                        // $position->assessMagnetActivation();
-                        // Assess if we need to trigger the magnetization.
-                        // $position->assessMagnetTrigger();
-                    });
+                if (isset($prices[$pair])) {
+                    $exchangeSymbol->update([
+                        'last_mark_price' => $prices[$pair],
+                        'price_last_synced_at' => now(),
+                    ]);
+                }
             }
         });
     }
 
+    public function savePricesOnPositions()
+    {
+        echo "Running savePricesOnPositions() at " . now() . PHP_EOL;
+
+        // Use chunking to handle large sets of positions.
+        Position::with('exchangeSymbol')
+            ->opened()
+            ->chunkById(100, function ($positions) {
+                foreach ($positions as $position) {
+                    $position->last_mark_price = $position->exchangeSymbol->last_mark_price;
+                    $position->save();
+
+                    // Queue job to assess magnet activation.
+                    CoreJobQueue::create([
+                        'class' => AssessMagnetActivationJob::class,
+                        'queue' => 'positions',
+                        'arguments' => [
+                            'positionId' => $position->id,
+                        ],
+                    ]);
+                }
+            });
+    }
+
     public function savePricesOnExchangeSymbolsHistory(array $prices)
     {
-        ExchangeSymbol::all()->each(function ($exchangeSymbol) use ($prices) {
+        // Use chunking to prevent memory issues with large datasets.
+        ExchangeSymbol::chunk(100, function ($exchangeSymbols) use ($prices) {
+            foreach ($exchangeSymbols as $exchangeSymbol) {
+                $pair = $exchangeSymbol->parsedTradingPair('binance');
 
-            $pair = $exchangeSymbol->parsedTradingPair('binance');
-
-            if (array_key_exists($pair, $prices)) {
-                // Save price on the price history.
-                PriceHistory::create([
-                    'exchange_symbol_id' => $exchangeSymbol->id,
-                    'mark_price' => $prices[$pair],
-                ]);
+                if (isset($prices[$pair])) {
+                    PriceHistory::create([
+                        'exchange_symbol_id' => $exchangeSymbol->id,
+                        'mark_price' => $prices[$pair],
+                    ]);
+                }
             }
         });
     }
