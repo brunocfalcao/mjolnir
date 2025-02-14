@@ -12,7 +12,7 @@ use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Position;
 
-class CreateMagnetOrderLifecycleJob extends BaseQueuableJob
+class CreateMagnetOrderJob extends BaseQueuableJob
 {
     public Account $account;
 
@@ -43,10 +43,11 @@ class CreateMagnetOrderLifecycleJob extends BaseQueuableJob
         ]);
 
         CoreJobQueue::create([
-            'class' => CreateMagnetOrderJob::class,
+            'class' => CreateAndPlaceMarketMagnetOrderJob::class,
             'queue' => 'orders',
             'arguments' => [
                 'orderId' => $this->position->id,
+                'limitOrderId' => $this->order->id,
             ],
         ]);
     }

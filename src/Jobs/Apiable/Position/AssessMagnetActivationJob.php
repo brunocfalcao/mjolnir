@@ -1,16 +1,15 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Jobs\Apiable\Order;
+namespace Nidavellir\Mjolnir\Jobs\Apiable\Position;
 
-use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Position;
 
-class CancelOrderJob extends BaseApiableJob
+class AssessMagnetActivationJob extends BaseQueuableJob
 {
     public Account $account;
 
@@ -18,22 +17,17 @@ class CancelOrderJob extends BaseApiableJob
 
     public Position $position;
 
-    public Order $order;
-
-    public function __construct(int $orderId)
+    public function __construct(int $positionId)
     {
-        $this->order = Order::with(['position'])->findOrFail($orderId);
-
-        $this->position = $this->order->position;
+        $this->position = Position::findOrFail($positionId);
         $this->account = $this->position->account;
         $this->apiSystem = $this->account->apiSystem;
-
         $this->rateLimiter = RateLimitProxy::make($this->apiSystem->canonical)->withAccount($this->account);
         $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
     }
 
-    public function computeApiable()
+    public function compute()
     {
-        $this->order->apiCancel();
+        $this->position->assessMagnetActivation();
     }
 }

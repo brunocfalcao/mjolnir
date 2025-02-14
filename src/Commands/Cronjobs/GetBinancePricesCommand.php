@@ -3,11 +3,13 @@
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
 use Illuminate\Console\Command;
+use Nidavellir\Mjolnir\Jobs\Apiable\Position\AssessMagnetActivationJob;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
 use Nidavellir\Mjolnir\Support\Proxies\ApiWebsocketProxy;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
+use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\PriceHistory;
@@ -88,10 +90,17 @@ class GetBinancePricesCommand extends Command
                         $position->save();
 
                         // Assess if we need to activate the magnetization.
-                        $position->assessMagnetActivation();
+                        CoreJobQueue::create([
+                            'class' => AssessMagnetActivationJob::class,
+                            'queue' => 'positions',
+                            'arguments' => [
+                                'positionId' => $this->position->id,
+                            ],
+                        ]);
 
+                        // $position->assessMagnetActivation();
                         // Assess if we need to trigger the magnetization.
-                        $position->assessMagnetTrigger();
+                        // $position->assessMagnetTrigger();
                     });
             }
         });
