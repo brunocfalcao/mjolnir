@@ -55,7 +55,7 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
             // If the position had more than 3 limit orders filled, notify.
             if ($this->position
                 ->orders
-                ->whereIn('type', ['LIMIT', 'LIMIT-MAGNET'])
+                ->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
                 ->where('status', 'FILLED')
                 ->count() >= 1) {
                 User::admin()->get()->each(function ($user) use ($pnl) {

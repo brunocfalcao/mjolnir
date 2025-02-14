@@ -133,7 +133,7 @@ class PlaceOrderJob extends BaseApiableJob
             ->where('status', 'FILLED')
             ->isNotEmpty();
 
-        $allLimitOrdersFilled = $orders->whereIn('type', ['LIMIT', 'LIMIT-MAGNET'])
+        $allLimitOrdersFilled = $orders->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
             ->whereIn('status', ['FILLED', 'PARTIALLY_FILLED'])
             ->count() == $this->order->position->total_limit_orders;
 

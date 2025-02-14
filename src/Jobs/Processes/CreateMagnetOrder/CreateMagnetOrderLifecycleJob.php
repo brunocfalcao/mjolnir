@@ -2,15 +2,18 @@
 
 namespace Nidavellir\Mjolnir\Jobs\Processes\CreateMagnetOrder;
 
-use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
-use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
-use Nidavellir\Mjolnir\Jobs\Apiable\Order\CancelOrderJob;
-use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Illuminate\Support\Str;
+use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Thor\Models\Order;
-use Nidavellir\Thor\Models\Position;
+use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
+use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
+use Nidavellir\Mjolnir\Jobs\Apiable\Order\CancelOrderJob;
+use Nidavellir\Mjolnir\Jobs\Processes\CreateMagnetOrder\CreateMagnetOrderJob;
+use Nidavellir\Mjolnir\Jobs\Apiable\Position\CreateAndPlaceMarketMagnetOrderJob;
 
 class CreateMagnetOrderLifecycleJob extends BaseQueuableJob
 {
@@ -34,20 +37,26 @@ class CreateMagnetOrderLifecycleJob extends BaseQueuableJob
 
     public function compute()
     {
+        $blockUuid = (string) Str::uuid();
+
         CoreJobQueue::create([
             'class' => CancelOrderJob::class,
             'queue' => 'orders',
             'arguments' => [
                 'orderId' => $this->order->id,
             ],
+            'index' => 1,
+            'block_uuid' => $blockUuid
         ]);
 
         CoreJobQueue::create([
-            'class' => CreateMagnetOrderJob::class,
+            'class' => CreateAndPlaceMarketMagnetOrderJob::class,
             'queue' => 'orders',
             'arguments' => [
-                'orderId' => $this->position->id,
+                'orderId' => $this->order->id,
             ],
+            'index' => 2,
+            'block_uuid' => $blockUuid
         ]);
     }
 }

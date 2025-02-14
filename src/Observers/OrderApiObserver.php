@@ -28,7 +28,7 @@ class OrderApiObserver
         // Do we already have all the limit orders and are we creating one more?
         $totalEligibleOrders = $order->position
             ->orders
-            ->whereIn('type', ['LIMIT', 'LIMIT-MAGNET'])
+            ->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
             ->whereIn('status', ['NEW', 'FILLED', 'PARTIALLY_FILLED'])
             ->count();
 
@@ -212,8 +212,8 @@ class OrderApiObserver
             ]);
         }
 
-        // Order cancelled by mistake? Re-place the order.
-        if ($order->status == 'CANCELLED' && $order->getOriginal('status') != 'CANCELLED') {
+        // Order cancelled by mistake? Re-place the order (except magnetized orders, those are okay to cancel).
+        if ($order->status == 'CANCELLED' && $order->getOriginal('status') != 'CANCELLED' && !$order->is_magnetized) {
             // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Order canceled by mistake. Recreating order');
             // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering PlaceOrderJob::class');
             CoreJobQueue::create([
@@ -226,7 +226,7 @@ class OrderApiObserver
         }
 
         // Limit order filled or partially filled? -- Compute WAP.
-        if (($order->status == 'FILLED' || $order->status == 'PARTIALLY_FILLED') && $order->getOriginal('status') != 'FILLED' && $order->type == 'LIMIT') {
+        if (($order->status == 'FILLED' || $order->status == 'PARTIALLY_FILLED') && $order->getOriginal('status') != 'FILLED' && ($order->type == 'LIMIT' || $order->type == 'MARKET-MAGNET')) {
             // WAP calculation.
             // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Limit order filled or partially filled, recalculating WAP and readjusting Profit order');
             // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering CalculateWAPAndAdjustProfitOrderJob::class');

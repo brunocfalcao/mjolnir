@@ -27,12 +27,16 @@ trait HasMagnetizationFeatures
 
             User::admin()->get()->each(function ($user) {
                 $user->pushover(
-                    message: "Magnet ACTIVATED for position {$this->parsedTradingPair}, ID: {$this->id} at price {$this->last_mark_price}",
+                    message: "Magnet ACTIVATED for position {$this->parsedTradingPair} ID: {$this->id}, Order ID: {$magnetOrder->id}, at price {$this->last_mark_price}",
                     title: "Magnet ACTIVATED for position {$this->parsedTradingPair}",
                     applicationKey: 'nidavellir_positions'
                 );
             });
+
+            return $magnetOrder;
         }
+
+        return null;
     }
 
     public function assessMagnetTrigger()
@@ -41,19 +45,23 @@ trait HasMagnetizationFeatures
          * A magnet trigger will execute the following:
          * Cancel the limit order that is part of this magnet.
          * Create a market order with exactly the same quantity as the
-         * limit order that was cancelled, type 'LIMIT-MAGNET'.
+         * limit order that was cancelled, type 'MARKET-MAGNET'.
          */
         foreach ($this->orders()->where('is_magnetized')->get() as $magnetOrder) {
             if (($magnetOrder->side == 'BUY' && $magnetOrder->magnet_trigger_price <= $this->last_mark_price) ||
             ($magnetOrder->side == 'SELL' && $magnetOrder->magnet_trigger_price >= $this->last_mark_price)) {
                 User::admin()->get()->each(function ($user) {
                     $user->pushover(
-                        message: "Magnet TRIGGERED for position {$this->parsedTradingPair}, ID: {$this->id} at price {$this->last_mark_price}",
+                        message: "Magnet TRIGGERED for position {$this->parsedTradingPair} ID: {$this->id}, Order ID {$magnetOrder->id}, at price {$this->last_mark_price}",
                         title: "Magnet TRIGGERED for position {$this->parsedTradingPair}",
                         applicationKey: 'nidavellir_positions'
                     );
                 });
+
+                return $magnetOrder;
             }
         }
+
+        return null;
     }
 }

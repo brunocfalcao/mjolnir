@@ -65,7 +65,7 @@ class GetBinancePricesCommand extends Command
                 }
 
                 if ($its5seconds) {
-                    $this->savePricesOnPositions();
+                    //$this->assessMagnetActivations();
                 }
 
                 if ($its5minutes) {
@@ -98,7 +98,7 @@ class GetBinancePricesCommand extends Command
         });
     }
 
-    public function savePricesOnPositions()
+    public function assessMagnetActivations()
     {
         // Use chunking to handle large sets of positions.
         Position::with('exchangeSymbol')
@@ -118,6 +118,25 @@ class GetBinancePricesCommand extends Command
                     ]);
                 }
             });
+    }
+
+    public function assessMagnetTriggers()
+    {
+        Position::opened()->get()->each(function ($position) {
+
+            $magnetTriggerOrder = $position->assessMagnetTrigger();
+
+            if ($magnetTriggerOrder != null) {
+                // We have a position to trigger the magnet.
+                CoreJobQueue::create([
+                    'class' => CreateMagnetOrderLifecycleJob::class,
+                    'queue' => 'orders',
+                    'arguments' => [
+                        'positionId' => $magnetTriggerOrder->id,
+                    ],
+                ]);
+            }
+        });
     }
 
     public function savePricesOnExchangeSymbolsHistory(array $prices)

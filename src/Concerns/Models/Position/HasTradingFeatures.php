@@ -9,7 +9,7 @@ trait HasTradingFeatures
     {
         $this->load('orders');
 
-        return $this->orders->whereIn('type', ['LIMIT', 'LIMIT-MAGNET'])
+        return $this->orders->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
             ->where('status', 'FILLED')
             ->count() == $this->total_limit_orders;
     }

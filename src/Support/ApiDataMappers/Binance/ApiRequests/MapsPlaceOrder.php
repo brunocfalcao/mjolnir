@@ -34,6 +34,7 @@ trait MapsPlaceOrder
                 break;
 
             case 'MARKET':
+            case 'MARKET-MAGNET':
             case 'MARKET-CANCEL':
                 $properties->set('options.type', 'MARKET');
                 break;

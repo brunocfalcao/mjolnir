@@ -54,10 +54,13 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
             // Inform the order observer not to put the PROFIT order back on its original values.
             $this->position->update(['wap_triggered' => true]);
 
+            // Update all orders to is_magnetized = false, without calling observers.
+            $this->position->orders()->update(['is_magnetized' => false]);
+
             // How many orders do we have filled?
             $totalFilledOrders = $this->position
                 ->orders
-                ->whereIn('type', ['LIMIT', 'LIMIT-MAGNET'])
+                ->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
                 ->where('status', 'FILLED')->count();
 
             if ($totalFilledOrders >= $this->account->filled_orders_to_notify) {
