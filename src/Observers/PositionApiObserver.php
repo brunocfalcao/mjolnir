@@ -17,6 +17,10 @@ class PositionApiObserver
     public function updated(Position $position)
     {
         if ($position->wasChanged('last_mark_price')) {
+            info('Verifying magnet activation for position ' . $position->id);
+            /**
+             * Verify if we need to magnetize an order.
+             */
             $magnetOrder = $position->orders()
                 ->where('type', 'LIMIT')
                 ->where('status', 'NEW')
