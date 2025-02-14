@@ -3,13 +3,14 @@
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
 use Illuminate\Console\Command;
-use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
-use Nidavellir\Mjolnir\Support\Proxies\ApiWebsocketProxy;
-use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
 use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\PriceHistory;
+use Nidavellir\Thor\Models\ExchangeSymbol;
+use Nidavellir\Mjolnir\Support\Proxies\ApiWebsocketProxy;
+use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
+use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
 
 class GetBinancePricesCommand extends Command
 {
@@ -58,7 +59,8 @@ class GetBinancePricesCommand extends Command
                 }
             },
 
-            'ping' => function ($conn, $msg) {},
+            'ping' => function ($conn, $msg) {
+            },
         ];
 
         $websocketProxy->markPrices($callbacks);
