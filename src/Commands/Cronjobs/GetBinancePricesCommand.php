@@ -45,14 +45,11 @@ class GetBinancePricesCommand extends Command
                 $prices = collect($decoded);
 
                 $currentTime = now();
-                // Check if it's the start of a new minute
-                $its1minute = $currentTime->second === 0;
 
-                // Check if it's the start of a new 5-minute interval
-                $its5minutes = $its1minute && $currentTime->minute % 5 === 0;
-
-                // Check if the current second is a multiple of 5
-                $its5seconds = $currentTime->second % 5 === 0;
+                $each1minute = $currentTime->second === 0;
+                $each5minutes = $each1minute && $currentTime->minute % 5 === 0;
+                $each5seconds = $currentTime->second % 5 === 0;
+                $each6seconds = $currentTime->second % 6 === 0;
 
                 // Reformat prices: 'BTCUSDT' => 110510, ...
                 $prices = $prices->pluck('p', 's')->all();
@@ -60,19 +57,19 @@ class GetBinancePricesCommand extends Command
                 // Update exchange symbol prices each second
                 $this->savePricesOnExchangeSymbols($prices);
 
-                if ($its1minute) {
+                if ($each1minute) {
                     echo 'Prices statuses OK at '.$currentTime.PHP_EOL;
                 }
 
-                if ($its5seconds) {
+                if ($each5seconds) {
                     $this->assessMagnetActivations();
                 }
 
-                if ($its6seconds) {
+                if ($each6seconds) {
                     $this->assessMagnetTriggers();
                 }
 
-                if ($its5minutes) {
+                if ($each5minutes) {
                     $this->savePricesOnExchangeSymbolsHistory($prices);
                 }
             },
