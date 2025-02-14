@@ -63,7 +63,8 @@ class GetBinancePricesCommand extends Command
                 }
             },
 
-            'ping' => function ($conn, $msg) {},
+            'ping' => function ($conn, $msg) {
+            },
         ];
 
         $websocketProxy->markPrices($callbacks);
@@ -94,7 +95,7 @@ class GetBinancePricesCommand extends Command
                             'class' => AssessMagnetActivationJob::class,
                             'queue' => 'positions',
                             'arguments' => [
-                                'positionId' => $this->position->id,
+                                'positionId' => $position->id,
                             ],
                         ]);
 
