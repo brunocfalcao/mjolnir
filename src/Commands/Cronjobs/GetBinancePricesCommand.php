@@ -134,7 +134,7 @@ class GetBinancePricesCommand extends Command
                     'class' => CreateMagnetOrderLifecycleJob::class,
                     'queue' => 'orders',
                     'arguments' => [
-                        'positionId' => $magnetTriggerOrder->id,
+                        'orderId' => $magnetTriggerOrder->id,
                     ],
                 ]);
             }
