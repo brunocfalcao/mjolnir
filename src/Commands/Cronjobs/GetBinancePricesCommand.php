@@ -68,6 +68,10 @@ class GetBinancePricesCommand extends Command
                     $this->assessMagnetActivations();
                 }
 
+                if ($its6seconds) {
+                    $this->assessMagnetTriggers();
+                }
+
                 if ($its5minutes) {
                     $this->savePricesOnExchangeSymbolsHistory($prices);
                 }
