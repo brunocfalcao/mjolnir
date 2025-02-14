@@ -39,8 +39,6 @@ class GetBinancePricesCommand extends Command
         // Define WebSocket callbacks
         $callbacks = [
             'message' => function ($conn, $msg) {
-                echo now().PHP_EOL;
-
                 $prices = collect(json_decode($msg, true));
 
                 // Check if it's the start of a new minute
@@ -53,6 +51,10 @@ class GetBinancePricesCommand extends Command
                 $prices = collect($prices)->pluck('p', 's')->all();
 
                 $this->savePricesOnExchangeSymbolAndPositions($prices);
+
+                if ($its1minute) {
+                    echo "Prices statuses OK at " . now().PHP_EOL;
+                }
 
                 if ($its5minutes) {
                     $this->savePricesOnExchangeSymbolsHistory($prices);
