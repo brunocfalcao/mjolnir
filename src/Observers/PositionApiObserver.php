@@ -16,6 +16,9 @@ class PositionApiObserver
 
     public function updated(Position $position)
     {
+
+        return;
+
         if ($position->wasChanged('last_mark_price')) {
             /**
              * Verify if we need to magnetize an order.
