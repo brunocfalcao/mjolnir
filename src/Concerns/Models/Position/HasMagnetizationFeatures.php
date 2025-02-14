@@ -47,10 +47,10 @@ trait HasMagnetizationFeatures
          * Create a market order with exactly the same quantity as the
          * limit order that was cancelled, type 'MARKET-MAGNET'.
          */
-        foreach ($this->orders()->where('is_magnetized')->get() as $magnetOrder) {
+        foreach ($this->orders()->where('is_magnetized', true)->get() as $magnetOrder) {
             if (($magnetOrder->side == 'BUY' && $magnetOrder->magnet_trigger_price <= $this->last_mark_price) ||
             ($magnetOrder->side == 'SELL' && $magnetOrder->magnet_trigger_price >= $this->last_mark_price)) {
-                User::admin()->get()->each(function ($user) {
+                User::admin()->get()->each(function ($user) use ($magnetOrder) {
                     $user->pushover(
                         message: "Magnet TRIGGERED for position {$this->parsedTradingPair} ID: {$this->id}, Order ID {$magnetOrder->id}, at price {$this->last_mark_price}",
                         title: "Magnet TRIGGERED for position {$this->parsedTradingPair}",
