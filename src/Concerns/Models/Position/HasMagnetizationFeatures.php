@@ -25,7 +25,7 @@ trait HasMagnetizationFeatures
                 $magnetOrder->update(['is_magnetized' => true]);
             });
 
-            User::admin()->get()->each(function ($user) {
+            User::admin()->get()->each(function ($user) use ($magnetOrder) {
                 $user->pushover(
                     message: "Magnet ACTIVATED for position {$this->parsedTradingPair} ID: {$this->id}, Order ID: {$magnetOrder->id}, at price {$this->last_mark_price}",
                     title: "Magnet ACTIVATED for position {$this->parsedTradingPair}",
