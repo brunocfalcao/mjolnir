@@ -28,7 +28,7 @@ class OrderApiObserver
         // Do we already have all the limit orders and are we creating one more?
         $totalEligibleOrders = $order->position
             ->orders
-            ->where('type', 'LIMIT')
+            ->whereIn('type', ['LIMIT', 'LIMIT-MAGNET'])
             ->whereIn('status', ['NEW', 'FILLED', 'PARTIALLY_FILLED'])
             ->count();
 

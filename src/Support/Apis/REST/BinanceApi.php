@@ -101,6 +101,23 @@ class BinanceApi
         return $this->client->signRequest($apiRequest);
     }
 
+    // https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Cancel-Order
+    public function cancelOrder(ApiProperties $properties)
+    {
+        $this->validate($properties, [
+            'options.symbol' => 'required|string',
+            'options.orderId' => 'required|string',
+        ]);
+
+        $apiRequest = ApiRequest::make(
+            'DELETE',
+            '/fapi/v1/order',
+            $properties
+        );
+
+        return $this->client->signRequest($apiRequest);
+    }
+
     // https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api/Cancel-All-Open-Orders
     public function cancelAllOpenOrders(ApiProperties $properties)
     {

@@ -10,6 +10,7 @@ use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsExchangeIn
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsLeverageBracketsQuery;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsMarkPriceQuery;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsOpenOrdersQuery;
+use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsOrderCancel;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsOrderModify;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsOrderQuery;
 use Nidavellir\Mjolnir\Support\ApiDataMappers\Binance\ApiRequests\MapsPlaceOrder;
@@ -27,6 +28,7 @@ class BinanceApiDataMapper extends BaseDataMapper
     use MapsLeverageBracketsQuery;
     use MapsMarkPriceQuery;
     use MapsOpenOrdersQuery;
+    use MapsOrderCancel;
     use MapsOrderModify;
     use MapsOrderQuery;
     use MapsPlaceOrder;

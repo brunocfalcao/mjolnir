@@ -57,7 +57,7 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
             // How many orders do we have filled?
             $totalFilledOrders = $this->position
                 ->orders
-                ->where('type', 'LIMIT')
+                ->whereIn('type', ['LIMIT', 'LIMIT-MAGNET'])
                 ->where('status', 'FILLED')->count();
 
             if ($totalFilledOrders >= $this->account->filled_orders_to_notify) {

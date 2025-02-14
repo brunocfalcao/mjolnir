@@ -27,6 +27,17 @@ trait HasApiFeatures
         return new ApiDataMapperProxy($this->apiAccount()->apiSystem->canonical);
     }
 
+    public function apiCancel()
+    {
+        $this->apiProperties = $this->apiMapper()->prepareOrderCancelProperties($this);
+        $this->apiResponse = $this->apiAccount()->withApi()->cancelOrder($this->apiProperties);
+
+        return new ApiResponse(
+            response: $this->apiResponse,
+            result: $this->apiMapper()->resolveOrderCancelResponse($this->apiResponse)
+        );
+    }
+
     public function apiModify(?float $quantity = null, ?float $price = null)
     {
         if (! $quantity) {
@@ -105,14 +116,5 @@ trait HasApiFeatures
         ]);
 
         return $finalResponse;
-    }
-
-    public function apiCancel(): ApiResponse
-    {
-        /**
-         * Cancels an order. Mostly used for scenarios where we need to cancel
-         * the profit order (take-profit order), and recreate a new one due
-         * to a new WAP calculation.
-         */
     }
 }

@@ -36,6 +36,12 @@ trait HasMagnetizationFeatures
 
     public function assessMagnetTrigger()
     {
+        /**
+         * A magnet trigger will execute the following:
+         * Cancel the limit order that is part of this magnet.
+         * Create a market order with exactly the same quantity as the
+         * limit order that was cancelled, type 'LIMIT-MAGNET'.
+         */
         foreach ($this->orders()->where('is_magnetized')->get() as $magnetOrder) {
             if (($magnetOrder->side == 'BUY' && $magnetOrder->magnet_trigger_price <= $this->last_mark_price) ||
             ($magnetOrder->side == 'SELL' && $magnetOrder->magnet_trigger_price >= $this->last_mark_price)) {

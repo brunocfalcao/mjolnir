@@ -11,7 +11,7 @@ trait HasWAPFeatures
         // Fetch all FILLED LIMIT orders for this position
         $orders = $this->orders()
             ->where('status', 'FILLED')
-            ->whereIn('type', ['MARKET', 'LIMIT'])
+            ->whereIn('type', ['MARKET', 'LIMIT', 'LIMIT-MAGNET'])
             ->get();
 
         // Ensure there are orders to calculate WAP
