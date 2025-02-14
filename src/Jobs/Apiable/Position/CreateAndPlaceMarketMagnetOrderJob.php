@@ -50,6 +50,12 @@ class CreateAndPlaceMarketMagnetOrderJob extends BaseApiableJob
         ]);
 
         $limitMagnetOrder->apiPlace();
+        $limitMagnetOrder->apiSync();
+
+        // De-magnetize order.
+        $this->order->withoutEvents(function () {
+            $this->order->update(['is_magnetized' => false]);
+        });
 
         User::admin()->get()->each(function ($user) {
             $user->pushover(
