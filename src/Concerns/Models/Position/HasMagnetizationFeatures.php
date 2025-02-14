@@ -11,6 +11,7 @@ trait HasMagnetizationFeatures
         $magnetOrder = $this->orders()
             ->where('type', 'LIMIT')
             ->where('status', 'NEW')
+            ->where('is_magnetized', false)
             ->when($this->direction == 'LONG', function ($query) {
                 return $query->where('orders.magnet_activation_price', '>=', $this->last_mark_price);
             })

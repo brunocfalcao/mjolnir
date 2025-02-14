@@ -38,6 +38,7 @@ class GetBinancePricesCommand extends Command
                 $decoded = json_decode($msg, true);
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     \Log::error('Invalid JSON received in Binance prices message.', ['msg' => $msg]);
+
                     return;
                 }
 
@@ -60,7 +61,7 @@ class GetBinancePricesCommand extends Command
                 $this->savePricesOnExchangeSymbols($prices);
 
                 if ($its1minute) {
-                    echo 'Prices statuses OK at ' . $currentTime . PHP_EOL;
+                    echo 'Prices statuses OK at '.$currentTime.PHP_EOL;
                 }
 
                 if ($its5seconds) {
@@ -99,8 +100,6 @@ class GetBinancePricesCommand extends Command
 
     public function savePricesOnPositions()
     {
-        echo "Running savePricesOnPositions() at " . now() . PHP_EOL;
-
         // Use chunking to handle large sets of positions.
         Position::with('exchangeSymbol')
             ->opened()
