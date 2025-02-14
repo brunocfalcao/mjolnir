@@ -16,9 +16,7 @@ class PositionApiObserver
 
     public function updated(Position $position)
     {
-        return;
-
-        if ($position->wasChanged('last_mark_price') && $position->magnet_activation_price != null) {
+        if ($position->wasChanged('last_mark_price')) {
             $magnetOrder = $position->orders()
                 ->where('type', 'LIMIT')
                 ->where('status', 'NEW')
@@ -30,7 +28,10 @@ class PositionApiObserver
                 })->first();
 
             if ($magnetOrder) {
-                $magnetOrder->update(['is_magnetized' => true]);
+                $magnetOrder->withoutEvents(function () use ($magnetOrder) {
+                    $magnetOrder->update(['is_magnetized' => true]);
+                });
+
                 User::admin()->get()->each(function ($user) use ($position) {
                     $user->pushover(
                         message: "Magnet ACTIVATED for position {$position->parsedTradingPair}, ID: {$position->id} at price {$position->last_mark_price}",
