@@ -65,7 +65,7 @@ class GetBinancePricesCommand extends Command
                 }
 
                 if ($its5seconds) {
-                    //$this->assessMagnetActivations();
+                    $this->assessMagnetActivations();
                 }
 
                 if ($its5minutes) {

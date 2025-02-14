@@ -213,7 +213,7 @@ class OrderApiObserver
         }
 
         // Order cancelled by mistake? Re-place the order (except magnetized orders, those are okay to cancel).
-        if ($order->status == 'CANCELLED' && $order->getOriginal('status') != 'CANCELLED' && !$order->is_magnetized) {
+        if ($order->status == 'CANCELLED' && $order->getOriginal('status') != 'CANCELLED' && ! $order->is_magnetized) {
             // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Order canceled by mistake. Recreating order');
             // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering PlaceOrderJob::class');
             CoreJobQueue::create([
