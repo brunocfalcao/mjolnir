@@ -51,7 +51,7 @@ class GetBinancePricesCommand extends Command
                 // Readjust prices with a new array like 'BTCUSDT' => 110510, ...
                 $prices = collect($prices)->pluck('p', 's')->all();
 
-                $this->savePricesOnExchangeSymbol($prices);
+                $this->savePricesOnExchangeSymbolAndPositions($prices);
 
                 if ($its5minutes) {
                     $this->savePricesOnExchangeSymbolsHistory($prices);
@@ -64,7 +64,7 @@ class GetBinancePricesCommand extends Command
         $websocketProxy->markPrices($callbacks);
     }
 
-    public function savePricesOnExchangeSymbol(array $prices)
+    public function savePricesOnExchangeSymbolAndPositions(array $prices)
     {
         ExchangeSymbol::all()->each(function ($exchangeSymbol) use ($prices) {
 
@@ -76,6 +76,20 @@ class GetBinancePricesCommand extends Command
                     'last_mark_price' => $prices[$pair],
                     'price_last_synced_at' => now(),
                 ]);
+
+                Position::opened()
+                    ->where('exchange_symbol_id', $exchangeSymbol->id)
+                    ->get()
+                    ->each(function ($position) use ($exchangeSymbol) {
+                        $position->last_mark_price = $exchangeSymbol->last_mark_price;
+                        $position->save();
+
+                        // Assess if we need to activate the magnetization.
+                        $position->assessMagnetActivation();
+
+                        // Assess if we need to trigger the magnetization.
+                        $position->assessMagnetTrigger();
+                    });
             }
         });
     }

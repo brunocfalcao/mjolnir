@@ -24,7 +24,7 @@ class UpdateAccountsBalancesCommand extends Command
 
         foreach ($accounts as $account) {
             try {
-                //$this->info("Updating balance for account ID: {$account->id}");
+                // $this->info("Updating balance for account ID: {$account->id}");
 
                 // Fetch balance from API
                 $balance = $account->apiQuery()->result;
@@ -49,7 +49,7 @@ class UpdateAccountsBalancesCommand extends Command
             }
         }
 
-        //$this->info('Balance update completed for all accounts.');
+        // $this->info('Balance update completed for all accounts.');
 
         return 0;
     }

@@ -25,10 +25,8 @@ use Nidavellir\Mjolnir\Commands\Debug\QueryOrderCommand;
 use Nidavellir\Mjolnir\Commands\Debug\QueryPositionsCommand;
 use Nidavellir\Mjolnir\Commands\Debug\QueryTradeCommand;
 use Nidavellir\Mjolnir\Commands\TestCommand;
-use Nidavellir\Mjolnir\Observers\ExchangeSymbolApiObserver;
 use Nidavellir\Mjolnir\Observers\OrderApiObserver;
 use Nidavellir\Mjolnir\Observers\PositionApiObserver;
-use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Position;
 
@@ -44,7 +42,6 @@ class MjolnirServiceProvider extends ServiceProvider
     {
         Order::observe(OrderApiObserver::class);
         Position::observe(PositionApiObserver::class);
-        ExchangeSymbol::observe(ExchangeSymbolApiObserver::class);
     }
 
     protected function registerCommands()
