@@ -123,19 +123,19 @@ class GetBinancePricesCommand extends Command
 
     public function assessPosititionsMagnetTriggers()
     {
-        echo "assessPosititionsMagnetTriggers() at " . now() . PHP_EOL;
+        $positions = Position::opened()->get();
 
-        Position::opened()
-                ->get()
-                ->each(function ($position) {
-                    CoreJobQueue::create([
-                        'class' => AssessMagnetTriggerJob::class,
-                        'queue' => 'positions',
-                        'arguments' => [
-                            'positionId' => $position->id,
-                        ],
-                    ]);
-                });
+        echo "assessPosititionsMagnetTriggers() for {$positions->count()} positions at " . now() . PHP_EOL;
+
+        $positions->each(function ($position) {
+            CoreJobQueue::create([
+                'class' => AssessMagnetTriggerJob::class,
+                'queue' => 'positions',
+                'arguments' => [
+                    'positionId' => $position->id,
+                ],
+            ]);
+        });
     }
 
     public function savePricesOnExchangeSymbolsHistory(array $prices)
