@@ -23,6 +23,10 @@ trait HasMagnetizationFeatures
         if ($magnetOrder) {
             $this->load('exchangeSymbol');
 
+            $magnetOrder->withoutEvents(function () use ($magnetOrder) {
+                $magnetOrder->update(['magnet_status' => 'activated']);
+            });
+
             User::admin()->get()->each(function ($user) use ($magnetOrder) {
                 $price = api_format_price($this->last_mark_price, $this->exchangeSymbol);
                 $user->pushover(

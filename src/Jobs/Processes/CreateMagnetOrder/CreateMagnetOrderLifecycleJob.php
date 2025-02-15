@@ -48,7 +48,6 @@ class CreateMagnetOrderLifecycleJob extends BaseQueuableJob
             'block_uuid' => $blockUuid,
         ]);
 
-        /*
         CoreJobQueue::create([
             'class' => CreateAndPlaceMarketMagnetOrderJob::class,
             'queue' => 'orders',
@@ -58,6 +57,5 @@ class CreateMagnetOrderLifecycleJob extends BaseQueuableJob
             'index' => 2,
             'block_uuid' => $blockUuid,
         ]);
-        */
     }
 }
