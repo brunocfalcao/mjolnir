@@ -3,16 +3,15 @@
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
 use Illuminate\Console\Command;
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Thor\Models\PriceHistory;
-use Nidavellir\Thor\Models\ExchangeSymbol;
-use Nidavellir\Mjolnir\Support\Proxies\ApiWebsocketProxy;
-use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
-use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
 use Nidavellir\Mjolnir\Jobs\Apiable\Position\AssessMagnetActivationJob;
-use Nidavellir\Mjolnir\Jobs\Processes\CreateMagnetOrder\CreateMagnetOrderLifecycleJob;
+use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
+use Nidavellir\Mjolnir\Support\Proxies\ApiWebsocketProxy;
+use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\ExchangeSymbol;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\PriceHistory;
 
 class GetBinancePricesCommand extends Command
 {
@@ -67,7 +66,7 @@ class GetBinancePricesCommand extends Command
                 }
 
                 if ($every3Seconds) {
-                    //$this->assessMagnetTriggers();
+                    // $this->assessMagnetTriggers();
                 }
 
                 if ($every5Minutes) {
@@ -125,19 +124,13 @@ class GetBinancePricesCommand extends Command
     public function assessMagnetTriggers()
     {
         Position::opened()->get()->each(function ($position) {
-
-            $magnetTriggerOrder = $position->assessMagnetTrigger();
-
-            if ($magnetTriggerOrder != null) {
-                // We have a position to trigger the magnet.
-                CoreJobQueue::create([
-                    'class' => CreateMagnetOrderLifecycleJob::class,
-                    'queue' => 'orders',
-                    'arguments' => [
-                        'orderId' => $magnetTriggerOrder->id,
-                    ],
-                ]);
-            }
+            CoreJobQueue::create([
+                'class' => AssessMagnetTriggerJob::class,
+                'queue' => 'positions',
+                'arguments' => [
+                    'positionId' => $position->id,
+                ],
+            ]);
         });
     }
 
