@@ -32,6 +32,7 @@ class AssessMagnetTriggerJob extends BaseQueuableJob
     {
         $magnetTriggerOrder = $this->position->assessMagnetTrigger();
 
+        /*
         if ($magnetTriggerOrder != null) {
             // We have a position to trigger the magnet.
             CoreJobQueue::create([
@@ -42,5 +43,6 @@ class AssessMagnetTriggerJob extends BaseQueuableJob
                 ],
             ]);
         }
+        */
     }
 }
