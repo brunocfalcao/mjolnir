@@ -54,7 +54,7 @@ class CreateAndPlaceMarketMagnetOrderJob extends BaseApiableJob
 
         // De-magnetize original limit order.
         $this->order->withoutEvents(function () {
-            $this->order->update(['is_magnetized' => false]);
+            $this->order->update(['magnet_status' => 'triggered']);
         });
 
         User::admin()->get()->each(function ($user) {

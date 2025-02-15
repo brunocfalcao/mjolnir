@@ -96,12 +96,15 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
         /**
          * Lets get the magnet zone percentage, so we can calculate both
          * the activation and trigger price. The activation is when the
-         * price reaches this amount, it will place is_magnetized=true.
+         * price reaches this amount, it will place magnet_status = 'activated'.
          *
          * The trigger price is if the price rebounds to this price, then
          * it will automatically trigger the magnetization (cancelation of
          * the limit order and an immediate market order of the quantity of
-         * the limit order).
+         * the limit order), with magnet_status = triggered.
+         *
+         * If the trigger price wasn't reached, and the limit order was
+         * normally achieved, then the magnet_status = cancelled.
          */
         $magnetPercentage = TradeConfiguration::default()->first()->magnet_zone_percentage / 100;
 
@@ -132,6 +135,7 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
                 'quantity' => $quantity,
                 'magnet_activation_price' => $magnetActivationPrice,
                 'magnet_trigger_price' => $magnetTriggerPrice,
+                'magnet_status' => 'standby'
             ]);
         }
 

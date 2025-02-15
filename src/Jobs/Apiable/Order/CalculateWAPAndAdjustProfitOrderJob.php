@@ -54,8 +54,8 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
             // Inform the order observer not to put the PROFIT order back on its original values.
             $this->position->update(['wap_triggered' => true]);
 
-            // Update all orders to is_magnetized = false, without calling observers.
-            $this->position->orders()->update(['is_magnetized' => false]);
+            // Update all orders to magnet_status = activated, to 'cancelled'.
+            $this->position->orders()->where('magnet_status', 'activated')->update(['magnet_status' => 'cancelled']);
 
             // How many orders do we have filled?
             $totalFilledOrders = $this->position

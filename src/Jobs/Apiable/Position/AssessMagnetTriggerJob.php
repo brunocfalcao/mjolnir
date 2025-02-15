@@ -34,6 +34,11 @@ class AssessMagnetTriggerJob extends BaseQueuableJob
         $magnetTriggerOrder = $this->position->assessMagnetTrigger();
 
         if ($magnetTriggerOrder != null) {
+            // Immediately change the magnet_status to "triggering"
+            $magnetTriggerOrder->withoutEvents(function () use ($magnetTriggerOrder) {
+                $magnetTriggerOrder->update(['magnet_status' => 'triggering']);
+            });
+
             User::admin()->get()->each(function ($user) use ($magnetTriggerOrder) {
                 $user->pushover(
                     message: "Starting CreateMagnetOrderLifecycleJob, Magnet Order ID: {$magnetTriggerOrder->id}",

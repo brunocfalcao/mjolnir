@@ -11,7 +11,7 @@ trait HasMagnetizationFeatures
         $magnetOrder = $this->orders()
             ->where('type', 'LIMIT')
             ->where('status', 'NEW')
-            ->where('is_magnetized', false)
+            ->where('magnet_status', 'standby')
             ->when($this->direction == 'LONG', function ($query) {
                 return $query->where('orders.magnet_activation_price', '>=', $this->last_mark_price);
             })
@@ -21,10 +21,6 @@ trait HasMagnetizationFeatures
             ->first();
 
         if ($magnetOrder) {
-            $magnetOrder->withoutEvents(function () use ($magnetOrder) {
-                $magnetOrder->update(['is_magnetized' => true]);
-            });
-
             $this->load('exchangeSymbol');
 
             User::admin()->get()->each(function ($user) use ($magnetOrder) {
@@ -50,7 +46,7 @@ trait HasMagnetizationFeatures
          * Create a market order with exactly the same quantity as the
          * limit order that was cancelled, type 'MARKET-MAGNET'.
          */
-        foreach ($this->orders()->where('is_magnetized', true)->get() as $magnetOrder) {
+        foreach ($this->orders()->where('magnet_status', 'activated')->get() as $magnetOrder) {
             if (($magnetOrder->side == 'BUY' && $magnetOrder->magnet_trigger_price <= $this->last_mark_price) ||
             ($magnetOrder->side == 'SELL' && $magnetOrder->magnet_trigger_price >= $this->last_mark_price)) {
                 $this->load('exchangeSymbol');
