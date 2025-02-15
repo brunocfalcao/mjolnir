@@ -42,12 +42,14 @@ class CreateAndPlaceMarketMagnetOrderJob extends BaseApiableJob
         if ($this->order->status == 'FILLED') {
             // Cancel magnetization because the ORDER is not cancelled.
             $this->order->update(['magnet_status' => 'cancelled']);
+
             return;
         }
 
         // Order is still not cancelled? Try again.
         if ($this->order->status != 'CANCELLED') {
             $this->coreJobQueue->updateToRetry(now()->addSeconds($this->workerServerBackoffSeconds));
+
             return;
         }
 
@@ -74,7 +76,7 @@ class CreateAndPlaceMarketMagnetOrderJob extends BaseApiableJob
 
         User::admin()->get()->each(function ($user) {
             $user->pushover(
-                message: "Limit MAGNET order was filled for position {$this->order->position->parsedTradingPair}",
+                message: "MAGNET order was successfully filled for position {$this->order->position->parsedTradingPair}",
                 title: "Limit Magnet order placed ({$this->order->position->parsedTradingPair}) successfully",
                 applicationKey: 'nidavellir_orders'
             );
@@ -101,7 +103,7 @@ class CreateAndPlaceMarketMagnetOrderJob extends BaseApiableJob
 
         User::admin()->get()->each(function ($user) {
             $user->pushover(
-                message: 'Error creating the magnet order, so we are replacing back the original LIMIT order',
+                message: 'Error creating the magnet order, so we are creating back the original LIMIT order',
                 title: "Error placing Magnet order for position {$this->order->position->parsedTradingPair}",
                 applicationKey: 'nidavellir_orders'
             );

@@ -35,6 +35,14 @@ class CancelOrderJob extends BaseApiableJob
     public function computeApiable()
     {
         $this->order->apiCancel();
+
+        User::admin()->get()->each(function ($user) {
+            $user->pushover(
+                message: "Order from {$this->order->position->parsedTradingPair}, Order ID {$this->order->id} cancelled, possibly due to a magnetization. If not, please check!",
+                title: 'Order cancelled',
+                applicationKey: 'nidavellir_errors'
+            );
+        });
     }
 
     public function resolveException(\Throwable $e)

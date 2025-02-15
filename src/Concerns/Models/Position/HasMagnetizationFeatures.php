@@ -27,15 +27,6 @@ trait HasMagnetizationFeatures
                 $magnetOrder->update(['magnet_status' => 'activated']);
             });
 
-            User::admin()->get()->each(function ($user) use ($magnetOrder) {
-                $price = api_format_price($this->last_mark_price, $this->exchangeSymbol);
-                $user->pushover(
-                    message: "Magnet ACTIVATED for position {$this->parsedTradingPair} ID: {$this->id}, Order ID: {$magnetOrder->id}, at price {$price}",
-                    title: "Magnet ACTIVATED for position {$this->parsedTradingPair}",
-                    applicationKey: 'nidavellir_positions'
-                );
-            });
-
             return $magnetOrder;
         }
 
@@ -60,7 +51,7 @@ trait HasMagnetizationFeatures
                     $user->pushover(
                         message: "Magnet TRIGGERED for position {$this->parsedTradingPair} ID: {$this->id}, Order ID {$magnetOrder->id}, at price {$price}",
                         title: "Magnet TRIGGERED for position {$this->parsedTradingPair}",
-                        applicationKey: 'nidavellir_positions'
+                        applicationKey: 'nidavellir_warnings'
                     );
                 });
 
