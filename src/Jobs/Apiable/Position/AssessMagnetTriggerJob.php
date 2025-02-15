@@ -32,6 +32,12 @@ class AssessMagnetTriggerJob extends BaseQueuableJob
     {
         $magnetTriggerOrder = $this->position->assessMagnetTrigger();
 
+        if ($magnetTriggerOrder) {
+            $magnetTriggerOrder->withoutEvents(function () use ($magnetTriggerOrder) {
+                $magnetTriggerOrder->update(['is_magnetized' => false]);
+            });
+        }
+
         /*
         if ($magnetTriggerOrder != null) {
             // We have a position to trigger the magnet.
