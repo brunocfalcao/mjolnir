@@ -28,6 +28,6 @@ class AssessMagnetActivationJob extends BaseQueuableJob
 
     public function compute()
     {
-        $this->position->assessMagnetActivation();
+        //$this->position->assessMagnetActivation();
     }
 }
