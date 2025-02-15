@@ -36,12 +36,18 @@ class CreateAndPlaceMarketMagnetOrderJob extends BaseApiableJob
     {
         $dataMapper = new ApiDataMapperProxy($this->account->apiSystem->canonical);
 
-        // We need to check if the current LIMIT order was not filled in the mean time.
         $this->order->apiSync();
 
-        if ($this->order->status != 'NEW') {
-            // Cancel magnetization because the ORDER was in the meantime changed.
+        // Order was filled in the meantime? Cancel the magnet.
+        if ($this->order->status == 'FILLED') {
+            // Cancel magnetization because the ORDER is not cancelled.
             $this->order->update(['magnet_status' => 'cancelled']);
+            return;
+        }
+
+        // Order is still not cancelled? Try again.
+        if ($this->order->status != 'CANCELLED') {
+            $this->coreJobQueue->updateToRetry(now()->addSeconds(10));
             return;
         }
 
