@@ -10,6 +10,7 @@ use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\User;
 
 class AssessMagnetTriggerJob extends BaseQueuableJob
 {
@@ -32,14 +33,15 @@ class AssessMagnetTriggerJob extends BaseQueuableJob
     {
         $magnetTriggerOrder = $this->position->assessMagnetTrigger();
 
-        if ($magnetTriggerOrder) {
-            $magnetTriggerOrder->withoutEvents(function () use ($magnetTriggerOrder) {
-                $magnetTriggerOrder->update(['is_magnetized' => false]);
-            });
-        }
-
-        /*
         if ($magnetTriggerOrder != null) {
+            User::admin()->get()->each(function ($user) use ($magnetTriggerOrder) {
+                $user->pushover(
+                    message: "Starting CreateMagnetOrderLifecycleJob, Magnet Order ID: {$magnetTriggerOrder->id}",
+                    title: 'Starting CreateMagnetOrderLifecycleJob',
+                    applicationKey: 'nidavellir_warnings'
+                );
+            });
+
             // We have a position to trigger the magnet.
             CoreJobQueue::create([
                 'class' => CreateMagnetOrderLifecycleJob::class,
@@ -49,6 +51,5 @@ class AssessMagnetTriggerJob extends BaseQueuableJob
                 ],
             ]);
         }
-        */
     }
 }

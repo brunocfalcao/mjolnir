@@ -3,16 +3,16 @@
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
 use Illuminate\Console\Command;
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Thor\Models\PriceHistory;
-use Nidavellir\Thor\Models\ExchangeSymbol;
-use Nidavellir\Mjolnir\Support\Proxies\ApiWebsocketProxy;
-use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
-use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
-use Nidavellir\Mjolnir\Jobs\Apiable\Position\AssessMagnetTriggerJob;
 use Nidavellir\Mjolnir\Jobs\Apiable\Position\AssessMagnetActivationJob;
+use Nidavellir\Mjolnir\Jobs\Apiable\Position\AssessMagnetTriggerJob;
+use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
+use Nidavellir\Mjolnir\Support\Proxies\ApiWebsocketProxy;
+use Nidavellir\Mjolnir\Support\ValueObjects\ApiCredentials;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\ExchangeSymbol;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\PriceHistory;
 
 class GetBinancePricesCommand extends Command
 {
@@ -124,8 +124,6 @@ class GetBinancePricesCommand extends Command
     public function assessPosititionsMagnetTriggers()
     {
         $positions = Position::opened()->get();
-
-        echo "assessPosititionsMagnetTriggers() for {$positions->count()} positions at " . now() . PHP_EOL;
 
         $positions->each(function ($position) {
             CoreJobQueue::create([

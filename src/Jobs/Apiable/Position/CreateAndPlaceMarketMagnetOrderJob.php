@@ -52,7 +52,7 @@ class CreateAndPlaceMarketMagnetOrderJob extends BaseApiableJob
         $limitMagnetOrder->apiPlace();
         $limitMagnetOrder->apiSync();
 
-        // De-magnetize order.
+        // De-magnetize original limit order.
         $this->order->withoutEvents(function () {
             $this->order->update(['is_magnetized' => false]);
         });
@@ -68,6 +68,14 @@ class CreateAndPlaceMarketMagnetOrderJob extends BaseApiableJob
 
     public function resolveException(\Throwable $e)
     {
+        User::admin()->get()->each(function ($user) {
+            $user->pushover(
+                message: 'Error creating the magnet order, so we are replacing back the original LIMIT order',
+                title: "Error placing Magnet order for position {$this->order->position->parsedTradingPair}",
+                applicationKey: 'nidavellir_orders'
+            );
+        });
+
         /**
          * If we cannot place the market magnet, then we need to
          * put back the limit order where it was, with the same
