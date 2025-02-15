@@ -98,9 +98,9 @@ class GetBinancePricesCommand extends Command
         });
 
         // Update last mark price for opened positions.
-        Position::with('exchangeSymbol')
-            ->opened()
+        Position::opened()
             ->each(function ($position) {
+                $position->load('exchangeSymbol');
                 $position->last_mark_price = $position->exchangeSymbol->last_mark_price;
                 $position->save();
             });
@@ -109,8 +109,7 @@ class GetBinancePricesCommand extends Command
     public function assessPositionsMagnetActivations()
     {
         // Use chunking to handle large sets of positions.
-        Position::with('exchangeSymbol')
-            ->opened()
+        Position::opened()
             ->each(function ($position) {
                 CoreJobQueue::create([
                     'class' => AssessMagnetActivationJob::class,
