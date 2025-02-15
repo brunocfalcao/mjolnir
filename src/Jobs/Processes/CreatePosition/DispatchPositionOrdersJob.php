@@ -135,7 +135,7 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
                 'quantity' => $quantity,
                 'magnet_activation_price' => $magnetActivationPrice,
                 'magnet_trigger_price' => $magnetTriggerPrice,
-                'magnet_status' => 'standby'
+                'magnet_status' => 'standby',
             ]);
         }
 
