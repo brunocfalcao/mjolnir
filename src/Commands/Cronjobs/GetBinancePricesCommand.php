@@ -58,7 +58,7 @@ class GetBinancePricesCommand extends Command
                 $this->savePricesOnExchangeSymbols($prices);
 
                 if ($everyMinute) {
-                    echo 'Prices statuses OK at '.$currentTime.PHP_EOL;
+                    echo 'OK at '.$currentTime.PHP_EOL;
                 }
 
                 if ($every5Seconds) {
