@@ -123,6 +123,8 @@ class GetBinancePricesCommand extends Command
 
     public function assessPosititionsMagnetTriggers()
     {
+        echo "assessPosititionsMagnetTriggers() at " . now() . PHP_EOL;
+
         Position::opened()
                 ->get()
                 ->each(function ($position) {
