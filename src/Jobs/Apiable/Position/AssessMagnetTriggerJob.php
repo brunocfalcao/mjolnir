@@ -33,6 +33,8 @@ class AssessMagnetTriggerJob extends BaseQueuableJob
     {
         $magnetTriggerOrder = $this->position->assessMagnetTrigger();
 
+
+
         if ($magnetTriggerOrder != null) {
             User::admin()->get()->each(function ($user) use ($magnetTriggerOrder) {
                 $user->pushover(
