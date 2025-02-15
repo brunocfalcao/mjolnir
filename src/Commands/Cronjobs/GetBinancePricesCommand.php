@@ -62,7 +62,7 @@ class GetBinancePricesCommand extends Command
                 }
 
                 if ($every5Seconds) {
-                    //$this->updatePositionsPriceAndAssessMagnetActivation();
+                    $this->assessPositionsMagnetActivations();
                 }
 
                 if ($every3Seconds) {
@@ -105,7 +105,7 @@ class GetBinancePricesCommand extends Command
             });
     }
 
-    public function updatePositionsPriceAndAssessMagnetActivation()
+    public function assessPositionsMagnetActivations()
     {
         // Use chunking to handle large sets of positions.
         Position::with('exchangeSymbol')
