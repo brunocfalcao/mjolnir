@@ -46,11 +46,11 @@ class GetBinancePricesCommand extends Command
                 $prices = collect($decoded);
 
                 $currentTime = now();
-
-                $each1minute = $currentTime->second === 0;
-                $each5minutes = $each1minute && $currentTime->minute % 5 === 0;
-                $each5seconds = $currentTime->second % 5 === 0;
-                $each6seconds = $currentTime->second % 6 === 0;
+                $everyMinute = $currentTime->second === 0;
+                $every5Minutes = $currentTime->minute % 5 === 0;
+                $every5Seconds = $currentTime->second % 5 === 0;
+                $every6Seconds = $currentTime->second % 6 === 0;
+                $every3Seconds = $currentTime->second % 3 === 0;
 
                 // Reformat prices: 'BTCUSDT' => 110510, ...
                 $prices = $prices->pluck('p', 's')->all();
@@ -58,19 +58,19 @@ class GetBinancePricesCommand extends Command
                 // Update exchange symbol prices each second
                 $this->savePricesOnExchangeSymbols($prices);
 
-                if ($each1minute) {
+                if ($everyMinute) {
                     echo 'Prices statuses OK at '.$currentTime.PHP_EOL;
                 }
 
-                if ($each5seconds) {
-                    //$this->assessMagnetActivations();
+                if ($every5Seconds) {
+                    $this->updatePositionsPriceAndAssessMagnetActivation();
                 }
 
-                if ($each6seconds) {
+                if ($every3Seconds) {
                     //$this->assessMagnetTriggers();
                 }
 
-                if ($each5minutes) {
+                if ($every5Minutes) {
                     $this->savePricesOnExchangeSymbolsHistory($prices);
                 }
             },
@@ -86,39 +86,39 @@ class GetBinancePricesCommand extends Command
     public function savePricesOnExchangeSymbols(array $prices)
     {
         // Use chunking to avoid loading all records at once.
-        ExchangeSymbol::chunk(100, function ($exchangeSymbols) use ($prices) {
-            foreach ($exchangeSymbols as $exchangeSymbol) {
-                $pair = $exchangeSymbol->parsedTradingPair('binance');
+        ExchangeSymbol::each(function ($exchangeSymbol) use ($prices) {
+            $pair = $exchangeSymbol->parsedTradingPair('binance');
 
-                if (isset($prices[$pair])) {
-                    $exchangeSymbol->update([
-                        'last_mark_price' => $prices[$pair],
-                        'price_last_synced_at' => now(),
-                    ]);
-                }
+            if (isset($prices[$pair])) {
+                $exchangeSymbol->update([
+                    'last_mark_price' => $prices[$pair],
+                    'price_last_synced_at' => now(),
+                ]);
             }
         });
+
+        // Update last mark price for opened positions.
+        Position::with('exchangeSymbol')
+            ->opened()
+            ->each(function ($position) {
+                $position->last_mark_price = $position->exchangeSymbol->last_mark_price;
+                $position->save();
+            });
     }
 
-    public function assessMagnetActivations()
+    public function updatePositionsPriceAndAssessMagnetActivation()
     {
         // Use chunking to handle large sets of positions.
         Position::with('exchangeSymbol')
             ->opened()
-            ->chunkById(100, function ($positions) {
-                foreach ($positions as $position) {
-                    $position->last_mark_price = $position->exchangeSymbol->last_mark_price;
-                    $position->save();
-
-                    // Queue job to assess magnet activation.
-                    CoreJobQueue::create([
-                        'class' => AssessMagnetActivationJob::class,
-                        'queue' => 'positions',
-                        'arguments' => [
-                            'positionId' => $position->id,
-                        ],
-                    ]);
-                }
+            ->each(function ($position) {
+                CoreJobQueue::create([
+                    'class' => AssessMagnetActivationJob::class,
+                    'queue' => 'positions',
+                    'arguments' => [
+                        'positionId' => $position->id,
+                    ],
+                ]);
             });
     }
 
