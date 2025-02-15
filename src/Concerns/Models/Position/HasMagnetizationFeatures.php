@@ -56,7 +56,7 @@ trait HasMagnetizationFeatures
                 $this->load('exchangeSymbol');
                 $price = api_format_price($this->last_mark_price, $this->exchangeSymbol);
 
-                User::admin()->get()->each(function ($user) use ($magnetOrder) {
+                User::admin()->get()->each(function ($user) use ($magnetOrder, $price) {
                     $user->pushover(
                         message: "Magnet TRIGGERED for position {$this->parsedTradingPair} ID: {$this->id}, Order ID {$magnetOrder->id}, at price {$price}",
                         title: "Magnet TRIGGERED for position {$this->parsedTradingPair}",
