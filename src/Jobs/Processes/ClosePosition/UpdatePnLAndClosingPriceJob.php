@@ -52,12 +52,12 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
                 'closing_price' => $closingPrice,
             ]);
 
-            // If the position had more than 3 limit orders filled, notify.
+            // Notify if it's equal to the filled orders to notify index.
             if ($this->position
                 ->orders
                 ->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
                 ->where('status', 'FILLED')
-                ->count() >= 1) {
+                ->count() >= $this->account->filled_orders_to_notify) {
                 User::admin()->get()->each(function ($user) use ($pnl) {
                     $user->pushover(
                         message: "Higher profit {$this->position->parsedTradingPair} ({$this->position->direction}) closed (PnL: {$pnl})",
