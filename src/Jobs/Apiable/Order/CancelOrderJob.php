@@ -47,7 +47,7 @@ class CancelOrderJob extends BaseApiableJob
 
     public function resolveException(\Throwable $e)
     {
-        User::admin()->get()->each(function ($user) {
+        User::admin()->get()->each(function ($user) use ($e) {
             $user->pushover(
                 message: "Error canceling order with ID {$this->order->id}: ".$e->getMessage(),
                 title: 'Error canceling order',
