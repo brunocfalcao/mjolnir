@@ -2,8 +2,6 @@
 
 namespace Nidavellir\Mjolnir\Concerns\Models\Position;
 
-use Nidavellir\Thor\Models\User;
-
 trait HasMagnetizationFeatures
 {
     public function assessMagnetActivation()
@@ -46,14 +44,6 @@ trait HasMagnetizationFeatures
             ($magnetOrder->side == 'SELL' && $magnetOrder->magnet_trigger_price >= $this->last_mark_price)) {
                 $this->load('exchangeSymbol');
                 $price = api_format_price($this->last_mark_price, $this->exchangeSymbol);
-
-                User::admin()->get()->each(function ($user) use ($magnetOrder, $price) {
-                    $user->pushover(
-                        message: "Magnet TRIGGERED for position {$this->parsedTradingPair} ID: {$this->id}, Order ID {$magnetOrder->id}, at price {$price}",
-                        title: "Magnet TRIGGERED for position {$this->parsedTradingPair}",
-                        applicationKey: 'nidavellir_warnings'
-                    );
-                });
 
                 return $magnetOrder;
             }

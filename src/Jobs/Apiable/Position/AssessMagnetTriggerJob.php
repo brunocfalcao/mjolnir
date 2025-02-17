@@ -10,6 +10,7 @@ use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\User;
 
 class AssessMagnetTriggerJob extends BaseQueuableJob
 {
@@ -36,6 +37,14 @@ class AssessMagnetTriggerJob extends BaseQueuableJob
             // Immediately change the magnet_status to "triggering"
             $magnetTriggerOrder->withoutEvents(function () use ($magnetTriggerOrder) {
                 $magnetTriggerOrder->update(['magnet_status' => 'triggering']);
+            });
+
+            User::admin()->get()->each(function ($user) use ($magnetTriggerOrder) {
+                $user->pushover(
+                    message: "Magnet TRIGGERED for position {$this->position->parsedTradingPair} ID: {$this->id}, Order ID {$magnetTriggerOrder->id}, at price {$magnetTriggerOrder->magnet_trigger_price}",
+                    title: "Magnet TRIGGERED for position {$this->position->parsedTradingPair}",
+                    applicationKey: 'nidavellir_warnings'
+                );
             });
 
             // We have a position to trigger the magnet.

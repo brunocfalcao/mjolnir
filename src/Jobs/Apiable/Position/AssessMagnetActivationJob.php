@@ -8,6 +8,7 @@ use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\User;
 
 class AssessMagnetActivationJob extends BaseQueuableJob
 {
@@ -28,6 +29,16 @@ class AssessMagnetActivationJob extends BaseQueuableJob
 
     public function compute()
     {
-        $this->position->assessMagnetActivation();
+        $magnetOrder = $this->position->assessMagnetActivation();
+
+        if ($magnetOrder) {
+            User::admin()->get()->each(function ($user) use ($magnetOrder) {
+                $user->pushover(
+                    message: "Magnet ACTIVATED for position {$this->position->parsedTradingPair} ID: {$this->position->id}, Order ID {$magnetOrder->id}, at price {$magnetOrder->magnet_activation_price}",
+                    title: "Magnet ACTIVATED for position {$this->position->parsedTradingPair}",
+                    applicationKey: 'nidavellir_warnings'
+                );
+            });
+        }
     }
 }
