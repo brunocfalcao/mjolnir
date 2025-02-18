@@ -8,6 +8,10 @@ trait HasWAPFeatures
 {
     public function calculateWAP()
     {
+        // Set resync and error to defaults.
+        $resync = false;
+        $error = '';
+
         // Fetch all FILLED LIMIT orders for this position
         $orders = $this->orders()
             ->where('status', 'FILLED')
@@ -56,6 +60,18 @@ trait HasWAPFeatures
                         applicationKey: 'nidavellir_warnings'
                     );
                 });
+
+                $difference = abs($positionQuantity - $totalQuantity);
+
+                // Max gap threshold: 15%.
+                $threshold = abs($positionQuantity) * 0.15;
+
+                if ($difference > $threshold) {
+                    // Something happened, we need to request a resync.
+                    $resync = true;
+                    $error = 'The difference percentage between totalQuantity and positionQuantity exceeds threshold';
+                }
+
                 // Give priority to position quantity from the exchange.
                 $totalQuantity = $positionQuantity;
             }
@@ -86,6 +102,8 @@ trait HasWAPFeatures
 
         // Return total quantity and WAP price as an array, and format both numbers.
         return [
+            'resync' => $resync,
+            'error' => $error,
             'quantity' => api_format_quantity($totalQuantity, $this->exchangeSymbol),
             'price' => api_format_price($wapPrice, $this->exchangeSymbol),
         ];

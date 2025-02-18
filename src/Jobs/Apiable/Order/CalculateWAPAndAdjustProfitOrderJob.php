@@ -44,6 +44,25 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
     {
         $wap = $this->position->calculateWAP();
 
+        if (array_key_exists('resync', $wap) && $wap['resync'] == true) {
+            // Something happened and we need to resync the orders. Then we can try again the core job.
+            User::admin()->get()->each(function ($user) use ($wap) {
+                $user->pushover(
+                    message: "WAP calculation for ({$this->parsedTradingPair} Position ID: {$this->id}) orders need to be resynced and will be retried. Error: {$wap['error']}",
+                    title: 'WAP calculation orders need to be resynced and retried later',
+                    applicationKey: 'nidavellir_warnings'
+                );
+            });
+
+            $this->position->load('orders');
+            foreach ($this->position->orders as $order) {
+                $order->apiSync();
+            }
+
+            $this->coreJobQueue->updateToRetry($this->rateLimiter->rateLimitbackoffSeconds());
+            return;
+        }
+
         if ($wap['quantity'] != null && $wap['price'] != null) {
             // Obtain info from the profit order.
             $profitOrder = $this->position->orders->firstWhere('type', 'PROFIT');
