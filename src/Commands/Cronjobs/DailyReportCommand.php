@@ -18,7 +18,7 @@ class DailyReportCommand extends Command
         // Fetch accounts belonging to traders that are active and can trade.
         $accounts = Account::whereHas('user', function ($query) {
             $query->where('is_trader', true);
-        })->with('user')
+        })->with(['user', 'quote'])
             ->canTrade()
             ->get();
 
@@ -56,7 +56,6 @@ class DailyReportCommand extends Command
                 ->where('updated_at', '>=', now()->startOfDay())
                 ->count();
 
-            $account->load('quote');
             $quote = $account->quote->canonical;
 
             // Notify all admin users via pushover.

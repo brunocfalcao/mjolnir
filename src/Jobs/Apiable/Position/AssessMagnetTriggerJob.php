@@ -41,7 +41,7 @@ class AssessMagnetTriggerJob extends BaseQueuableJob
 
             User::admin()->get()->each(function ($user) use ($magnetTriggerOrder) {
                 $user->pushover(
-                    message: "Magnet TRIGGERED for position {$this->position->parsedTradingPair} ID: {$this->id}, Order ID {$magnetTriggerOrder->id}, at price {$magnetTriggerOrder->magnet_trigger_price}",
+                    message: "Magnet TRIGGERED for position {$this->position->parsedTradingPair} ID: {$this->position->id}, Order ID {$magnetTriggerOrder->id}, at price {$magnetTriggerOrder->magnet_trigger_price}",
                     title: "Magnet TRIGGERED for position {$this->position->parsedTradingPair}",
                     applicationKey: 'nidavellir_warnings'
                 );

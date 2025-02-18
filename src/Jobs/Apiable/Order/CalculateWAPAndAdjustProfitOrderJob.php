@@ -50,7 +50,7 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
                 $user->pushover(
                     message: "WAP calculation for ({$this->parsedTradingPair} Position ID: {$this->id}) orders need to be resynced and will be retried. Error: {$wap['error']}",
                     title: 'WAP calculation orders need to be resynced and retried later',
-                    applicationKey: 'nidavellir_warnings'
+                    applicationKey: 'nidavellir_errors'
                 );
             });
 
