@@ -69,15 +69,17 @@ class CreateAndPlaceMarketMagnetOrderJob extends BaseApiableJob
         $limitMagnetOrder->apiPlace();
         $limitMagnetOrder->apiSync();
 
-        // Complete magnetization.
+        // Complete magnetization without triggering events.
         $this->order->withoutEvents(function () {
-            $this->order->update(['magnet_status' => 'triggered']);
+            $this->order->update([
+                'magnet_status' => 'triggered'
+            ]);
         });
 
-        User::admin()->get()->each(function ($user) {
+        User::admin()->get()->each(function ($user) use ($limitMagnetOrder) {
             $user->pushover(
-                message: "MAGNET order was successfully filled for position {$this->order->position->parsedTradingPair}",
-                title: "Limit Magnet order placed ({$this->order->position->parsedTradingPair}) successfully",
+                message: "MAGNET-MARKET (market) order for {$this->order->position->parsedTradingPair} successfully placed  at price {$limitMagnetOrder->price} with quantity {$limitMagnetOrder->quantity}",
+                title: "Magnet market order placed ({$this->order->position->parsedTradingPair}) successfully",
                 applicationKey: 'nidavellir_orders'
             );
         });
