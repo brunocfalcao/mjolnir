@@ -76,13 +76,15 @@ class CreateAndPlaceMarketMagnetOrderJob extends BaseApiableJob
             ]);
         });
 
+        /*
         User::admin()->get()->each(function ($user) use ($limitMagnetOrder) {
             $user->pushover(
-                message: "MAGNET-MARKET (market) order for {$this->order->position->parsedTradingPair} successfully placed  at price {$limitMagnetOrder->price} with quantity {$limitMagnetOrder->quantity}",
+                message: "MARKET MAGNET (market) order for {$this->order->position->parsedTradingPair} successfully placed  at price {$limitMagnetOrder->price} with quantity {$limitMagnetOrder->quantity}",
                 title: "Magnet market order placed ({$this->order->position->parsedTradingPair}) successfully",
                 applicationKey: 'nidavellir_orders'
             );
         });
+        */
     }
 
     public function resolveException(\Throwable $e)

@@ -31,6 +31,7 @@ class AssessMagnetActivationJob extends BaseQueuableJob
     {
         $magnetOrder = $this->position->assessMagnetActivation();
 
+        /*
         if ($magnetOrder) {
             User::admin()->get()->each(function ($user) use ($magnetOrder) {
                 $user->pushover(
@@ -40,5 +41,6 @@ class AssessMagnetActivationJob extends BaseQueuableJob
                 );
             });
         }
+        */
     }
 }

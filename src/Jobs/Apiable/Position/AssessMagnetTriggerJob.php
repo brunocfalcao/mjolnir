@@ -52,6 +52,7 @@ class AssessMagnetTriggerJob extends BaseQueuableJob
                 $magnetTriggerOrder->update(['magnet_status' => 'triggering']);
             });
 
+            /*
             User::admin()->get()->each(function ($user) use ($magnetTriggerOrder) {
                 $user->pushover(
                     message: "Magnet TRIGGERED for position {$this->position->parsedTradingPair} ID: {$this->position->id}, Order ID {$magnetTriggerOrder->id}, at price {$magnetTriggerOrder->magnet_trigger_price}",
@@ -59,6 +60,7 @@ class AssessMagnetTriggerJob extends BaseQueuableJob
                     applicationKey: 'nidavellir_warnings'
                 );
             });
+            */
 
             // We have a position to trigger the magnet.
             CoreJobQueue::create([
