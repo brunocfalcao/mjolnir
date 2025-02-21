@@ -99,11 +99,11 @@ class GetBinancePricesCommand extends Command
 
         // Update last mark price for opened positions.
         Position::opened()
-                ->with('exchangeSymbol')
-                ->each(function ($position) {
-                    $position->last_mark_price = $position->exchangeSymbol->last_mark_price;
-                    $position->save();
-                });
+            ->with('exchangeSymbol')
+            ->each(function ($position) {
+                $position->last_mark_price = $position->exchangeSymbol->last_mark_price;
+                $position->save();
+            });
     }
 
     public function assessPositionsMagnetActivations()

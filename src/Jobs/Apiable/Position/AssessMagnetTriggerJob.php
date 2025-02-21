@@ -33,7 +33,20 @@ class AssessMagnetTriggerJob extends BaseQueuableJob
     {
         $magnetTriggerOrder = $this->position->assessMagnetTrigger();
 
-        if ($magnetTriggerOrder != null) {
+        if ($magnetTriggerOrder != null && $magnetTriggerOrder->status == 'FILLED') {
+            // Limit order (that was supposed to be magnetized-triggered) was in the meantime filled.
+            User::admin()->get()->each(function ($user) use ($magnetTriggerOrder) {
+                $user->pushover(
+                    message: "Magnet NOT TRIGGERED for position {$this->position->parsedTradingPair} ID: {$this->position->id}, Order ID {$magnetTriggerOrder->id}, at price {$magnetTriggerOrder->magnet_trigger_price}, because the limit order was in the meantime filled",
+                    title: "Magnet NOT TRIGGERED for position {$this->position->parsedTradingPair}",
+                    applicationKey: 'nidavellir_warnings'
+                );
+            });
+
+            return;
+        }
+
+        if ($magnetTriggerOrder != null && $magnetTriggerOrder->status == 'NEW') {
             // Immediately change the magnet_status to "triggering"
             $magnetTriggerOrder->withoutEvents(function () use ($magnetTriggerOrder) {
                 $magnetTriggerOrder->update(['magnet_status' => 'triggering']);

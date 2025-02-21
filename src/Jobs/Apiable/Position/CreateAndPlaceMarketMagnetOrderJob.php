@@ -72,7 +72,7 @@ class CreateAndPlaceMarketMagnetOrderJob extends BaseApiableJob
         // Complete magnetization without triggering events.
         $this->order->withoutEvents(function () {
             $this->order->update([
-                'magnet_status' => 'triggered'
+                'magnet_status' => 'triggered',
             ]);
         });
 

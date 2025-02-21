@@ -38,7 +38,7 @@ class CancelOrderJob extends BaseApiableJob
 
         User::admin()->get()->each(function ($user) {
             $user->pushover(
-                message: "Order from {$this->order->position->parsedTradingPair}, Order ID {$this->order->id} cancelled, possibly due to a magnetization. If not, please check!",
+                message: "Order from {$this->order->position->parsedTradingPair}, Order {$this->order->type} ID {$this->order->id} cancelled, possibly due to a magnetization. If not, please check!",
                 title: 'Order cancelled',
                 applicationKey: 'nidavellir_errors'
             );

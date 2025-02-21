@@ -60,6 +60,7 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
             }
 
             $this->coreJobQueue->updateToRetry($this->rateLimiter->rateLimitbackoffSeconds());
+
             return;
         }
 
