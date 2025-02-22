@@ -73,7 +73,7 @@ class RunIntegrityChecksCommand extends Command
              *
              * Verify if we have open positions with PROFIT = FILLED or CANCELLED.
              */
-            $openedPositions = $account->positions()->where('positions.status', 'active')->get();
+            $openedPositions = $account->positions()->with('orders')->where('positions.status', 'active')->get();
 
             foreach ($openedPositions as $openedPosition) {
                 info('Checking position ' . $openedPosition->id);
