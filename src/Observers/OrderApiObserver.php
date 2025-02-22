@@ -213,16 +213,19 @@ class OrderApiObserver
         }
 
         // Order cancelled by mistake? Re-place the order (except standby magnetized orders, those will be resettled also).
-        if ($order->status == 'CANCELLED' && $order->getOriginal('status') != 'CANCELLED' && $order->magnet_status == 'standby') {
-            // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Order canceled by mistake. Recreating order');
-            // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering PlaceOrderJob::class');
-            CoreJobQueue::create([
-                'class' => PlaceOrderJob::class,
-                'queue' => 'orders',
-                'arguments' => [
-                    'orderId' => $order->id,
-                ],
-            ]);
+        // Before: if ($order->status == 'CANCELLED' && $order->getOriginal('status') != 'CANCELLED' && $order->magnet_status == 'standby') {
+        if ($order->status == 'CANCELLED' && $order->getOriginal('status') != 'CANCELLED') {
+            if (($order->type == 'LIMIT' && $order->magnet_status == 'standby') || $order->type == 'PROFIT') {
+                // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Order canceled by mistake. Recreating order');
+                // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering PlaceOrderJob::class');
+                CoreJobQueue::create([
+                    'class' => PlaceOrderJob::class,
+                    'queue' => 'orders',
+                    'arguments' => [
+                        'orderId' => $order->id,
+                    ],
+                ]);
+            }
         }
 
         // Limit order filled or partially filled? -- Compute WAP.
