@@ -6,26 +6,28 @@ trait HasMagnetizationFeatures
 {
     public function assessMagnetActivation()
     {
-        $magnetOrder = $this->orders()
-            ->where('type', 'LIMIT')
-            ->where('status', 'NEW')
-            ->where('magnet_status', 'standby')
-            ->when($this->direction == 'LONG', function ($query) {
-                return $query->where('orders.magnet_activation_price', '>=', $this->last_mark_price);
-            })
-            ->when($this->direction == 'SHORT', function ($query) {
-                return $query->where('orders.magnet_activation_price', '<=', $this->last_mark_price);
-            })
-            ->first();
+        if ($this->last_mark_price != null) {
+            $magnetOrder = $this->orders()
+                ->where('type', 'LIMIT')
+                ->where('status', 'NEW')
+                ->where('magnet_status', 'standby')
+                ->when($this->direction == 'LONG', function ($query) {
+                    return $query->where('orders.magnet_activation_price', '>=', $this->last_mark_price);
+                })
+                ->when($this->direction == 'SHORT', function ($query) {
+                    return $query->where('orders.magnet_activation_price', '<=', $this->last_mark_price);
+                })
+                ->first();
 
-        if ($magnetOrder) {
-            $this->load('exchangeSymbol');
+            if ($magnetOrder) {
+                $this->load('exchangeSymbol');
 
-            $magnetOrder->withoutEvents(function () use ($magnetOrder) {
-                $magnetOrder->update(['magnet_status' => 'activated']);
-            });
+                $magnetOrder->withoutEvents(function () use ($magnetOrder) {
+                    $magnetOrder->update(['magnet_status' => 'activated']);
+                });
 
-            return $magnetOrder;
+                return $magnetOrder;
+            }
         }
 
         return null;
