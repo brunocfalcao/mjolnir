@@ -82,9 +82,11 @@ class RunIntegrityChecksCommand extends Command
                     ->where('type', 'PROFIT')
                     ->where('status', '<>', 'NEW')
                     ->exists()) {
-                    User::admin()->get()->each(function ($user) use ($account, $openedPosition) {
+                    $openedProfitOrder = $openedPosition->orders->firstWhere('type', 'PROFIT');
+
+                    User::admin()->get()->each(function ($user) use ($account, $openedPosition, $openedProfitOrder) {
                         $user->pushover(
-                            message: "Account ID {$account->id}, Opened Position {$openedPosition->parsedTradingPair}, ID {$openedPosition->id} with PROFIT order status {$openedPosition->status}. Please check!",
+                            message: "Account ID {$account->id}, Opened Position {$openedPosition->parsedTradingPair}, ID {$openedPosition->id} with PROFIT order status {$openedProfitOrder->status}. Please check!",
                             title: 'Integrity Check failed - Opened position with invalid position',
                             applicationKey: 'nidavellir_warnings'
                         );
