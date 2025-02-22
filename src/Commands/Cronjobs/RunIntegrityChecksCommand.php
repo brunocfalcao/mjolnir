@@ -76,10 +76,10 @@ class RunIntegrityChecksCommand extends Command
             $openedPositions = $account->positions()->with('orders')->where('positions.status', 'active')->get();
 
             foreach ($openedPositions as $openedPosition) {
-                if ($openedPosition->orders()
+                if ($openedPosition->orders
                     ->where('type', 'PROFIT')
                     ->whereNotIn('status', ['NEW', 'PARTIALLY_FILLED'])
-                    ->exists()) {
+                    ->isNotEmpty()) {
                     $openedProfitOrder = $openedPosition->orders->firstWhere('type', 'PROFIT');
 
                     User::admin()->get()->each(function ($user) use ($account, $openedPosition, $openedProfitOrder) {
