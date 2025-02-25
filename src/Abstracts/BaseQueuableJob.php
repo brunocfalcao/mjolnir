@@ -34,7 +34,7 @@ abstract class BaseQueuableJob extends BaseJob
 
             // Max retries reached?
             if ($this->coreJobQueue->retries == $this->retries + 1) {
-                throw new JustResolveException('CoreJobQueue max retries reached (nidavellir error)');
+                throw new JustResolveException('Aborting this coreJobQueue - Max retries reached (nidavellir error). Please check');
             }
 
             // Quick authorization method on the child job.
