@@ -100,7 +100,7 @@ abstract class BaseQueuableJob extends BaseJob
                 }
 
                 // propagate exception.
-                throw $e;
+                // throw $e;
 
                 return;
             }
@@ -113,7 +113,7 @@ abstract class BaseQueuableJob extends BaseJob
                 }
 
                 // propagate exception.
-                throw $e;
+                // throw $e;
 
                 return;
             }
