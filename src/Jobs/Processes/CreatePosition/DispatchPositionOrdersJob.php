@@ -109,7 +109,7 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
         $magnetPercentage = TradeConfiguration::default()->first()->magnet_zone_percentage / 100;
 
         /**
-         * The magnet activation is alway 50% of the magnet percentage zone. Then
+         * The magnet activation is alway 30% of the magnet percentage zone. Then
          * the magnet trigger is the limit price +/- the magnet percentage.
          *
          * Both will be recorded on the orders type=LIMIT, and checked every
@@ -120,10 +120,10 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
             $price = $this->getAveragePrice(($i + 1) * $percentageGap);
 
             if ($side['same'] == 'BUY') {
-                $magnetActivationPrice = api_format_price($price * (1 + (0.5 * $magnetPercentage)), $this->position->exchangeSymbol);
+                $magnetActivationPrice = api_format_price($price * (1 + (0.3 * $magnetPercentage)), $this->position->exchangeSymbol);
                 $magnetTriggerPrice = api_format_price($price * (1 + $magnetPercentage), $this->position->exchangeSymbol);
             } else { // SELL order
-                $magnetActivationPrice = api_format_price($price * (1 - (0.5 * $magnetPercentage)), $this->position->exchangeSymbol);
+                $magnetActivationPrice = api_format_price($price * (1 - (0.3 * $magnetPercentage)), $this->position->exchangeSymbol);
                 $magnetTriggerPrice = api_format_price($price * (1 - $magnetPercentage), $this->position->exchangeSymbol);
             }
 
