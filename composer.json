@@ -21,7 +21,6 @@
         "brunocfalcao/laravel-helpers": "dev-master",
         "brunocfalcao/thor": "dev-master",
         "laravel-notification-channels/pushover": "^4.0",
-        "illuminate/contracts": "^11.0",
         "predis/predis": "^2.2",
         "ratchet/pawl": "^0.4.1"
     },
