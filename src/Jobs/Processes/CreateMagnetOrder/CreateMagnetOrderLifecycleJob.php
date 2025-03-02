@@ -38,6 +38,20 @@ class CreateMagnetOrderLifecycleJob extends BaseQueuableJob
     {
         $blockUuid = (string) Str::uuid();
 
+        /**
+         * We can only cancel the order and create the magnet if the order
+         * that will be magnetized is still on status NEW.
+         */
+        $this->order->apiSync();
+
+        // Magnetized order still available to be cancelled?
+        if ($this->order->type == 'LIMIT' && $this->order->status != 'NEW') {
+            // Reset the magnetized order to cancelled.
+            $this->order->update(['magnet_status' => 'cancelled']);
+
+            return;
+        }
+
         CoreJobQueue::create([
             'class' => CancelOrderJob::class,
             'queue' => 'orders',
