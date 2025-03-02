@@ -12,7 +12,7 @@ abstract class BaseIndicator
 
     public string $type;
 
-    public string $symbol;
+    public ?string $symbol = null;
 
     public function load(array $data): void
     {

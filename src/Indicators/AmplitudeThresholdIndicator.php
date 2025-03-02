@@ -24,7 +24,6 @@ class AmplitudeThresholdIndicator extends BaseIndicator
             count($this->data['low']) < 2 ||
             count($this->data['high']) < 2
         ) {
-            info('[AmplitudeThresholdIndicator] - Not enough data to analyze, returning FALSE.');
             return false; // Not enough data to analyze
         }
 
@@ -45,15 +44,10 @@ class AmplitudeThresholdIndicator extends BaseIndicator
         $priceDifference = $highPrice - $lowPrice;
         $percentageAmplitude = ($priceDifference / $lowPrice) * 100;
 
-        info("[AmplitudeThresholdIndicator] - {$this->symbol} - Oldest Low: $oldestLow, Newest Low: $newestLow, Oldest High: $oldestHigh, Newest High: $newestHigh");
-        info("[AmplitudeThresholdIndicator] - {$this->symbol} - Calculated Amplitude: $percentageAmplitude% (Threshold: {$this->amplitude}%)");
-
         if ($percentageAmplitude > $this->amplitude) {
-            info("[AmplitudeThresholdIndicator] - {$this->symbol} - Amplitude exceeded threshold, returning FALSE.");
             return false;
         }
 
-        info("[AmplitudeThresholdIndicator] - {$this->symbol} - Amplitude within threshold, returning TRUE.");
         return true;
     }
 }
