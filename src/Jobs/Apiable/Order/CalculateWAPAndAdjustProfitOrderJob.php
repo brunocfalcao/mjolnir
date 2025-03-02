@@ -48,7 +48,7 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
             // Something happened and we need to resync the orders. Then we can try again the core job.
             User::admin()->get()->each(function ($user) use ($wap) {
                 $user->pushover(
-                    message: "WAP calculation for ({$this->position->parsedTradingPair} Position ID: {$this->id}) orders need to be resynced and will be retried. Error: {$wap['error']}",
+                    message: "WAP calculation for ({$this->position->parsedTradingPair} Position ID: {$this->position->id}) orders need to be resynced and will be retried. Error: {$wap['error']}",
                     title: 'WAP calculation orders need to be resynced and retried later',
                     applicationKey: 'nidavellir_errors'
                 );
