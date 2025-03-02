@@ -88,7 +88,7 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
                 $user->pushover(
                     message: "Stop-loss placed for {$this->position->parsedTradingPair} at price {$stopPrice}",
                     title: 'Stop-loss order placing error',
-                    applicationKey: 'nidavellir_errors'
+                    applicationKey: 'nidavellir_warnings'
                 );
             });
         }
@@ -105,7 +105,7 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
             $user->pushover(
                 message: "Error placing the stop-loss order for position {$this->position->id}. Please check!",
                 title: 'Stop-loss order placing error',
-                applicationKey: 'nidavellir_errors'
+                applicationKey: 'nidavellir_warnings'
             );
         });
     }

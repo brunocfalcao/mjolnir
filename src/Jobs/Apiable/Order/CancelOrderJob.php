@@ -40,7 +40,7 @@ class CancelOrderJob extends BaseApiableJob
             $user->pushover(
                 message: "Order from {$this->order->position->parsedTradingPair}, Order {$this->order->type} ID {$this->order->id} cancelled, possibly due to a magnetization. If not, please check!",
                 title: 'Order cancelled',
-                applicationKey: 'nidavellir_errors'
+                applicationKey: 'nidavellir_warnings'
             );
         });
     }
@@ -51,7 +51,7 @@ class CancelOrderJob extends BaseApiableJob
             $user->pushover(
                 message: "Error canceling order with ID {$this->order->id}: ".$e->getMessage(),
                 title: 'Error canceling order',
-                applicationKey: 'nidavellir_errors'
+                applicationKey: 'nidavellir_warnings'
             );
         });
     }

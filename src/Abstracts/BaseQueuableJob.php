@@ -170,6 +170,7 @@ abstract class BaseQueuableJob extends BaseJob
                 $this->exceptionHandler->resolveException($e);
             }
 
+            // Did something already updated the core job queue status? -- yes = skip then.
             if (! $this->coreJobQueueStatusUpdated) {
                 // Update to failed, and it's done.
                 $this->coreJobQueue->updateToFailed($e);

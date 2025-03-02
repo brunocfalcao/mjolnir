@@ -83,7 +83,7 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
                 $user->pushover(
                     message: 'A PnL was recorded NEGATIVE. Stopping new positions from being opened. Please check ASAP!',
                     title: 'PnL negative! Something was wrong!',
-                    applicationKey: 'nidavellir_errors'
+                    applicationKey: 'nidavellir_warnings'
                 );
             });
         }
