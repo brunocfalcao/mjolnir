@@ -17,6 +17,7 @@
     "require": {
         "php": "^8.2",
         "angle/chrono": "^1.0",
+        "illuminate/contracts": "^12.0",
         "binance/binance-connector-php": "^1.6",
         "brunocfalcao/laravel-helpers": "dev-master",
         "brunocfalcao/thor": "dev-master",

@@ -12,6 +12,8 @@ abstract class BaseIndicator
 
     public string $type;
 
+    public string $symbol;
+
     public function load(array $data): void
     {
         $this->data = $data;

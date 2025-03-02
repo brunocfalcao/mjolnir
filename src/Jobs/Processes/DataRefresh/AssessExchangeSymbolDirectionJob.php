@@ -51,6 +51,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
         foreach (Indicator::active()->get() as $indicatorModel) {
             $indicatorClass = $indicatorModel->class;
             $indicator = new $indicatorClass;
+            $indicator->symbol = $this->exchangeSymbol->symbol->token;
             $continue = true;
 
             if (! array_key_exists($indicatorModel->canonical, $indicatorData)) {
