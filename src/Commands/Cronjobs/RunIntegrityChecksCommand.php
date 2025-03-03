@@ -128,13 +128,13 @@ class RunIntegrityChecksCommand extends Command
                     $openedProfitOrder = $openedPosition->orders->firstWhere('type', 'PROFIT');
                     if ($wap['quantity'] != $openedProfitOrder->quantity ||
                        $wap['price'] != $openedProfitOrder->price) {
-                        $openedProfitOrder->loadMissing('exchangeSymbol');
+                        $openedPosition->loadMissing('exchangeSymbol');
 
                         // Format values (WAP and Exchange Symbol);
-                        $orderPrice = api_format_price($orderPrice->price, $openedProfitOrder->exchangeSymbol);
-                        $orderQuantity = api_format_quantity($orderPrice->quantity, $openedProfitOrder->exchangeSymbol);
-                        $wapPrice = api_format_price($wap['price'], $openedProfitOrder->exchangeSymbol);
-                        $wapQuantity = api_format_quantity($wap['quantity'], $openedProfitOrder->exchangeSymbol);
+                        $orderPrice = api_format_price($orderPrice->price, $openedPosition->exchangeSymbol);
+                        $orderQuantity = api_format_quantity($orderPrice->quantity, $openedPosition->exchangeSymbol);
+                        $wapPrice = api_format_price($wap['price'], $openedPosition->exchangeSymbol);
+                        $wapQuantity = api_format_quantity($wap['quantity'], $openedPosition->exchangeSymbol);
                         $tradingPair = $openedPosition->parsedTradingPair;
 
                         // Something happened, the WAP is wrongly calculated.
