@@ -21,6 +21,10 @@ class RunIntegrityChecksCommand extends Command
             ->canTrade()
             ->get();
 
+        /**
+         * Most of the integrity checks are calculated on accounts that
+         * can trade.
+         */
         foreach ($accounts as $account) {
             $openOrders = collect($account->apiQueryOpenOrders()->result);
             $exchangeStandbyOrders = $this->getStandbyOrders($openOrders);
@@ -71,7 +75,8 @@ class RunIntegrityChecksCommand extends Command
             /**
              * INTEGRITY CHECK
              *
-             * Verify if we have open positions with PROFIT = FILLED or CANCELLED.
+             * Verify if we have open positions with PROFIT = FILLED or CANCELLED. If that's the case
+             * we need to ALERT for this error so the admin can take action.
              */
             $openedPositions = $account->positions()->with('orders')->where('positions.status', 'active')->get();
 
@@ -89,6 +94,58 @@ class RunIntegrityChecksCommand extends Command
                             applicationKey: 'nidavellir_warnings'
                         );
                     });
+                }
+            }
+
+            /**
+             * INTEGRITY CHECK
+             *
+             * Verify if the WAP is well calculated for each of the
+             * active positions that have at least one limit order filled.
+             */
+            foreach ($openedPositions as $openedPosition) {
+                // Check if the position has at least one FILLED order of the specified types
+                if ($openedPosition->orders()
+                    ->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
+                    ->where('status', 'FILLED')
+                    ->exists()) {
+
+                    /**
+                     * Lets calculate the WAP, and then verify if it's the same
+                     * price and quantity as the profit order. If not, we
+                     * recalculate the WAP.
+                     */
+
+                    /**
+                        return [
+                            'resync' => $resync,
+                            'error' => $error,
+                            'quantity' => api_format_quantity($totalQuantity, $this->exchangeSymbol),
+                            'price' => api_format_price($wapPrice, $this->exchangeSymbol),
+                        ];
+                     */
+                    $wap = $openedPosition->calculateWAP();
+                    $openedProfitOrder = $openedPosition->orders->firstWhere('type', 'PROFIT');
+                    if ($wap['quantity'] != $openedProfitOrder->quantity ||
+                       $wap['price'] != $openedProfitOrder->price) {
+                        $openedProfitOrder->local('exchangeSymbol');
+
+                        // Format values (WAP and Exchange Symbol);
+                        $orderPrice = api_format_price($orderPrice->price, $openedProfitOrder->exchangeSymbol);
+                        $orderQuantity = api_format_quantity($orderPrice->quantity, $openedProfitOrder->exchangeSymbol);
+                        $wapPrice = api_format_price($wap['price'], $openedProfitOrder->exchangeSymbol);
+                        $wapQuantity = api_format_quantity($wap['quantity'], $openedProfitOrder->exchangeSymbol);
+                        $tradingPair = $openedPosition->parsedTradingPair;
+
+                        // Something happened, the WAP is wrongly calculated.
+                        User::admin()->get()->each(function ($user) use ($tradingPair, $orderPrice, $orderQuantity, $wapPrice, $wapQuantity) {
+                            $user->pushover(
+                                message: "Position {$tradingPair} with wrong WAP calculation: Current: {$orderPrice}/{$orderQuantity} vs correct: {$wapPrice}/{$wapQuantity}",
+                                title: "{$tradingPair} - Integrity check failed - WAP wrongly calculated",
+                                applicationKey: 'nidavellir_warnings'
+                            );
+                        });
+                    }
                 }
             }
         }
