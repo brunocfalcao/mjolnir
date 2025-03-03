@@ -131,8 +131,8 @@ class RunIntegrityChecksCommand extends Command
                         $openedPosition->loadMissing('exchangeSymbol');
 
                         // Format values (WAP and Exchange Symbol);
-                        $orderPrice = api_format_price($orderPrice->price, $openedPosition->exchangeSymbol);
-                        $orderQuantity = api_format_quantity($orderPrice->quantity, $openedPosition->exchangeSymbol);
+                        $orderPrice = api_format_price($openedProfitOrder->price, $openedPosition->exchangeSymbol);
+                        $orderQuantity = api_format_quantity($openedProfitOrder->quantity, $openedPosition->exchangeSymbol);
                         $wapPrice = api_format_price($wap['price'], $openedPosition->exchangeSymbol);
                         $wapQuantity = api_format_quantity($wap['quantity'], $openedPosition->exchangeSymbol);
                         $tradingPair = $openedPosition->parsedTradingPair;
