@@ -128,7 +128,7 @@ class RunIntegrityChecksCommand extends Command
                     $openedProfitOrder = $openedPosition->orders->firstWhere('type', 'PROFIT');
                     if ($wap['quantity'] != $openedProfitOrder->quantity ||
                        $wap['price'] != $openedProfitOrder->price) {
-                        $openedProfitOrder->local('exchangeSymbol');
+                        $openedProfitOrder->loadMissing('exchangeSymbol');
 
                         // Format values (WAP and Exchange Symbol);
                         $orderPrice = api_format_price($orderPrice->price, $openedProfitOrder->exchangeSymbol);
