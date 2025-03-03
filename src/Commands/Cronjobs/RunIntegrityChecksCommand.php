@@ -3,9 +3,11 @@
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
 use Illuminate\Console\Command;
+use Nidavellir\Thor\Models\User;
 use Illuminate\Support\Collection;
 use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\User;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Mjolnir\Jobs\Apiable\Order\CalculateWAPAndAdjustProfitOrderJob;
 
 class RunIntegrityChecksCommand extends Command
 {
@@ -140,11 +142,21 @@ class RunIntegrityChecksCommand extends Command
                         // Something happened, the WAP is wrongly calculated.
                         User::admin()->get()->each(function ($user) use ($tradingPair, $orderPrice, $orderQuantity, $wapPrice, $wapQuantity) {
                             $user->pushover(
-                                message: "Position {$tradingPair} with wrong WAP calculation: Current: {$orderPrice}/{$orderQuantity} vs correct: {$wapPrice}/{$wapQuantity}",
+                                message: "Position {$tradingPair} with wrong WAP calculation: Current: {$orderPrice}/{$orderQuantity} vs correct: {$wapPrice}/{$wapQuantity}. Triggering recalculation ...",
                                 title: "{$tradingPair} - Integrity check failed - WAP wrongly calculated",
                                 applicationKey: 'nidavellir_warnings'
                             );
                         });
+
+                        CoreJobQueue::create([
+                            'class' => CalculateWAPAndAdjustProfitOrderJob::class,
+                            'queue' => 'orders',
+                            'arguments' => [
+                                'orderId' => $openedProfitOrder->id,
+                                'originalPrice' => $openedProfitOrder->price,
+                                'originalQuantity' => $openedProfitOrder->quantity,
+                            ]
+                        ]);
                     }
                 }
             }
