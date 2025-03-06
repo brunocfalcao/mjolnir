@@ -29,6 +29,10 @@ class EMAsSameDirection extends BaseIndicator
         $trend = null;
 
         foreach ($emas as $ema) {
+            if (! array_key_exists('value', $ema['result'])) {
+                return null;
+            }
+
             $values = $ema['result']['value'];
 
             if (! isset($values[1]) || ! isset($values[0])) {
