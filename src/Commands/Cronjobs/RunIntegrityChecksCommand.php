@@ -3,11 +3,11 @@
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
 use Illuminate\Console\Command;
-use Nidavellir\Thor\Models\User;
 use Illuminate\Support\Collection;
+use Nidavellir\Mjolnir\Jobs\Apiable\Order\CalculateWAPAndAdjustProfitOrderJob;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Mjolnir\Jobs\Apiable\Order\CalculateWAPAndAdjustProfitOrderJob;
+use Nidavellir\Thor\Models\User;
 
 class RunIntegrityChecksCommand extends Command
 {
@@ -155,7 +155,7 @@ class RunIntegrityChecksCommand extends Command
                                 'orderId' => $openedProfitOrder->id,
                                 'originalPrice' => $openedProfitOrder->price,
                                 'originalQuantity' => $openedProfitOrder->quantity,
-                            ]
+                            ],
                         ]);
                     }
                 }
