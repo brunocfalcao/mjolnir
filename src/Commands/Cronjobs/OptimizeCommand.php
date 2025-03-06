@@ -5,7 +5,6 @@ namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
-use Nidavellir\Thor\Models\User;
 
 class OptimizeCommand extends Command
 {
@@ -20,16 +19,6 @@ class OptimizeCommand extends Command
         $this->cleanLogs();
         $this->clearCache();
         $this->optimize();
-
-        /*
-        User::admin()->get()->each(function ($user) {
-            $user->pushover(
-                message: 'Cronjob optimize ran successfully',
-                title: 'Optimize cronjob status',
-                applicationKey: 'nidavellir_cronjobs'
-            );
-        });
-        */
     }
 
     private function cleanLogs()

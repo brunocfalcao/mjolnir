@@ -53,6 +53,7 @@ trait HasWAPFeatures
 
             // Is there a difference between both? -- Cast to strings.
             if ((string) $positionQuantity != (string) $totalQuantity) {
+                /*
                 User::admin()->get()->each(function ($user) use ($positionQuantity, $totalQuantity) {
                     $user->pushover(
                         message: "WAP difference ({$this->parsedTradingPair} ID: {$this->id}) - Exchange: {$positionQuantity}, DB (M+L): {$totalQuantity}",
@@ -60,6 +61,7 @@ trait HasWAPFeatures
                         applicationKey: 'nidavellir_warnings'
                     );
                 });
+                */
 
                 $difference = abs($positionQuantity - $totalQuantity);
 

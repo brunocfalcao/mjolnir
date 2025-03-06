@@ -110,21 +110,17 @@ class RunIntegrityChecksCommand extends Command
                 if ($openedPosition->orders()
                     ->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
                     ->where('status', 'FILLED')
-                    ->exists()) {
+                    ->exists() &&
+                    $openedPosition->orders()
+                        ->whereIn('type', 'PROFIT')
+                        ->whereIn('status', ['NEW', 'PARTIALLY_FILLED'])
+                        ->exists()
+                ) {
 
                     /**
                      * Lets calculate the WAP, and then verify if it's the same
                      * price and quantity as the profit order. If not, we
                      * recalculate the WAP.
-                     */
-
-                    /**
-                        return [
-                            'resync' => $resync,
-                            'error' => $error,
-                            'quantity' => api_format_quantity($totalQuantity, $this->exchangeSymbol),
-                            'price' => api_format_price($wapPrice, $this->exchangeSymbol),
-                        ];
                      */
                     $wap = $openedPosition->calculateWAP();
                     $openedProfitOrder = $openedPosition->orders->firstWhere('type', 'PROFIT');
