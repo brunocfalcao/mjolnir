@@ -104,6 +104,8 @@ class RunIntegrityChecksCommand extends Command
              *
              * Verify if the WAP is well calculated for each of the
              * active positions that have at least one limit order filled.
+             *
+             * Discard cases where the positions.wap_triggered is true.
              */
             foreach ($openedPositions as $openedPosition) {
                 // Check if the position has at least one FILLED order of the specified types
@@ -114,7 +116,8 @@ class RunIntegrityChecksCommand extends Command
                     $openedPosition->orders()
                         ->where('type', 'PROFIT')
                         ->whereIn('status', ['NEW', 'PARTIALLY_FILLED'])
-                        ->exists()
+                        ->exists() &&
+                    $openedPosition->wap_triggered == false
                 ) {
 
                     /**
