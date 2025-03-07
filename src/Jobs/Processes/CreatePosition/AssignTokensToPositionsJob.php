@@ -98,7 +98,10 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
                         $data['direction'] = $selectedExchangeSymbol['direction'];
                     }
 
+                    // Copy specific exchange symbol information to the position.
                     $data['exchange_symbol_id'] = $selectedExchangeSymbol->id;
+                    $data['indicators'] = $selectedExchangeSymbol->indicators;
+                    $data['indicator_timeframe'] = $selectedExchangeSymbol->indicator_timeframe;
 
                     $position->update($data);
 
