@@ -112,7 +112,7 @@ class RunIntegrityChecksCommand extends Command
                     ->where('status', 'FILLED')
                     ->exists() &&
                     $openedPosition->orders()
-                        ->whereIn('type', 'PROFIT')
+                        ->where('type', 'PROFIT')
                         ->whereIn('status', ['NEW', 'PARTIALLY_FILLED'])
                         ->exists()
                 ) {
