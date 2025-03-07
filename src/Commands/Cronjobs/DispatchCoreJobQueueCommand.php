@@ -9,12 +9,12 @@ class DispatchCoreJobQueueCommand extends Command
 {
     protected $signature = 'mjolnir:dispatch-core-job-queue';
 
-    protected $description = 'Dispatch all pending API jobs';
+    protected $description = 'Dispatch all pending API jobs.';
 
     public function handle()
     {
         CoreJobQueue::dispatch();
 
-        return 0;
+        return Command::SUCCESS;
     }
 }

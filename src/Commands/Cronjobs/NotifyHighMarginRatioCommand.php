@@ -9,31 +9,45 @@ class NotifyHighMarginRatioCommand extends Command
 {
     protected $signature = 'mjolnir:notify-high-margin-ratio';
 
-    protected $description = 'If the margin ratio is above a threshold, it will send a notification';
+    protected $description = 'Send a notification if the margin ratio exceeds the defined threshold.';
 
     public function handle()
     {
-        $accounts = Account::whereHas('user', function ($query) {
-            $query->where('is_trader', true); // Ensure the user is a trader
-        })->with('user')
+        // Retrieve active trading accounts.
+        $accounts = Account::whereHas('user', fn ($query) => $query->where('is_trader', true))
+            ->with('user')
             ->canTrade()
             ->get();
 
         foreach ($accounts as $account) {
             $balance = $account->apiQuery()->result;
 
-            // Compute the margin ratio. If more than X%, send notification.
-            $marginRatio = round($balance['totalMaintMargin'] / $balance['totalMarginBalance'] * 100, 2);
+            // Ensure necessary balance keys exist before computing margin ratio.
+            if (! isset($balance['totalMaintMargin'], $balance['totalMarginBalance']) || $balance['totalMarginBalance'] == 0) {
+                continue;
+            }
 
+            // Compute the margin ratio percentage.
+            $marginRatio = round(($balance['totalMaintMargin'] / $balance['totalMarginBalance']) * 100, 2);
+
+            // Send notification if the margin ratio exceeds the account's threshold.
             if ($marginRatio > $account->margin_ratio_notification_threshold) {
-                $account->user->pushover(
-                    message: 'Your account have a high margin ratio: '.$marginRatio.'%',
-                    title: 'Margin ratio alert',
-                    applicationKey: 'nidavellir_warnings'
-                );
+                $this->sendMarginAlert($account, $marginRatio);
             }
         }
 
-        return 0;
+        return Command::SUCCESS;
+    }
+
+    /**
+     * Sends a margin ratio alert notification to the user.
+     */
+    private function sendMarginAlert(Account $account, float $marginRatio): void
+    {
+        $account->user->pushover(
+            message: "Your account has a high margin ratio: {$marginRatio}%.",
+            title: 'Margin Ratio Alert',
+            applicationKey: 'nidavellir_warnings'
+        );
     }
 }

@@ -3,9 +3,6 @@
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Jobs\Processes\CreatePosition\CreateNewPositionsJob;
 use Nidavellir\Mjolnir\Jobs\Processes\CreatePosition\VerifyPreConditionsJob;
@@ -13,50 +10,39 @@ use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\Symbol;
 
 class DispatchPositionsCommand extends Command
 {
-    protected $signature = 'mjolnir:dispatch-positions {--clean : Truncate tables, clear logs, and create testing data before execution}';
+    protected $signature = 'mjolnir:dispatch-positions';
 
-    protected $description = 'Dispatch all possible remaining to be opened positions, for all possible accounts';
+    protected $description = 'Dispatch all possible remaining positions for eligible accounts.';
 
     public function handle()
     {
-        if ($this->option('clean')) {
-            File::put(storage_path('logs/laravel.log'), '');
-            $this->cleanData();
-            // $this->createTestingData();
-        }
-
-        // Do we have exchange symbols?
+        // Exit early if no exchange symbols exist.
         if (! ExchangeSymbol::query()->exists()) {
             return;
         }
 
-        // Only process accounts belonging to traders.
-        $accounts = Account::whereHas('user', function ($query) {
-            $query->where('is_trader', true); // Ensure the user is a trader
-        })->with('user')
+        // Retrieve active trader accounts eligible for trading.
+        $accounts = Account::whereHas('user', fn ($query) => $query->where('is_trader', true))
+            ->with('user')
             ->canTrade()
             ->get();
 
         foreach ($accounts as $account) {
-            // Get open positions for the account.
-            $openPositions = Position::active()->where('account_id', $account->id)->get();
+            // Fetch the number of open positions for this account.
+            $openPositions = Position::active()
+                ->where('account_id', $account->id)
+                ->count();
 
-            // Calculate the delta.
-            $delta = $account->max_concurrent_trades - $openPositions->count();
-
-            $blockUuid = (string) Str::uuid();
+            // Determine how many more positions can be opened.
+            $delta = $account->max_concurrent_trades - $openPositions;
 
             if ($delta > 0) {
-                /**
-                 * Verify all the financial conditions to open a new position
-                 * for the respective account, and also specific
-                 * risk-management conditions that might stop
-                 * the position to be opened.
-                 */
+                $blockUuid = Str::uuid()->toString();
+
+                // Queue precondition verification job.
                 CoreJobQueue::create([
                     'class' => VerifyPreConditionsJob::class,
                     'queue' => 'positions',
@@ -67,9 +53,7 @@ class DispatchPositionsCommand extends Command
                     'block_uuid' => $blockUuid,
                 ]);
 
-                /**
-                 * Create as much positions as the delta using this job.
-                 */
+                // Queue job to create new positions based on delta.
                 CoreJobQueue::create([
                     'class' => CreateNewPositionsJob::class,
                     'queue' => 'positions',
@@ -83,75 +67,6 @@ class DispatchPositionsCommand extends Command
             }
         }
 
-        return 0;
-    }
-
-    protected function cleanData()
-    {
-        // Clear logs and truncate tables
-        DB::table('core_job_queue')->truncate();
-        DB::table('api_requests_log')->truncate();
-        DB::table('rate_limits')->truncate();
-        DB::table('positions')->truncate();
-        DB::table('orders')->truncate();
-    }
-
-    protected function createTestingData()
-    {
-        // Create the first Position (fast-traded, satisfies the criteria)
-        $id = 17;
-        Position::create([
-            'account_id' => 1, // Replace with a valid account_id
-            'exchange_symbol_id' => $id, // Replace with a valid exchange_symbol_id
-            'margin' => Account::find(1)->margin_override,
-            'direction' => ExchangeSymbol::find($id)->direction,
-            'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago
-            'closed_at' => Carbon::now(), // Closed now
-            'created_at' => Carbon::now()->subMinutes(2), // Created 2 minutes ago
-            'updated_at' => Carbon::now(), // Updated now
-            'status' => 'new', // Set the status to closed
-        ]);
-
-        // Create the first Position (fast-traded, satisfies the criteria)
-        $id = 15;
-        Position::create([
-            'account_id' => 1, // Replace with a valid account_id
-            'exchange_symbol_id' => $id, // Replace with a valid exchange_symbol_id
-            'margin' => Account::find(1)->margin_override,
-            'direction' => ExchangeSymbol::find($id)->direction,
-            'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago
-            'closed_at' => Carbon::now(), // Closed now
-            'created_at' => Carbon::now()->subMinutes(2), // Created 2 minutes ago
-            'updated_at' => Carbon::now(), // Updated now
-            'status' => 'closed', // Set the status to closed
-        ]);
-
-        // Create the second Position (does not satisfy the criteria, created more than 5 minutes ago)
-        $id = 7;
-        Position::create([
-            'account_id' => 1, // Replace with a valid account_id
-            'exchange_symbol_id' => $id, // Replace with a valid exchange_symbol_id
-            'margin' => Account::find(1)->margin_override,
-            'direction' => ExchangeSymbol::find($id)->direction,
-            'started_at' => Carbon::now()->subMinutes(10), // Started 10 minutes ago
-            'closed_at' => Carbon::now()->subMinutes(7), // Closed 7 minutes ago
-            'created_at' => Carbon::now()->subMinutes(10), // Created 10 minutes ago
-            'updated_at' => Carbon::now()->subMinutes(7), // Updated 7 minutes ago
-            'status' => 'new', // Set the status to closed
-        ]);
-
-        // Create another Position (fast-traded, satisfies the criteria)
-        $id = 14;
-        Position::create([
-            'account_id' => 1, // Replace with a valid account_id
-            'exchange_symbol_id' => $id, // Replace with a valid exchange_symbol_id
-            'margin' => Account::find(1)->margin_override,
-            'direction' => ExchangeSymbol::find($id)->direction,
-            'started_at' => Carbon::now()->subMinutes(2), // Started 2 minutes ago
-            'closed_at' => Carbon::now(), // Closed now
-            'created_at' => Carbon::now()->subMinutes(2), // Created 2 minutes ago
-            'updated_at' => Carbon::now(), // Updated now
-            'status' => 'closed', // Set the status to closed
-        ]);
+        return Command::SUCCESS;
     }
 }

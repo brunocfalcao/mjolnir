@@ -3,6 +3,8 @@
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Nidavellir\Mjolnir\Jobs\Processes\DataRefresh\QueryExchangeLeverageBracketsJob;
 use Nidavellir\Mjolnir\Jobs\Processes\DataRefresh\QueryExchangeMarketDataJob;
@@ -14,19 +16,34 @@ use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Symbol;
 use Nidavellir\Thor\Models\TradingPair;
 
-class RefreshDataCommand extends Command
+class _RefreshDataCommand extends Command
 {
-    protected $signature = 'mjolnir:refresh-data';
+    protected $signature = 'mjolnir:refresh-data {--clean : Truncate base data tables before running}';
 
     protected $description = 'Executes the hourly refresh cronjobs (symbols, exchange symbols, delisting, etc).';
 
     public function handle()
     {
-        // Generate a unique block identifier for job grouping.
+        // Always truncate the log file
+        // File::put(storage_path('logs/laravel.log'), '');
+
+        // Optional truncation of base data tables if --clean is provided
+        if ($this->option('clean')) {
+            File::put(storage_path('logs/laravel.log'), '');
+            DB::table('core_job_queue')->truncate();
+            DB::table('api_requests_log')->truncate();
+            DB::table('symbols')->truncate();
+            DB::table('exchange_symbols')->truncate();
+            DB::table('rate_limits')->truncate();
+            DB::table('positions')->truncate();
+            DB::table('orders')->truncate();
+        }
+
         $blockUuid = (string) Str::uuid();
 
-        // Upsert symbols for trading pairs not yet present in the database.
+        // Upsert Symbols
         foreach (TradingPair::all() as $tradingPair) {
+            // Verify if the symbol is already in the database
             if (! Symbol::where('cmc_id', $tradingPair->cmc_id)->exists()) {
                 CoreJobQueue::create([
                     'class' => UpsertSymbolsJob::class,
@@ -40,7 +57,6 @@ class RefreshDataCommand extends Command
             }
         }
 
-        // Queue a job to sync all symbols.
         CoreJobQueue::create([
             'class' => SyncAllSymbolsJob::class,
             'queue' => 'cronjobs',
@@ -48,7 +64,7 @@ class RefreshDataCommand extends Command
             'block_uuid' => $blockUuid,
         ]);
 
-        // Queue jobs for each exchange to query market data.
+        // Exchange Information
         foreach (ApiSystem::allExchanges() as $exchange) {
             CoreJobQueue::create([
                 'class' => QueryExchangeMarketDataJob::class,
@@ -62,7 +78,7 @@ class RefreshDataCommand extends Command
             ]);
         }
 
-        // Queue jobs for each exchange to query leverage brackets.
+        // Leverage Brackets
         foreach (ApiSystem::allExchanges() as $exchange) {
             CoreJobQueue::create([
                 'class' => QueryExchangeLeverageBracketsJob::class,
@@ -76,7 +92,7 @@ class RefreshDataCommand extends Command
             ]);
         }
 
-        // Queue jobs for each exchange to upsert exchange symbols.
+        // Exchange Symbols
         foreach (ApiSystem::allExchanges() as $exchange) {
             CoreJobQueue::create([
                 'class' => UpsertExchangeSymbolsJob::class,
@@ -89,8 +105,13 @@ class RefreshDataCommand extends Command
             ]);
         }
 
-        // Note: The UpsertExchangeSymbolsJob will automatically trigger indicator jobs after completion.
+        /**
+         * The UpsertExchangeSymbolsJob, when it's finished, will
+         * create new core jobs for the indicators. Each exchange symbol
+         * will have its own block_uuid with fetch indicator and calculate
+         * trading side.
+         */
 
-        return Command::SUCCESS;
+        return 0;
     }
 }

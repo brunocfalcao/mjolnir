@@ -10,34 +10,40 @@ class OptimizeCommand extends Command
 {
     protected $signature = 'mjolnir:optimize';
 
-    protected $description = 'Clean log files and clear Laravel cache to free disk space';
+    protected $description = 'Clean log files and clear Laravel cache to free disk space.';
 
     public function handle()
     {
-        $hostname = gethostname();
-
+        // Clean log files from the storage directory.
         $this->cleanLogs();
+
+        // Clear Laravel caches using artisan commands.
         $this->clearCache();
-        $this->optimize();
+
+        // Run Laravel optimization command.
+        $this->optimizeApplication();
+
+        return Command::SUCCESS;
     }
 
+    // Clean all files from the logs directory.
     private function cleanLogs()
     {
         $logPath = storage_path('logs');
-        $files = File::allFiles($logPath);
-
-        foreach ($files as $file) {
-            File::delete($file);
+        if (File::exists($logPath)) {
+            File::cleanDirectory($logPath);
         }
     }
 
+    // Clear Laravel caches using the optimize:clear artisan command.
     private function clearCache()
     {
         Artisan::call('optimize:clear');
         sleep(1);
     }
 
-    private function optimize()
+    // Run Laravel optimization using the optimize artisan command.
+    private function optimizeApplication()
     {
         Artisan::call('optimize');
     }
