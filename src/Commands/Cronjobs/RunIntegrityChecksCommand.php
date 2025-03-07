@@ -50,7 +50,7 @@ class RunIntegrityChecksCommand extends Command
             if (abs($exchangeStandbyOrders->count() - $dbStandbyOrders->count()) > 8) {
                 User::admin()->get()->each(function ($user) use ($account, $exchangeStandbyOrders, $dbStandbyOrders) {
                     $user->pushover(
-                        message: "Account ID {$account->id}: Exchange Standby Orders = {$exchangeStandbyOrders->count()}, DB Standby Orders = {$dbStandbyOrders->count()}",
+                        message: "Account ID {$account->id}: Exchange Standby Orders = {$exchangeStandbyOrders->count()}, DB Standby Orders = {$dbStandbyOrders->count()}. Please check!",
                         title: 'Integrity Check failed - Total standby orders mismatch',
                         applicationKey: 'nidavellir_warnings'
                     );
@@ -67,7 +67,7 @@ class RunIntegrityChecksCommand extends Command
             if (count($positions) > $account->max_concurrent_trades && $account->max_concurrent_trades > 0) {
                 User::admin()->get()->each(function ($user) use ($account, $positions) {
                     $user->pushover(
-                        message: "Account ID {$account->id}: Max positions exceeded. Exchange opened positions: ".count($positions).', Max concurrent positions: '.$account->max_concurrent_trades,
+                        message: "Account ID {$account->id}: Max positions exceeded. Exchange opened positions: ".count($positions).', Max concurrent positions: '.$account->max_concurrent_trades . '. Please check!',
                         title: 'Integrity Check failed - Max concurrent positions exceeded',
                         applicationKey: 'nidavellir_warnings'
                     );
@@ -92,7 +92,7 @@ class RunIntegrityChecksCommand extends Command
                     User::admin()->get()->each(function ($user) use ($openedPosition, $openedProfitOrder) {
                         $user->pushover(
                             message: "Active Position {$openedPosition->parsedTradingPair} ID {$openedPosition->id} with PROFIT order ID {$openedProfitOrder->id}, with status {$openedProfitOrder->status}. Please check!",
-                            title: 'Integrity Check failed - Opened position with invalid position',
+                            title: 'Integrity Check failed - Opened position with invalid profit order status',
                             applicationKey: 'nidavellir_warnings'
                         );
                     });
@@ -139,13 +139,15 @@ class RunIntegrityChecksCommand extends Command
                         $tradingPair = $openedPosition->parsedTradingPair;
 
                         // Something happened, the WAP is wrongly calculated.
+                        /*
                         User::admin()->get()->each(function ($user) use ($tradingPair, $orderPrice, $orderQuantity, $wapPrice, $wapQuantity) {
                             $user->pushover(
-                                message: "Position {$tradingPair} with wrong WAP calculation: Current: {$orderPrice}/{$orderQuantity} vs correct: {$wapPrice}/{$wapQuantity}. Triggering recalculation ...",
+                                message: "Position {$tradingPair} with wrong WAP calculation: Current: {$orderPrice}/{$orderQuantity} vs correct: {$wapPrice}/{$wapQuantity}. Will trigger recalculation!",
                                 title: "{$tradingPair} - Integrity check failed - WAP wrongly calculated",
                                 applicationKey: 'nidavellir_warnings'
                             );
                         });
+                        */
 
                         CoreJobQueue::create([
                             'class' => CalculateWAPAndAdjustProfitOrderJob::class,
