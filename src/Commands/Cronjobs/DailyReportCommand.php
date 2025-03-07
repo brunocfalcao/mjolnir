@@ -11,61 +11,49 @@ class DailyReportCommand extends Command
 {
     protected $signature = 'mjolnir:daily-report';
 
-    protected $description = 'Reports the daily profit statistics based on wallet balance difference';
+    protected $description = 'Reports the daily profit statistics based on wallet balance difference.';
 
     public function handle()
     {
-        // Fetch accounts belonging to traders that are active and can trade.
-        $accounts = Account::whereHas('user', function ($query) {
-            $query->where('is_trader', true);
-        })->with(['user', 'quote'])
+        // Cache today's start time to avoid redundant function calls.
+        $startOfDay = now()->startOfDay();
+
+        // Retrieve all active trader accounts that are eligible to trade.
+        $accounts = Account::whereHas('user', fn ($query) => $query->where('is_trader', true))
+            ->with(['user', 'quote'])
             ->canTrade()
             ->get();
 
         foreach ($accounts as $account) {
-            // Fetch the snapshot for the beginning of the current day.
+            // Fetch the earliest balance snapshot recorded today.
             $startOfDaySnapshot = AccountBalanceHistory::where('account_id', $account->id)
-                ->where('created_at', '>=', now()->startOfDay())
-                ->orderBy('created_at')
+                ->where('created_at', '>=', $startOfDay)
+                ->oldest('created_at')
                 ->first();
 
-            // Fetch the latest snapshot for the account.
+            // Fetch the most recent balance snapshot available.
             $currentSnapshot = AccountBalanceHistory::where('account_id', $account->id)
-                ->orderByDesc('created_at')
+                ->latest('created_at')
                 ->first();
 
-            // Default values for balances.
-            $totalWalletBalance = 0;
-            $startOfDayBalance = 0;
-            $currentDayProfit = 0;
-
-            if ($currentSnapshot) {
-                $totalWalletBalance = round($currentSnapshot->total_wallet_balance, 2);
-            }
-
-            if ($startOfDaySnapshot) {
-                $startOfDayBalance = round($startOfDaySnapshot->total_wallet_balance, 2);
-            }
-
-            // Calculate the profit for the current day based on total wallet balance difference.
+            $totalWalletBalance = round($currentSnapshot?->total_wallet_balance ?? 0, 2);
+            $startOfDayBalance = round($startOfDaySnapshot?->total_wallet_balance ?? 0, 2);
             $currentDayProfit = round($totalWalletBalance - $startOfDayBalance, 2);
 
-            // Count trades closed today.
+            // Count the number of trades closed since the start of the day.
             $totalTradesToday = Position::where('account_id', $account->id)
                 ->where('status', 'closed')
-                ->where('updated_at', '>=', now()->startOfDay())
+                ->where('updated_at', '>=', $startOfDay)
                 ->count();
 
-            $quote = $account->quote->canonical;
-
-            // Notify all admin users via pushover.
+            // Send a summary report notification to the account owner.
             $account->user->pushover(
-                message: "Wallet Balance: {$totalWalletBalance} {$quote}, Daily Profit: {$currentDayProfit} {$quote}, Daily Trades: {$totalTradesToday}",
-                title: "Account report for {$account->user->name}, ID: {$account->id}",
+                message: "Wallet Balance: {$totalWalletBalance} {$account->quote->canonical}, Daily Profit: {$currentDayProfit} {$account->quote->canonical}, Daily Trades: {$totalTradesToday}.",
+                title: "Account report for {$account->user->name}, ID: {$account->id}.",
                 applicationKey: 'nidavellir_cronjobs'
             );
         }
 
-        return 0;
+        return Command::SUCCESS;
     }
 }
