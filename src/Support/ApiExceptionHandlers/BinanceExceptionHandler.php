@@ -32,6 +32,6 @@ class BinanceExceptionHandler extends BaseExceptionHandler
     public $httpRetryableStatusCodes = [
         503,
         400 => [-1021],
-        408 => [-1007]
+        408 => [-1007],
     ];
 }
