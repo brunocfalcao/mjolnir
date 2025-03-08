@@ -19,6 +19,25 @@ class RunIntegrityChecksCommand extends Command
 
     public function handle()
     {
+        // I want to check on the core_job_queue (CoreJob) has delayed/not picked entries for more than 5 minutes.
+        $notProcessedJobs = CoreJobQueue::where('status', 'pending')
+        ->where(function ($query) {
+            $query->whereNull('dispatch_after')
+                  ->orWhere('dispatch_after', '<=', Carbon::now());
+        })
+        ->where('created_at', '<=', Carbon::now()->subMinutes(5))
+        ->get();
+
+        if ($notProcessedJobs->isNotEmpty()) {
+            User::admin()->get()->each(function ($user) {
+                $user->pushover(
+                    message: "There are Core Job Queue entries to be processed longer than 5 mins ago!",
+                    title: 'Integrity Check failed - Delayed processing core job queue entries',
+                    applicationKey: 'nidavellir_warnings'
+                );
+            });
+        }
+
         // Verify if there is a laravel.log file, and if it was created less than 15 mins ago.
         $logPath = storage_path('logs/laravel.log');
 
@@ -34,7 +53,6 @@ class RunIntegrityChecksCommand extends Command
 
         // Compare with the current time.
         if ($fileTime->diffInMinutes(Carbon::now()) < 15) {
-            // Notify admin users about a mismatch in standby orders.
             User::admin()->get()->each(function ($user) {
                 $user->pushover(
                     message: "A laravel.log file was created earlier today",
