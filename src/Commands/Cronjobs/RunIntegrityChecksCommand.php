@@ -29,9 +29,9 @@ class RunIntegrityChecksCommand extends Command
         ->get();
 
         if ($notProcessedJobs->isNotEmpty()) {
-            User::admin()->get()->each(function ($user) {
+            User::admin()->get()->each(function ($user) use ($notProcessedJobs) {
                 $user->pushover(
-                    message: "There are Core Job Queue entries to be processed longer than 5 mins ago!",
+                    message: "There are Core Job Queue entries to be processed longer than 5 mins ago! E.g.: ID: " . $notProcessedJobs->first()->id,
                     title: 'Integrity Check failed - Delayed processing core job queue entries',
                     applicationKey: 'nidavellir_warnings'
                 );
