@@ -2,12 +2,14 @@
 
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Collection;
-use Nidavellir\Mjolnir\Jobs\Apiable\Order\CalculateWAPAndAdjustProfitOrderJob;
-use Nidavellir\Thor\Models\Account;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\User;
+use Illuminate\Support\Collection;
+use Nidavellir\Thor\Models\Account;
+use Illuminate\Support\Facades\File;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Mjolnir\Jobs\Apiable\Order\CalculateWAPAndAdjustProfitOrderJob;
 
 class RunIntegrityChecksCommand extends Command
 {
@@ -17,6 +19,31 @@ class RunIntegrityChecksCommand extends Command
 
     public function handle()
     {
+        // Verify if there is a laravel.log file, and if it was created less than 15 mins ago.
+        $logPath = storage_path('logs/laravel.log');
+
+        // Check if the file exists.
+        if (!File::exists($logPath)) {
+            $this->error('Log file does not exist.');
+            return 1;
+        }
+
+        // Get the file's last modified time.
+        $lastModified = File::lastModified($logPath);
+        $fileTime = Carbon::createFromTimestamp($lastModified);
+
+        // Compare with the current time.
+        if ($fileTime->diffInMinutes(Carbon::now()) < 15) {
+            // Notify admin users about a mismatch in standby orders.
+            User::admin()->get()->each(function ($user) {
+                $user->pushover(
+                    message: "A laravel.log file was created earlier today",
+                    title: 'Integrity Check failed - A laravel.log file was created',
+                    applicationKey: 'nidavellir_warnings'
+                );
+            });
+        }
+
         // Retrieve accounts where the user is a trader and is eligible for trading.
         $accounts = Account::whereHas('user', function ($query) {
             $query->where('is_trader', true);
