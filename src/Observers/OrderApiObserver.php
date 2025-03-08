@@ -229,7 +229,7 @@ class OrderApiObserver
         }
 
         // Limit order filled or partially filled? -- Compute WAP.
-        if (($order->status == 'FILLED' || $order->status == 'PARTIALLY_FILLED') && $order->getOriginal('status') != 'FILLED' && ($order->type == 'LIMIT' || $order->type == 'MARKET-MAGNET')) {
+        if (($order->status == 'FILLED') && $order->getOriginal('status') != 'FILLED' && ($order->type == 'LIMIT' || $order->type == 'MARKET-MAGNET')) {
             // WAP calculation.
             // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Limit order filled or partially filled, recalculating WAP and readjusting Profit order');
             // info('[OrderApiObserver] '.$token.' - '.$order->type.' Order ID: '.$order->id.' - Triggering CalculateWAPAndAdjustProfitOrderJob::class');
