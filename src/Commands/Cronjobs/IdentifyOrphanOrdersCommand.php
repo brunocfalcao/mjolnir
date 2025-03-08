@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\User;
 
-class _IdentifyOrphanOrdersCommand extends Command
+class IdentifyOrphanOrdersCommand extends Command
 {
     protected $signature = 'mjolnir:identify-orphan-orders';
 
