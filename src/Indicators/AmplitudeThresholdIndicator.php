@@ -5,9 +5,9 @@ namespace Nidavellir\Mjolnir\Indicators;
 use Nidavellir\Mjolnir\Abstracts\BaseIndicator;
 
 /**
- * Verifies if there was a specific amplitude percentage in the respective
- * candle timeframe. This is an indicator that will cancel any conclusion in
- * case of an extreme fluctuation on a token price (e.g: > 30% in 1h for instance).
+ * Verifies if there was a specific growth/drop price percentage in the respective
+ * candle timeframe length. This is an indicator that will cancel tokens that in
+ * case of an extreme fluctuation on a token price (e.g: > 30% in 24h for instance).
  */
 class AmplitudeThresholdIndicator extends BaseIndicator
 {
@@ -15,7 +15,7 @@ class AmplitudeThresholdIndicator extends BaseIndicator
 
     public string $type = 'validation';
 
-    protected float $amplitude = 30.0; // 30% default threshold
+    protected float $amplitude = 20; // 20% default threshold
 
     public function isValid(): bool
     {

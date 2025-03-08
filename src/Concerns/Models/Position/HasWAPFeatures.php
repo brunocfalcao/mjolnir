@@ -41,10 +41,15 @@ trait HasWAPFeatures
          * the total position amount from the exchange.
          */
         $this->loadMissing('account');
+
         // Get position amount, and use that on the quantity.
         $apiResponse = $this->account->apiQueryPositions();
+
         // Get sanitized positions, key = pair.
         $positions = $apiResponse->result;
+
+        $positionFromExchange = null;
+
         if (array_key_exists($this->parsedTradingPair, $positions)) {
             // We have a position. Lets place a contrary order to close it.
             $positionFromExchange = $positions[$this->parsedTradingPair];
@@ -93,13 +98,22 @@ trait HasWAPFeatures
         // Get profit percentage. E.g: 0.330
         $profitPercentage = $this->profit_percentage;
 
-        // Add the Profit % on top of it.
-        if ($this->direction == 'LONG') {
-            // Add profit for LONG positions
-            $wapPrice = $wapPrice * (1 + $profitPercentage / 100);
-        } elseif ($this->direction == 'SHORT') {
-            // Subtract profit for SHORT positions
-            $wapPrice = $wapPrice * (1 - $profitPercentage / 100);
+        /**
+         * If we have all limit orders filled, then we will need to get the
+         * breakeven price for the current position. The objective is to
+         * close the position without earning anything.
+         */
+        if ($this->hasAllLimitOrdersFilled() && $positionFromExchange != null) {
+            $wapPrice = $positionFromExchange['breakEvenPrice'];
+        } else {
+            // Add the Profit % on top of it.
+            if ($this->direction == 'LONG') {
+                // Add profit for LONG positions
+                $wapPrice = $wapPrice * (1 + $profitPercentage / 100);
+            } elseif ($this->direction == 'SHORT') {
+                // Subtract profit for SHORT positions
+                $wapPrice = $wapPrice * (1 - $profitPercentage / 100);
+            }
         }
 
         // Return total quantity and WAP price as an array, and format both numbers.

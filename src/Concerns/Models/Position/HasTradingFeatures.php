@@ -7,7 +7,7 @@ trait HasTradingFeatures
     // Does this position have all limit orders filled?
     public function hasAllLimitOrdersFilled()
     {
-        $this->load('orders');
+        $this->loadMissing('orders');
 
         return $this->orders->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
             ->where('status', 'FILLED')
