@@ -101,8 +101,10 @@ class GetBinancePricesCommand extends Command
         Position::opened()
             ->with('exchangeSymbol')
             ->each(function ($position) {
-                $position->last_mark_price = $position->exchangeSymbol->last_mark_price;
-                $position->save();
+                if (!is_null($position->exchangeSymbol->last_mark_price)) {
+                    $position->last_mark_price = $position->exchangeSymbol->last_mark_price;
+                    $position->save();
+                }
             });
     }
 
