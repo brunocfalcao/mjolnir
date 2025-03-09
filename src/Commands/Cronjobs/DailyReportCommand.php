@@ -49,7 +49,7 @@ class DailyReportCommand extends Command
 
             // Send a summary report notification to the account owner.
             $account->user->pushover(
-                message: "Wallet Balance: {$totalWalletBalance}\nDaily Profit: {$currentDayProfit}\nuPnL: {$uPnL}\nTrades: {$totalTradesToday}.",
+                message: "Daily Profit: {$currentDayProfit}\nuPnL: {$uPnL}\nWallet Balance: {$totalWalletBalance}\nTrades: {$totalTradesToday}.",
                 title: "Account report for {$account->user->name}, ID: {$account->id}.",
                 applicationKey: 'nidavellir_cronjobs'
             );
