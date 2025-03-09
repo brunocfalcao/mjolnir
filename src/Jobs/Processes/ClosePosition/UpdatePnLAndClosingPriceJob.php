@@ -52,6 +52,17 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
                 'closing_price' => $closingPrice,
             ]);
 
+            // Notify if PnL is less than 0.
+            if ($pnl < 0) {
+                User::admin()->get()->each(function ($user) use ($pnl) {
+                    $user->pushover(
+                        message: "{$this->position->parsedTradingPair} with negative closing PnL: {$pnl})",
+                        title: "Position closed with negative PnL",
+                        applicationKey: 'nidavellir_warnings'
+                    );
+                });
+            }
+
             // Notify if it's equal to the filled orders to notify index.
             if ($this->position
                 ->orders
