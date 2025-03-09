@@ -39,6 +39,7 @@ class DailyReportCommand extends Command
             $totalWalletBalance = round($currentSnapshot?->total_wallet_balance ?? 0, 2);
             $startOfDayBalance = round($startOfDaySnapshot?->total_wallet_balance ?? 0, 2);
             $currentDayProfit = round($totalWalletBalance - $startOfDayBalance, 2);
+            $uPnL = round($currentSnapshot->total_unrealized_profit, 2);
 
             // Count the number of trades closed since the start of the day.
             $totalTradesToday = Position::where('account_id', $account->id)
@@ -48,7 +49,7 @@ class DailyReportCommand extends Command
 
             // Send a summary report notification to the account owner.
             $account->user->pushover(
-                message: "Wallet Balance: {$totalWalletBalance} {$account->quote->canonical}, Daily Profit: {$currentDayProfit} {$account->quote->canonical}, Daily Trades: {$totalTradesToday}.",
+                message: "Wallet Balance: {$totalWalletBalance} {$account->quote->canonical}, Daily Profit: {$currentDayProfit} {$account->quote->canonical}, uPnL: {$uPnL}, Trades: {$totalTradesToday}.",
                 title: "Account report for {$account->user->name}, ID: {$account->id}.",
                 applicationKey: 'nidavellir_cronjobs'
             );
