@@ -36,6 +36,7 @@ class CancelOrderJob extends BaseApiableJob
     {
         $this->order->apiCancel();
 
+        /*
         User::admin()->get()->each(function ($user) {
             $user->pushover(
                 message: "Order from {$this->order->position->parsedTradingPair}, Order {$this->order->type} ID {$this->order->id} cancelled, possibly due to a magnetization. If not, please check!",
@@ -43,6 +44,7 @@ class CancelOrderJob extends BaseApiableJob
                 applicationKey: 'nidavellir_warnings'
             );
         });
+        */
     }
 
     public function resolveException(\Throwable $e)
