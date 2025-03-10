@@ -17,7 +17,7 @@ trait HasApiFeatures
 
     public function apiAccount()
     {
-        $this->loadMissing('position.account');
+        $this->load('position.account');
 
         return $this->position->account;
     }

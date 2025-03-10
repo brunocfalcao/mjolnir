@@ -49,7 +49,7 @@ class ClosePositionJob extends BaseApiableJob
         }
 
         // Verify if the profit order was expired.
-        $this->position->loadMissing('orders');
+        $this->position->load('orders');
 
         $profitOrder = $this->position->orders->firstWhere('type', 'PROFIT');
 

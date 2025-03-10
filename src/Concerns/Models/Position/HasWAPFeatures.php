@@ -40,7 +40,7 @@ trait HasWAPFeatures
          * the position on the exchange. If not, we take priority from
          * the total position amount from the exchange.
          */
-        $this->loadMissing('account');
+        $this->load('account');
 
         // Get position amount, and use that on the quantity.
         $apiResponse = $this->account->apiQueryPositions();

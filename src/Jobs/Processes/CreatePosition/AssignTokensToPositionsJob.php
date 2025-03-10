@@ -81,11 +81,11 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
                 $selectedExchangeSymbol = EligibleExchangeSymbolsForPosition::getBestExchangeSymbol($position, $exchangeSymbolsToRemove);
 
                 if ($selectedExchangeSymbol) {
-                    $this->account->loadMissing('positions');
+                    $this->account->load('positions');
 
                     // Verify if this exchange symbol is already present on active trades for this account.
                     if (in_array($selectedExchangeSymbol->id, $this->account->positions()->active()->pluck('exchange_symbol_id')->toArray())) {
-                        $selectedExchangeSymbol->loadMissing('symbol');
+                        $selectedExchangeSymbol->load('symbol');
                         $position->updateToCancelled("This exchange symbol {$selectedExchangeSymbol->symbol->token} ID: {$selectedExchangeSymbol->id} is already selected on other active positions for this account, skipping position");
 
                         continue;

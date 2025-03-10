@@ -12,17 +12,17 @@ class EligibleExchangeSymbolsForPosition
     public static function getBestExchangeSymbol(Position $position, ?Collection $otherExchangeSymbolsToRemove = null)
     {
         // Eager load relationships.
-        $position->loadMissing(['account.quote', 'exchangeSymbol.symbol']);
+        $position->load(['account.quote', 'exchangeSymbol.symbol']);
 
         // Get all exchange symbols on active positions.
         $exchangeSymbolsInOpenPositions = self::getActiveExchangeSymbols($position);
         // info('[EligibleExchangeSymbolsForPosition] - Exchangesymbols in open positions: ', $exchangeSymbolsInOpenPositions->pluck('symbol.token')->toArray());
-        $exchangeSymbolsInOpenPositions->loadMissing(['symbol', 'quote']);
+        $exchangeSymbolsInOpenPositions->load(['symbol', 'quote']);
 
         // Get all possible exchange symbols.
         $exchangeSymbolsEligible = self::getEligibleExchangeSymbols($position);
         // info('[EligibleExchangeSymbolsForPosition] - Eligible ExchangeSymbols: ', $exchangeSymbolsEligible->pluck('symbol.token')->toArray());
-        $exchangeSymbolsEligible->loadMissing(['symbol', 'quote']);
+        $exchangeSymbolsEligible->load(['symbol', 'quote']);
 
         // Reject all exchange symbols with a notional lower than the position notional.
         if ($position->total_limit_orders && $position->margin && $position->leverage) {
@@ -52,7 +52,7 @@ class EligibleExchangeSymbolsForPosition
         }
 
         // Eager load relationships.
-        $exchangeSymbolsAvailable->loadMissing(['symbol', 'quote']);
+        $exchangeSymbolsAvailable->load(['symbol', 'quote']);
 
         // Sort the exchange symbols by the indicator timeframe.
         $tradeConfiguration = TradeConfiguration::default()->first();

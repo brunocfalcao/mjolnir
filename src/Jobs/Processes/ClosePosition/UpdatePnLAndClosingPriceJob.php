@@ -29,7 +29,7 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        $this->position->loadMissing('orders');
+        $this->position->load('orders');
 
         // Was the PROFIT order synced?
         if ($this->position->orders->where('type', 'PROFIT')

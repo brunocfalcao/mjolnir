@@ -163,7 +163,7 @@ class RunIntegrityChecksCommand extends Command
                         $wap['price'] != $openedProfitOrder->price
                     ) {
                         // Ensure the exchange symbol relationship is loaded.
-                        $openedPosition->loadMissing('exchangeSymbol');
+                        $openedPosition->load('exchangeSymbol');
 
                         // Format the profit order and WAP values for clarity.
                         $orderPrice = api_format_price($openedProfitOrder->price, $openedPosition->exchangeSymbol);

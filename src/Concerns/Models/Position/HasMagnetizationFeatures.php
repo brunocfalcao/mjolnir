@@ -20,7 +20,7 @@ trait HasMagnetizationFeatures
                 ->first();
 
             if ($magnetOrder) {
-                $this->loadMissing('exchangeSymbol');
+                $this->load('exchangeSymbol');
 
                 $magnetOrder->withoutEvents(function () use ($magnetOrder) {
                     $magnetOrder->update(['magnet_status' => 'activated']);
@@ -44,7 +44,7 @@ trait HasMagnetizationFeatures
         foreach ($this->orders()->where('magnet_status', 'activated')->get() as $magnetOrder) {
             if (($magnetOrder->side == 'BUY' && $magnetOrder->magnet_trigger_price <= $this->last_mark_price) ||
             ($magnetOrder->side == 'SELL' && $magnetOrder->magnet_trigger_price >= $this->last_mark_price)) {
-                $this->loadMissing('exchangeSymbol');
+                $this->load('exchangeSymbol');
                 $price = api_format_price($this->last_mark_price, $this->exchangeSymbol);
 
                 return $magnetOrder;

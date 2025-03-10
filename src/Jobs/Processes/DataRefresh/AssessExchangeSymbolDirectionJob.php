@@ -31,7 +31,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        $this->exchangeSymbol->loadMissing('symbol');
+        $this->exchangeSymbol->load('symbol');
 
         $previousJobQueue = $this->coreJobQueue->getPrevious()->first();
 
@@ -56,10 +56,10 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
             if (! array_key_exists($indicatorModel->canonical, $indicatorData)) {
                 // Load all data into the indicator. It's a computed indicator.
-                $indicator->loadMissing($indicatorData);
+                $indicator->load($indicatorData);
             } else {
                 // Load specific indicator data.
-                $indicator->loadMissing($indicatorData[$indicatorModel->canonical]['result']);
+                $indicator->load($indicatorData[$indicatorModel->canonical]['result']);
             }
 
             switch ($indicator->type) {
