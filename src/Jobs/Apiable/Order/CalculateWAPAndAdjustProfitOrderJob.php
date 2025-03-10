@@ -54,7 +54,7 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
                 );
             });
 
-            $this->position->load('orders');
+            $this->position->loadMissing('orders');
             foreach ($this->position->orders as $order) {
                 $order->apiSync();
             }

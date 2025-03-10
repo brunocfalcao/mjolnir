@@ -33,7 +33,7 @@ function get_market_order_amount_divider($totalLimitOrders)
 
 function api_format_quantity($quantity, ExchangeSymbol $exchangeSymbol)
 {
-    $exchangeSymbol->load('symbol');
+    $exchangeSymbol->loadMissing('symbol');
 
     // Calculate the factor based on quantity precision
     $precisionFactor = pow(10, $exchangeSymbol->quantity_precision);

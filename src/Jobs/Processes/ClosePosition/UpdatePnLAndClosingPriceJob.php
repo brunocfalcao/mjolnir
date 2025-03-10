@@ -29,7 +29,7 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        $this->position->load('orders');
+        $this->position->loadMissing('orders');
 
         // Was the PROFIT order synced?
         if ($this->position->orders->where('type', 'PROFIT')
@@ -57,7 +57,7 @@ class UpdatePnLAndClosingPriceJob extends BaseApiableJob
                 User::admin()->get()->each(function ($user) use ($pnl) {
                     $user->pushover(
                         message: "{$this->position->parsedTradingPair} with negative closing PnL: {$pnl})",
-                        title: "Position closed with negative PnL",
+                        title: 'Position closed with negative PnL',
                         applicationKey: 'nidavellir_warnings'
                     );
                 });

@@ -2,14 +2,14 @@
 
 namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 
-use Illuminate\Support\Carbon;
 use Illuminate\Console\Command;
-use Nidavellir\Thor\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Nidavellir\Thor\Models\Account;
 use Illuminate\Support\Facades\File;
-use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Mjolnir\Jobs\Apiable\Order\CalculateWAPAndAdjustProfitOrderJob;
+use Nidavellir\Thor\Models\Account;
+use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\User;
 
 class RunIntegrityChecksCommand extends Command
 {
@@ -21,17 +21,17 @@ class RunIntegrityChecksCommand extends Command
     {
         // I want to check on the core_job_queue (CoreJob) has delayed/not picked entries for more than 5 minutes.
         $notProcessedJobs = CoreJobQueue::where('status', 'pending')
-        ->where(function ($query) {
-            $query->whereNull('dispatch_after')
-                  ->orWhere('dispatch_after', '<=', Carbon::now());
-        })
-        ->where('created_at', '<=', Carbon::now()->subMinutes(5))
-        ->get();
+            ->where(function ($query) {
+                $query->whereNull('dispatch_after')
+                    ->orWhere('dispatch_after', '<=', Carbon::now());
+            })
+            ->where('created_at', '<=', Carbon::now()->subMinutes(5))
+            ->get();
 
         if ($notProcessedJobs->isNotEmpty()) {
             User::admin()->get()->each(function ($user) use ($notProcessedJobs) {
                 $user->pushover(
-                    message: "There are Core Job Queue entries to be processed longer than 5 mins ago! E.g.: ID: " . $notProcessedJobs->first()->id,
+                    message: 'There are Core Job Queue entries to be processed longer than 5 mins ago! E.g.: ID: '.$notProcessedJobs->first()->id,
                     title: 'Integrity Check failed - Delayed processing core job queue entries',
                     applicationKey: 'nidavellir_warnings'
                 );
@@ -42,8 +42,9 @@ class RunIntegrityChecksCommand extends Command
         $logPath = storage_path('logs/laravel.log');
 
         // Check if the file exists.
-        if (!File::exists($logPath)) {
+        if (! File::exists($logPath)) {
             $this->error('Log file does not exist.');
+
             return 1;
         }
 
@@ -55,7 +56,7 @@ class RunIntegrityChecksCommand extends Command
         if ($fileTime->diffInMinutes(Carbon::now()) < 15) {
             User::admin()->get()->each(function ($user) {
                 $user->pushover(
-                    message: "A laravel.log file was created earlier today",
+                    message: 'A laravel.log file was created earlier today',
                     title: 'Integrity Check failed - A laravel.log file was created',
                     applicationKey: 'nidavellir_warnings'
                 );

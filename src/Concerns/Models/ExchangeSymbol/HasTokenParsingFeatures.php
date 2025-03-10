@@ -9,7 +9,7 @@ trait HasTokenParsingFeatures
     // Accessor to return a full exchange-ready trading position trading pair.
     public function parsedTradingPair(string $apiSystemCanonical)
     {
-        $this->load(['symbol', 'quote']);
+        $this->loadMissing(['symbol', 'quote']);
 
         $dataMapper = new ApiDataMapperProxy($apiSystemCanonical);
 

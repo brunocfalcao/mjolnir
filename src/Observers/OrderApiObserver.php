@@ -23,7 +23,7 @@ class OrderApiObserver
          * If so, then we need to raise a JustEndException so the
          * order is not exceptionable-resolvable by the BaseQueuableJob.
          */
-        $order->load('position');
+        $order->loadMissing('position');
 
         // Do we already have all the limit orders and are we creating one more?
         $totalEligibleOrders = $order->position
@@ -116,7 +116,7 @@ class OrderApiObserver
 
         // info('[OrderApiObserver] - Running Api Observers');
 
-        $order->load(['position.orders', 'position.exchangeSymbol.symbol']);
+        $order->loadMissing(['position.orders', 'position.exchangeSymbol.symbol']);
 
         /**
          * Get all status variables.
