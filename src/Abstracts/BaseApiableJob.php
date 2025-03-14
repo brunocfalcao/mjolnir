@@ -3,9 +3,12 @@
 namespace Nidavellir\Mjolnir\Abstracts;
 
 use GuzzleHttp\Exception\RequestException;
+use Nidavellir\Mjolnir\Concerns\DefaultRetriableException;
 
 abstract class BaseApiableJob extends BaseQueuableJob
 {
+    use DefaultRetriableException;
+
     public ?BaseRateLimiter $rateLimiter;
 
     protected function compute()

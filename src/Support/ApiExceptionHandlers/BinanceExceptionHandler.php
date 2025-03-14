@@ -23,7 +23,7 @@ class BinanceExceptionHandler extends BaseExceptionHandler
      * 400: Bad request.
      * -1021: Timestamp for this request is outside of the recvWindow.
      *
-     * 408: Requedt Timeout
+     * 408: Request Timeout
      * -1007: Timeout waiting for response from backend server. Send status unknown.
      *
      * 503: Service unavailable.

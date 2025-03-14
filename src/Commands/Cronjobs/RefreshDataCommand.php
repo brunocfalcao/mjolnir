@@ -25,6 +25,8 @@ class RefreshDataCommand extends Command
         // Generate a unique block identifier for job grouping.
         $blockUuid = (string) Str::uuid();
 
+        $index = 1;
+
         // Upsert symbols for trading pairs not yet present in the database.
         foreach (TradingPair::all() as $tradingPair) {
             if (! Symbol::where('cmc_id', $tradingPair->cmc_id)->exists()) {
@@ -34,7 +36,7 @@ class RefreshDataCommand extends Command
                     'arguments' => [
                         'cmcId' => $tradingPair->cmc_id,
                     ],
-                    'index' => 1,
+                    'index' => $index,
                     'block_uuid' => $blockUuid,
                 ]);
             }
@@ -44,7 +46,7 @@ class RefreshDataCommand extends Command
         CoreJobQueue::create([
             'class' => SyncAllSymbolsJob::class,
             'queue' => 'cronjobs',
-            'index' => 2,
+            'index' => $index++,
             'block_uuid' => $blockUuid,
         ]);
 
@@ -57,7 +59,7 @@ class RefreshDataCommand extends Command
                     'apiSystemId' => $exchange->id,
                 ],
                 'canonical' => 'market-data:'.$exchange->canonical,
-                'index' => 1,
+                'index' => $index++,
                 'block_uuid' => $blockUuid,
             ]);
         }
@@ -71,7 +73,7 @@ class RefreshDataCommand extends Command
                     'apiSystemId' => $exchange->id,
                 ],
                 'canonical' => 'leverage-data:'.$exchange->canonical,
-                'index' => 1,
+                'index' => $index++,
                 'block_uuid' => $blockUuid,
             ]);
         }
@@ -84,7 +86,7 @@ class RefreshDataCommand extends Command
                 'arguments' => [
                     'apiSystemId' => $exchange->id,
                 ],
-                'index' => 2,
+                'index' => $index++,
                 'block_uuid' => $blockUuid,
             ]);
         }

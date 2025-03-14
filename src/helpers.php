@@ -1,8 +1,32 @@
 <?php
 
+use GuzzleHttp\Exception\RequestException;
 use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\TradingPair;
+
+function extract_http_code_and_status_code(RequestException $exception): array
+{
+    $httpCode = $exception->getCode();
+    $statusCode = null;
+
+    if ($exception->hasResponse()) {
+        $response = $exception->getResponse();
+        $httpCode = $response->getStatusCode(); // Override with actual HTTP status code
+
+        $body = (string) $response->getBody();
+        $decodedBody = json_decode($body, true);
+
+        if (isset($decodedBody['code'])) {
+            $statusCode = $decodedBody['code'];
+        }
+    }
+
+    return [
+        'http_code' => $httpCode,
+        'status_code' => $statusCode,
+    ];
+}
 
 function adjust_price_with_tick_size(float $price, float $pricePrecision, float $tickSize): float
 {

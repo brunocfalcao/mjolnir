@@ -24,6 +24,8 @@ class SyncAllSymbolsJob extends BaseApiableJob
 
     public function computeApiable()
     {
+
+        // If we have all image urls, we don't need to sync any symbol.
         if (Symbol::whereNull('image_url')->doesntExist()) {
             return;
         }

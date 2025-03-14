@@ -23,14 +23,19 @@ trait MapsPlaceOrder
         $properties->set('options.quantity', (string) $order->quantity);
 
         switch ($order->type) {
+            // A profit order is a market stop order.
             case 'PROFIT':
+                $properties->set('options.reduceonly', 'true');
+                $properties->set('options.timeinforce', 'GTC');
+                $properties->set('options.type', 'TAKE_PROFIT_MARKET');
+                $properties->set('options.stopPrice', $order->price);
+                $properties->set('options.closePosition', 'true');
+                break;
+
             case 'LIMIT':
                 $properties->set('options.timeinforce', 'GTC');
                 $properties->set('options.type', 'LIMIT');
                 $properties->set('options.price', $order->price);
-                if ($order->type == 'PROFIT') {
-                    $properties->set('options.reduceonly', 'true');
-                }
                 break;
 
             case 'MARKET':

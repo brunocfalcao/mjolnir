@@ -20,6 +20,7 @@ use Nidavellir\Mjolnir\Commands\Debug\ClosePositionCommand;
 use Nidavellir\Mjolnir\Commands\Debug\GetAccountBalanceCommand;
 use Nidavellir\Mjolnir\Commands\Debug\NotifyCommand;
 use Nidavellir\Mjolnir\Commands\Debug\PlaceOrderCommand;
+use Nidavellir\Mjolnir\Commands\Debug\PlacePositionCommand;
 use Nidavellir\Mjolnir\Commands\Debug\PlaceStopMarketOrderCommand;
 use Nidavellir\Mjolnir\Commands\Debug\QueryOrderCommand;
 use Nidavellir\Mjolnir\Commands\Debug\QueryPositionsCommand;
@@ -64,6 +65,7 @@ class MjolnirServiceProvider extends ServiceProvider
                 UpdateAccountsBalancesCommand::class,
 
                 // Debug.
+                PlacePositionCommand::class,
                 PlaceStopMarketOrderCommand::class,
                 NotifyCommand::class,
                 QueryTradeCommand::class,

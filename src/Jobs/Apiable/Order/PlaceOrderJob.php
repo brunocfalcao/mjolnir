@@ -139,15 +139,15 @@ class PlaceOrderJob extends BaseApiableJob
 
         // Are we placing another MARKET, PROFIT, or MARKET-CANCEL order by mistake?
         if ($this->order->type == 'MARKET' && $marketOrderFilled) {
-            return 'A 2nd MARKET order is trying to be created for the same position! Aborting.';
+            return 'A 2nd MARKET order is trying to be created when the current one is already filled! Aborting.';
         }
 
         if ($this->order->type == 'PROFIT' && $profitOrderFilled) {
-            return 'A 2nd PROFIT order is trying to be created for the same position! Aborting.';
+            return 'A 2nd PROFIT order is trying to be created when the current one is already filled! Aborting.';
         }
 
         if ($this->order->type == 'MARKET-CANCEL' && $marketCancelOrderFilled) {
-            return 'A 2nd MARKET-CANCEL order is trying to be created for the same position! Aborting.';
+            return 'A 2nd MARKET-CANCEL order is trying to be created when the current one is already filled! Aborting.';
         }
 
         if ($this->order->type == 'LIMIT' && $allLimitOrdersFilled) {

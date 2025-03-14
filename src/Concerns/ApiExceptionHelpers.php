@@ -24,35 +24,28 @@ trait ApiExceptionHelpers
         }
 
         try {
-            // If we have a response, we can continue.
-            if ($exception->getResponse() != null) {
-                $statusCode = $exception->getResponse()->getStatusCode();
+            $errorData = extract_http_code_and_status_code($exception);
+            $httpCode = $errorData['http_code'];
+            $statusCode = $errorData['status_code'];
 
-                $responseBody = $this->getResponseBody($exception);
+            if (isset($statusCodes[$httpCode])) {
+                $codes = $statusCodes[$httpCode];
 
-                if (isset($statusCodes[$statusCode])) {
-                    $codes = $statusCodes[$statusCode];
-
-                    // If specific codes are provided, check if the response code matches
-                    if (is_array($codes) && isset($responseBody['code'])) {
-                        return in_array($responseBody['code'], $codes);
-                    }
-
-                    // Handle all responses for this status code if no specific codes are provided
-                    return is_null($codes);
+                // If specific codes are provided, check if the response code matches
+                if (is_array($codes) && ! is_null($statusCode)) {
+                    return in_array($statusCode, $codes, true);
                 }
 
-                // If the status code is directly present as an integer in the array, handle it
-                if (in_array($statusCode, $statusCodes, true)) {
-                    return true;
-                }
+                // Handle all responses for this status code if no specific codes are provided
+                return is_null($codes);
             }
+
+            // If the status code is directly present as an integer in the array, handle it
+            return in_array($httpCode, $statusCodes, true);
         } catch (\Throwable $e) {
             // Fallback, we should not handle the exception.
             return false;
         }
-
-        return false;
     }
 
     private function getResponseBody(RequestException $exception): array

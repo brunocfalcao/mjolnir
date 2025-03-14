@@ -7,8 +7,8 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Response;
 use Nidavellir\Mjolnir\Exceptions\JustEndException;
 use Nidavellir\Mjolnir\Exceptions\JustResolveException;
+use Nidavellir\Mjolnir\Exceptions\MaxRetriesReachedException;
 use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Thor\Models\User;
 use Psr\Http\Message\ResponseInterface;
 
 abstract class BaseQueuableJob extends BaseJob
@@ -34,7 +34,8 @@ abstract class BaseQueuableJob extends BaseJob
 
             // Max retries reached?
             if ($this->coreJobQueue->retries == $this->retries + 1) {
-                throw new JustResolveException('Aborting this coreJobQueue - Max retries reached (nidavellir error). Please check');
+                $this->coreJobQueue->update(['max_retries_reached' => true]);
+                throw new MaxRetriesReachedException;
             }
 
             // Quick authorization method on the child job.
@@ -83,6 +84,25 @@ abstract class BaseQueuableJob extends BaseJob
                 return;
             }
 
+            if ($e instanceof MaxRetriesReachedException) {
+                // Last try to make things like a rollback.
+                if (method_exists($this, 'resolveException')) {
+                    $this->resolveException($e);
+                }
+
+                if (method_exists($this->exceptionHandler, 'resolveException')) {
+                    $this->exceptionHandler->resolveException($e);
+                }
+
+                if (! $this->coreJobQueueStatusUpdated) {
+                    // Update to failed, and it's done.
+                    $this->coreJobQueue->updateToFailed("Core Job Queue [{$this->coreJobQueue->id}] - Max retries reached ({$this->coreJobQueue->class})");
+                    $this->coreJobQueue->finalizeDuration();
+                }
+
+                return;
+            }
+
             if ($e instanceof JustResolveException) {
                 // Last try to make things like a rollback.
                 if (method_exists($this, 'resolveException')) {
@@ -98,9 +118,6 @@ abstract class BaseQueuableJob extends BaseJob
                     $this->coreJobQueue->updateToFailed($e);
                     $this->coreJobQueue->finalizeDuration();
                 }
-
-                // propagate exception.
-                // throw $e;
 
                 return;
             }
@@ -119,25 +136,22 @@ abstract class BaseQueuableJob extends BaseJob
             }
 
             /**
-             * We will try to run the 3 exception handler methods from the
+             * We will try to run the 4 exception handler methods from the
              * exceptionHandler if exists. Then we will run the local ones.
+             *
+             * The global methods always run prior to the local methods.
              */
 
-            // Should gracefully retry the core job?
-            if (method_exists($this, 'retryException')) {
-                $shouldRetry = $this->retryException($e);
-            }
-
+            // Should gracefully retry (and if so before-retry) the core job?
             if (isset($this->exceptionHandler) && method_exists($this->exceptionHandler, 'retryException')) {
                 $orShouldRetry = $this->exceptionHandler->retryException($e);
             }
 
-            if ((isset($shouldRetry) && $shouldRetry) || (isset($orShouldRetry) && $orShouldRetry)) {
-                // If we have a method call beforeRetry(\Throwable $e), run it.
-                if (method_exists($this, 'beforeRetry')) {
-                    $this->beforeRetry($e);
-                }
+            if (method_exists($this, 'retryException')) {
+                $shouldRetry = $this->retryException($e);
+            }
 
+            if ((isset($shouldRetry) && $shouldRetry) || (isset($orShouldRetry) && $orShouldRetry)) {
                 $this->coreJobQueue->updateToRetry(now()->addSeconds($this->workerServerBackoffSeconds));
 
                 return;
@@ -175,15 +189,6 @@ abstract class BaseQueuableJob extends BaseJob
                 // Update to failed, and it's done.
                 $this->coreJobQueue->updateToFailed($e);
                 $this->coreJobQueue->finalizeDuration();
-
-                User::admin()->get()->each(function ($user) use ($e) {
-                    $user->pushover(
-                        message: "[{$this->coreJobQueue->id}] - ".$e->getMessage(),
-                        title: 'Core Job Queue Error',
-                        applicationKey: 'nidavellir_errors'
-                    );
-                });
-
                 // propagate exception.
                 throw $e;
             }
