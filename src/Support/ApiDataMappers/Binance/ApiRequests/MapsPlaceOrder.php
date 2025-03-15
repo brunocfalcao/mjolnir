@@ -25,7 +25,6 @@ trait MapsPlaceOrder
         switch ($order->type) {
             // A profit order is a market stop order.
             case 'PROFIT':
-                $properties->set('options.reduceonly', 'true');
                 $properties->set('options.timeinforce', 'GTC');
                 $properties->set('options.type', 'TAKE_PROFIT_MARKET');
                 $properties->set('options.stopPrice', $order->price);

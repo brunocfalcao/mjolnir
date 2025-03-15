@@ -28,8 +28,13 @@ trait MapsOrderQuery
 
         $raw = $result;
 
-        $price = $result['avgPrice'] != 0 ? $result['avgPrice'] : $result['price'];
-        $quantity = $result['executedQty'] != 0 ? $result['executedQty'] : $result['origQty'];
+        if ($result['type'] == 'TAKE_PROFIT_MARKET') {
+            $price = $result['stopPrice'];
+            $quantity = 0;
+        } else {
+            $price = $result['avgPrice'] != 0 ? $result['avgPrice'] : $result['price'];
+            $quantity = $result['executedQty'] != 0 ? $result['executedQty'] : $result['origQty'];
+        }
 
         if ($result['status'] == 'CANCELED') {
             $result['status'] = 'CANCELLED';

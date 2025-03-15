@@ -39,8 +39,12 @@ class CancelOrderJob extends BaseApiableJob
          * exists.
          */
         $this->order->apiSync();
+
+        // Skip observer so the order is not recreated again.
         if ($this->order->status == 'NEW') {
+            // info("[CancelOrderJob] - Cancelling order ID {$this->order->id} ({$this->order->type})");
             $this->order->apiCancel();
+            $this->order->apiSync();
         }
     }
 

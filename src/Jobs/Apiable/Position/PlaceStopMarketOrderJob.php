@@ -35,6 +35,19 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
 
     public function computeApiable()
     {
+        // Position inactive? -- Skip it.
+        if (! $this->position->isActive()) {
+            User::admin()->get()->each(function ($user) {
+                $user->pushover(
+                    message: "Stop-loss order placement skipped, because position ID {$this->position->id} is already inactive/closed",
+                    title: 'Stop-loss placement skipped',
+                    applicationKey: 'nidavellir_warnings'
+                );
+            });
+
+            return;
+        }
+
         $dataMapper = new ApiDataMapperProxy($this->account->apiSystem->canonical);
 
         // Verify if we still have this position open.
@@ -68,12 +81,7 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
                 'type' => 'STOP-MARKET',
                 'status' => 'NEW',
                 'price' => $stopPrice,
-                'quantity' => $this->position
-                    ->orders
-                    ->where('type', 'PROFIT')
-                    ->where('status', 'NEW')
-                    ->first()
-                    ->quantity,
+                'quantity' => 0,
             ]);
 
             CoreJobQueue::create([
@@ -88,7 +96,7 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
                 $user->pushover(
                     message: "Stop-loss placed for {$this->position->parsedTradingPair} at price {$stopPrice}",
                     title: 'Stop-loss order placing error',
-                    applicationKey: 'nidavellir_warnings'
+                    applicationKey: 'nidavellir_orders'
                 );
             });
         }

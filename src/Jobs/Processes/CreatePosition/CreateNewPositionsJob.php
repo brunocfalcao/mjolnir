@@ -7,10 +7,7 @@ use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\Position;
-use Nidavellir\Thor\Models\Quote;
-use Nidavellir\Thor\Models\Symbol;
 
 class CreateNewPositionsJob extends BaseQueuableJob
 {
@@ -30,26 +27,6 @@ class CreateNewPositionsJob extends BaseQueuableJob
 
     public function compute()
     {
-        // info('[CreateNewPositionsJob] - Creating '.$this->numPositions.' position(s) to '.$this->account->user->name);
-
-        /*
-        // ===============  TESTING =============
-        $testToken = 'FIL';
-        $testExchangeSymbol = ExchangeSymbol::where('symbol_id', Symbol::firstWhere('token', $testToken)->id)
-            ->where('quote_id', Quote::firstWhere('canonical', 'USDT')->id)
-            ->first();
-
-        // $testExchangeSymbol->update(['direction' => 'SHORT']);
-
-        //info('[CreateNewPositionsJob] - TESTING Exchange Symbol: '.$testExchangeSymbol->symbol->token);
-
-        $this->extraData = [
-            'exchange_symbol_id' => $testExchangeSymbol->id,
-            'direction' => $testExchangeSymbol->direction,
-        ];
-        // =============== /TESTING ===============
-        */
-
         $data = array_merge($this->extraData, [
             'account_id' => $this->account->id,
         ]);

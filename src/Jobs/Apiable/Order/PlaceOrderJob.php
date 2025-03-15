@@ -84,26 +84,17 @@ class PlaceOrderJob extends BaseApiableJob
          * we get the profit order quantity from the market order. It always
          * need to have the same quantity, even as the first time.
          */
-        if ($this->order->type == 'PROFIT') {
+        $this->order->loadMissing('position');
+
+        $marketOrder = $this->order->position->orders->firstWhere('type', 'MARKET');
+
+        // Only proceed with the profit order if the market order is already placed.
+        if ($this->order->type == 'PROFIT' && $marketOrder && $marketOrder->price != null) {
             $marketOrder = $this->order->position->orders->firstWhere('type', 'MARKET');
 
-            if (! $this->order->quantity) {
-                if (! $marketOrder) {
-                    throw new \Exception('Cannot place Profit order because the market order doesnt exist. Aborting');
-                }
-
-                $this->order->update([
-                    'quantity' => $marketOrder->quantity,
-                ]);
-            }
-
-            if (! $this->order->price) {
-                if (! $marketOrder) {
-                    throw new \Exception('Cannot place Profit order because the market order doesnt exist. Aborting');
-                }
-            }
-
+            // Profit orders always have quantity = 0 because they are TAKE_PROFIT_MARKET orders with ClosePosition = true.
             $this->order->update([
+                'quantity' => 0,
                 'price' => $this->getNewPriceFromPercentage($marketOrder->price, $this->position->profit_percentage),
             ]);
         }

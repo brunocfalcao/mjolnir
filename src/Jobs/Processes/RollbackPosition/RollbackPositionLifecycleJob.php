@@ -39,6 +39,7 @@ class RollbackPositionLifecycleJob extends BaseQueuableJob
             'arguments' => [
                 'positionId' => $this->position->id,
             ],
+            'dispatch_after' => now()->addSeconds(30),
         ]);
 
         CoreJobQueue::create([

@@ -13,7 +13,7 @@ use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\User;
 
-class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
+class _CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
 {
     public Account $account;
 
@@ -42,12 +42,7 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        // info('-= CalculateWAPAndAdjustProfitOrderJob START =-');
-        // info("-= Position ID: {$this->position->id} =-");
-
         $wap = $this->position->calculateWAP();
-
-        // info('WAP result: '.json_encode($wap));
 
         if (array_key_exists('resync', $wap) && $wap['resync'] == true) {
             // Something happened and we need to resync the orders. Then we can try again the core job.
@@ -69,39 +64,18 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
             return;
         }
 
-        if ($wap['price'] != null) {
+        if ($wap['quantity'] != null && $wap['price'] != null) {
+            // Obtain info from the profit order.
+            $profitOrder = $this->position->orders->firstWhere('type', 'PROFIT');
+
+            // Modify order for the new WAP values.
+            $apiResponse = $profitOrder->apiModify($wap['quantity'], $wap['price']);
+
             // Inform the order observer not to put the PROFIT order back on its original values.
             $this->position->update(['wap_triggered' => true]);
 
-            // Obtain info from the profit order.
-            $profitOrder = $this->position->profitOrder();
-
-            /**
-             * We need to cancel the current profit order, and place a new one
-             * because TAKE_PROFIT_MARKET orders are not changeable.
-             */
-            $newProfitOrder = $profitOrder->replicate();
-
-            $newProfitOrder->price = $wap['price'];
-            $newProfitOrder->quantity = 0;
-            $newProfitOrder->created_at = now();
-            $newProfitOrder->save();
-
-            // info("New Profit ORDER saved, ID: {$newProfitOrder->id}");
-
-            // Lets cancel the current profit order.
-            // info("Cancelling Order ID: {$profitOrder->id}");
-            $profitOrder->apiCancel();
-
-            // And finally, create the new profit order (take profit market order);
-            // info("Placing Order ID: {$newProfitOrder->id}");
-            $newProfitOrder->apiPlace();
-
             // Update all orders to magnet_status = activated, to 'cancelled'.
-            $this->position
-                ->orders()
-                ->where('magnet_status', 'activated')
-                ->update(['magnet_status' => 'cancelled']);
+            $this->position->orders()->where('magnet_status', 'activated')->update(['magnet_status' => 'cancelled']);
 
             // How many orders do we have filled?
             $totalFilledOrders = $this->position
@@ -148,7 +122,5 @@ class CalculateWAPAndAdjustProfitOrderJob extends BaseApiableJob
         } else {
             throw new \Exception('A WAP calculation was requested but there was an error. Position ID: '.$this->position->id);
         }
-
-        // info('-= CalculateWAPAndAdjustProfitOrderJob END =-');
     }
 }

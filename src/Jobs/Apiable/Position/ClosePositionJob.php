@@ -95,6 +95,11 @@ class ClosePositionJob extends BaseApiableJob
             }
 
             $this->coreJobQueue->updateToFailed("Could not close position for {$this->position->parsedTradingPair}, residual amount present ({$residualAmount} USDT). Position marked as failed", true);
+        }
+
+        if ($this->position->status == 'rollbacking') {
+            $this->position->updateToRollbacked('Position was marked as closed, but it needs to be manually closed on exchange due to residual amount present');
+        } else {
             $this->position->updateToClosed('Position was marked as closed, but it needs to be manually closed on exchange due to residual amount present');
         }
     }
