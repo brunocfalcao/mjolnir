@@ -10,6 +10,7 @@ use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Mjolnir\Support\ValueObjects\ApiProperties;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ExchangeSymbol;
+use Nidavellir\Thor\Models\Indicator;
 
 class QueryExchangeSymbolIndicatorJob extends BaseApiableJob
 {
@@ -40,13 +41,15 @@ class QueryExchangeSymbolIndicatorJob extends BaseApiableJob
     public function computeApiable()
     {
         // Just to avoid hitting a lot the rate limit threshold.
-        sleep(rand(0.75, 3.25));
+        sleep(rand(0.75, 1.25));
 
         if (! $this->timeframe) {
             $this->timeframe = $this->exchangeSymbol->tradeConfiguration->indicator_timeframes[0];
         }
 
-        $this->apiProperties = $this->apiDataMapper->prepareQueryIndicatorsProperties($this->exchangeSymbol, $this->timeframe);
+        $indicators = Indicator::active()->where('is_apiable', true)->where('type', 'refresh-data')->get();
+
+        $this->apiProperties = $this->apiDataMapper->prepareQueryIndicatorsProperties($this->exchangeSymbol, $indicators, $this->timeframe);
         // $this->apiProperties->set('debug', ['core_job_queue_id' => $this->coreJobQueue->id]);
 
         $this->response = $this->apiAccount->withApi()->getIndicatorValues($this->apiProperties);

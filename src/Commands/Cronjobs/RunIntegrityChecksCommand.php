@@ -5,8 +5,8 @@ namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
-use Nidavellir\Mjolnir\Jobs\Apiable\Order\CalculateWAPAndAdjustProfitOrderJob;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\User;
@@ -159,9 +159,7 @@ class RunIntegrityChecksCommand extends Command
                     // Retrieve the profit order for comparison.
                     $openedProfitOrder = $openedPosition->orders->firstWhere('type', 'PROFIT');
                     // Check if the calculated WAP differs from the profit order's price and quantity.
-                    if ($wap['quantity'] != $openedProfitOrder->quantity ||
-                        $wap['price'] != $openedProfitOrder->price
-                    ) {
+                    if ($wap['price'] != $openedProfitOrder->price) {
                         // Ensure the exchange symbol relationship is loaded.
                         $openedPosition->load('exchangeSymbol');
 
@@ -172,16 +170,19 @@ class RunIntegrityChecksCommand extends Command
                         $wapQuantity = api_format_quantity($wap['quantity'], $openedPosition->exchangeSymbol);
                         $tradingPair = $openedPosition->parsedTradingPair;
 
-                        // Queue a job to recalculate the WAP and adjust the profit order.
-                        CoreJobQueue::create([
-                            'class' => CalculateWAPAndAdjustProfitOrderJob::class,
-                            'queue' => 'orders',
-                            'arguments' => [
-                                'orderId' => $openedProfitOrder->id,
-                                'originalPrice' => $openedProfitOrder->price,
-                                'originalQuantity' => $openedProfitOrder->quantity,
-                            ],
-                        ]);
+                        User::admin()->get()->each(function ($user) use ($openedPosition) {
+                            $user->pushover(
+                                message: "Active Position {$openedPosition->parsedTradingPair} ID {$openedPosition->id} with wrong WAP calculated. Reseting position FILLED orders to NEW, for resyncing + WAP calculation",
+                                title: 'Integrity Check failed - Active position with wrong WAP calculated',
+                                applicationKey: 'nidavellir_warnings'
+                            );
+                        });
+
+                        Event::withoutEvents(function () {
+                            $this->position->orders()->where('status', 'FILLED')->update(['status' => 'NEW']);
+                        });
+
+                        $this->position->syncOrders();
                     }
                 }
             }

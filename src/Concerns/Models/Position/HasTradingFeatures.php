@@ -13,4 +13,11 @@ trait HasTradingFeatures
             ->where('status', 'FILLED')
             ->count() == $this->total_limit_orders;
     }
+
+    public function syncOrders()
+    {
+        foreach ($this->orders as $order) {
+            $order->apiSync();
+        }
+    }
 }

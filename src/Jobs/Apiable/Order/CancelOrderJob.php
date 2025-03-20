@@ -52,9 +52,9 @@ class CancelOrderJob extends BaseApiableJob
     {
         User::admin()->get()->each(function ($user) use ($e) {
             $user->pushover(
-                message: "Error canceling order with ID {$this->order->id}: ".$e->getMessage(),
+                message: "Error canceling order with ID {$this->order->id}. Error: ".$e->getMessage(),
                 title: 'Error canceling order',
-                applicationKey: 'nidavellir_warnings'
+                applicationKey: 'nidavellir_errors'
             );
         });
     }

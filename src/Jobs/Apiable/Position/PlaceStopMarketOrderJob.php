@@ -92,11 +92,14 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
                 ],
             ]);
 
+            // Trigger stop loss status. It will start sending reports.
+            $this->position->update(['stop_loss_triggered' => true]);
+
             User::admin()->get()->each(function ($user) use ($stopPrice) {
                 $user->pushover(
                     message: "Stop-loss placed for {$this->position->parsedTradingPair} at price {$stopPrice}",
                     title: 'Stop-loss order placing error',
-                    applicationKey: 'nidavellir_orders'
+                    applicationKey: 'nidavellir_warnigs'
                 );
             });
         }
@@ -111,9 +114,9 @@ class PlaceStopMarketOrderJob extends BaseApiableJob
          */
         User::admin()->get()->each(function ($user) {
             $user->pushover(
-                message: "Error placing the stop-loss order for position {$this->position->id}. Please check!",
+                message: "Error placing the stop-loss order for position [{$this->position->id}] - {$this->position->parsedTradingPair}. Error: {$e->getMessage()}",
                 title: 'Stop-loss order placing error',
-                applicationKey: 'nidavellir_warnings'
+                applicationKey: 'nidavellir_errors'
             );
         });
     }

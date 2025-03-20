@@ -62,6 +62,8 @@ abstract class BaseApiClient
             $startTime = microtime(true);
             $logData['started_at'] = now();
 
+            // dd($this->baseURL, $apiRequest->method, $apiRequest->path, $options);
+
             $response = $this->httpRequest->request(
                 $apiRequest->method,
                 $apiRequest->path,

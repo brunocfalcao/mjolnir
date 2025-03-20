@@ -38,18 +38,10 @@ class ClosePositionJob extends BaseApiableJob
         } catch (\Throwable $e) {
             // Trigger residual amount notification.
             $residualAmountPresent = true;
-
-            User::admin()->get()->each(function ($user) {
-                $user->pushover(
-                    message: "Could not close position for {$this->position->parsedTradingPair}, residual amount present, please close manually",
-                    title: "Error closing position for {$this->position->parsedTradingPair}",
-                    applicationKey: 'nidavellir_warnings'
-                );
-            });
         }
 
         // Verify if the profit order was expired.
-        $this->position->load('orders');
+        $this->position->load(['orders', 'exchangeSymbol']);
 
         $profitOrder = $this->position->orders->firstWhere('type', 'PROFIT');
 
@@ -94,18 +86,34 @@ class ClosePositionJob extends BaseApiableJob
                 }
             }
 
-            $this->coreJobQueue->updateToFailed("Could not close position for {$this->position->parsedTradingPair}, residual amount present ({$residualAmount} USDT). Position marked as failed", true);
+            $residualAmount = api_format_quantity($residualAmount, $this->position->exchangeSymbol);
+
+            User::admin()->get()->each(function ($user) use ($residualAmount) {
+                $user->pushover(
+                    message: "Position {$this->position->parsedTradingPair} closed but a residual amount of {$residualAmount} USDT is still present",
+                    title: 'Position closed, but a residual amount is present',
+                    applicationKey: 'nidavellir_warnings'
+                );
+            });
+
+            $this->position->updateToClosedResidual();
+
+            return;
         }
 
-        if ($this->position->status == 'rollbacking') {
-            $this->position->updateToRollbacked('Position was marked as closed, but it needs to be manually closed on exchange due to residual amount present');
-        } else {
-            $this->position->updateToClosed('Position was marked as closed, but it needs to be manually closed on exchange due to residual amount present');
-        }
+        $this->position->updateToClosed();
     }
 
     public function resolveException(\Throwable $e)
     {
+        User::admin()->get()->each(function ($user) {
+            $user->pushover(
+                message: "Position {$this->position->parsedTradingPair} not closed, due to an error: {$e->getMessage()}",
+                title: 'Position closing with error!',
+                applicationKey: 'nidavellir_warnings'
+            );
+        });
+
         $this->position->updateToFailed($e);
     }
 }

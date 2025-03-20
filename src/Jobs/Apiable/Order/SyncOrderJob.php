@@ -44,7 +44,7 @@ class SyncOrderJob extends BaseApiableJob
          */
         User::admin()->get()->each(function ($user) {
             $user->pushover(
-                message: "There was an error trying to sync {$this->position->parsedTradingPair}, order ID {$this->order->id}, it will be retried later",
+                message: "There was an error trying to sync {$this->position->parsedTradingPair}, order ID {$this->order->id}, it will be retried later. Error: {$e->getMessage()}",
                 title: "Error syncing an order from {$this->position->parsedTradingPair}",
                 applicationKey: 'nidavellir_warnings'
             );

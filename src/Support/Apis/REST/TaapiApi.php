@@ -34,7 +34,7 @@ class TaapiApi
     }
 
     // Fetches indicator values for the given API properties.
-    public function getIndicatorValues(ApiProperties $properties)
+    public function getGroupedIndicatorsValues(ApiProperties $properties)
     {
         $payload = [
             'secret' => $this->secret,
@@ -51,6 +51,19 @@ class TaapiApi
             'POST',
             '/bulk',
             new ApiProperties($payload)
+        );
+
+        return $this->client->publicRequest($apiRequest);
+    }
+
+    public function getIndicatorValues(ApiProperties $properties)
+    {
+        $properties->set('options.secret', $this->secret);
+
+        $apiRequest = ApiRequest::make(
+            'GET',
+            '/'.$properties->get('options.endpoint'),
+            new ApiProperties($properties->toArray())
         );
 
         return $this->client->publicRequest($apiRequest);
