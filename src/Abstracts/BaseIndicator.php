@@ -19,7 +19,7 @@ abstract class BaseIndicator
     public array $parameters = [];
 
     // The returned result after the api call.
-    protected array $result = [];
+    protected array $data = [];
 
     // Not mandatory in case we are having a grouped indicator query.
     public ?ExchangeSymbol $exchangeSymbol = null;
@@ -61,9 +61,9 @@ abstract class BaseIndicator
      * a direction e.g.: LONG, SHORT
      * a boolean e.g.: true, false
      */
-    public function result()
+    public function data()
     {
-        return $this->result;
+        return $this->data;
     }
 
     final public function compute()
@@ -72,14 +72,18 @@ abstract class BaseIndicator
          * Make the API call.
          * Return result(), made by the client.
          */
-        $result = $this->apiQuery();
+        $this->apiQuery();
 
-        // Ensure 'timestamp' exists and is an array
-        if (array_key_exists('timestamp', $result) && is_array($result['timestamp']) && ! empty($result['timestamp'])) {
-            $result['timestamp_for_humans'] = array_map(fn ($ts) => date('Y-m-d H:i:s', (int) $ts), $result['timestamp']);
+        // Add timestamp for humans.
+        if (is_array($this->data['timestamp'])) {
+            $this->data['timestamp_for_humans'] = array_map(function ($ts) {
+                return date('Y-m-d H:i:s', (int) $ts);
+            }, $this->data['timestamp']);
+        } else {
+            $this->data['timestamp_for_humans'] = date('Y-m-d H:i:s', (int) $this->data['timestamp']);
         }
 
-        return $result;
+        return $this->data;
     }
 
     // Adds a new parameter into the parameters array
@@ -103,6 +107,12 @@ abstract class BaseIndicator
 
         $apiProperties = $apiDataMapper->prepareQueryIndicatorProperties($this->exchangeSymbol, $this->parameters);
 
-        return $apiDataMapper->resolveQueryIndicatorResponse($apiAccount->withApi()->getIndicatorValues($apiProperties));
+        $this->data = $apiDataMapper->resolveQueryIndicatorResponse($apiAccount->withApi()->getIndicatorValues($apiProperties));
+    }
+
+    // Loads previously fetched indicator data into the indicator.
+    public function load(array $data)
+    {
+        $this->data = $data;
     }
 }

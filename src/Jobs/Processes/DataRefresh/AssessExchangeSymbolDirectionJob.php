@@ -48,23 +48,31 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
          * were inconclusive, then the exchange symbols is not
          * tradeable.
          */
-        foreach (Indicator::active()->get() as $indicatorModel) {
+        foreach (Indicator::active()->apiable()->where('type', 'refresh-data')->get() as $indicatorModel) {
             $indicatorClass = $indicatorModel->class;
-            $indicator = new $indicatorClass;
+            $indicator = new $indicatorClass($this->exchangeSymbol, ['interval' => $this->timeFrame]);
             $indicator->symbol = $this->exchangeSymbol->symbol->token;
             $continue = true;
 
+            /**
+             * A computed indicator doesn't have a key inside the indicator data.
+             * Later we need to change this logic.
+             */
             if (! array_key_exists($indicatorModel->canonical, $indicatorData)) {
                 // Load all data into the indicator. It's a computed indicator.
                 $indicator->load($indicatorData);
             } else {
-                // Load specific indicator data.
                 $indicator->load($indicatorData[$indicatorModel->canonical]['result']);
             }
+
+            $result = '';
+
+            info("Checking Indicator {$indicatorClass}");
 
             switch ($indicator->type) {
                 case 'validation':
                     if (! $indicator->isValid()) {
+                        $result = 'Indicator isValid() returned false';
                         $continue = false;
                     }
                     break;
@@ -75,6 +83,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
                     if ($direction) {
                         $directions[] = $indicator->direction();
                     } else {
+                        $result = 'Indicator direction returned NULL';
                         $continue = false;
                     }
                     break;
@@ -82,6 +91,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
             if (! $continue) {
                 $this->processNextTimeFrameOrConclude();
+                $this->coreJobQueue->update(['response' => 'Timeframe not concluded because: '.$result]);
 
                 return;
             }
@@ -106,6 +116,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
                     $currentTimeFrameIndex = array_search($this->timeFrame, $timeframes);
 
                     if ($leastTimeFrameIndex > $currentTimeFrameIndex) {
+                        /*
                         $str = $this->exchangeSymbol->symbol->token.' '.
                            $this->exchangeSymbol->direction.' to '.$newSide.' : '.
                            'Least timeframe: '.$timeframes[$leastTimeFrameIndex].' and got '.
@@ -116,6 +127,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
                             'description' => 'A direction change was not approved',
                             'return_data_text' => $str,
                         ]);
+                        */
 
                         /**
                          * No deal. We cannot change the indicator since the timeframe is not high enough to
@@ -127,12 +139,16 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
                          */
                         $this->shouldCleanIndicatorData = false;
 
+                        $this->coreJobQueue->update(['response' => 'Indicator CONCLUDED but not on the minimum timeframe to change. Lets continue...']);
+
                         // We need to try to process the next timeframe, but we don't clean the exchange symbol.
                         $this->processNextTimeFrameOrConclude();
 
                         return;
                     }
                 }
+
+                $this->coreJobQueue->update(['response' => "Exchange Symbol {$this->exchangeSymbol->symbol->token} indicator VALIDATED"]);
 
                 $this->updateSideAndNotify($newSide);
 
@@ -183,6 +199,8 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
         } else {
             if ($this->shouldCleanIndicatorData) {
                 // No conclusion reached: Disable exchange symbol.
+                $this->coreJobQueue->update(['response' => 'Exchange Symbol WITHOUT CONCLUSION. Stopped']);
+
                 $this->exchangeSymbol->update([
                     'direction' => null,
                     'is_tradeable' => false,

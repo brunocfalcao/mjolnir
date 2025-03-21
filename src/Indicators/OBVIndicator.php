@@ -12,9 +12,13 @@ class OBVIndicator extends BaseIndicator
 
     public function direction(): ?string
     {
+        info('OBVIndicator direction() with data '.json_encode($this->data));
+
         $obvValues = $this->data['value'] ?? null;
 
         if ($obvValues && count($obvValues) > 1) {
+            info("OBV Comparison: {$obvValues[1]} vs {$obvValues[0]}");
+
             return $obvValues[1] > $obvValues[0] ? 'LONG' : 'SHORT';
         }
 
