@@ -29,5 +29,9 @@ class CancelOpenOrdersJob extends BaseApiableJob
     public function computeApiable()
     {
         $this->position->apiCancelOrders();
+
+        // Still open orders?
+        $this->position->load('orders');
+        $this->position->orders->where('status', 'NEW')->each->apiCancel();
     }
 }

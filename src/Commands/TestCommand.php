@@ -3,7 +3,9 @@
 namespace Nidavellir\Mjolnir\Commands;
 
 use Illuminate\Console\Command;
+use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\ExchangeSymbol;
+use Nidavellir\Mjolnir\Jobs\Apiable\Position\CancelOpenOrdersJob;
 
 class TestCommand extends Command
 {
@@ -13,7 +15,13 @@ class TestCommand extends Command
 
     public function handle()
     {
-        dd(ExchangeSymbol::find(15)->parsedTradingPair('binance'));
+        CoreJobQueue::create([
+            'class' => CancelOpenOrdersJob::class,
+            'queue' => 'orders',
+            'arguments' => [
+                'positionId' => 2,
+            ],
+        ]);
 
         return 0;
     }

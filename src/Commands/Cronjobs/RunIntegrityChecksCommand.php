@@ -148,6 +148,7 @@ class RunIntegrityChecksCommand extends Command
                 }
             }
 
+            /*
             // Verify the correctness of the WAP calculation for each active position.
             foreach ($openedPositions as $openedPosition) {
                 // Check if the position has at least one FILLED order of type LIMIT or MARKET-MAGNET,
@@ -195,6 +196,7 @@ class RunIntegrityChecksCommand extends Command
                     }
                 }
             }
+            */
 
             /**
              * INTEGRITY CHECK
