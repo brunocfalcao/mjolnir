@@ -168,7 +168,6 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
 
         $this->position->orders->each(function ($order) use ($blockUuid) {
             // info('[DispatchPositionOrdersJob] - Dispatching order ID '.$order->id.' ('.$order->type.')');
-
             CoreJobQueue::create([
                 'class' => PlaceOrderJob::class,
                 'queue' => 'orders',
@@ -210,6 +209,7 @@ class DispatchPositionOrdersJob extends BaseQueuableJob
 
     public function resolveException(\Throwable $e)
     {
+        $this->position->orders->each->updateToFailed('Position lifecycle creation thrown an exception: '.$e->getMessage());
         $this->position->updateToFailed($e);
     }
 }

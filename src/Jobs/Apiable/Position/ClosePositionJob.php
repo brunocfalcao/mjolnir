@@ -70,6 +70,7 @@ class ClosePositionJob extends BaseApiableJob
                 'arguments' => [
                     'orderId' => $order->id,
                 ],
+                'dispatch_after' => now()->addSeconds(10),
             ]);
         }
 

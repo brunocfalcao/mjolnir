@@ -7,7 +7,6 @@ use Nidavellir\Mjolnir\Exceptions\JustEndException;
 use Nidavellir\Mjolnir\Jobs\Apiable\Order\ModifyOrderJob;
 use Nidavellir\Mjolnir\Jobs\Apiable\Order\PlaceOrderJob;
 use Nidavellir\Mjolnir\Jobs\Processes\ClosePosition\ClosePositionLifecycleJob;
-use Nidavellir\Mjolnir\Jobs\Processes\RollbackPosition\ReplaceProfitOrderLifecycleJob;
 use Nidavellir\Mjolnir\Jobs\Processes\UpdateWAP\UpdateWAPLifecycleJob;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Order;
@@ -21,7 +20,7 @@ class OrderApiObserver
 
         $this->checkExcessOrder($order, 'LIMIT', ['LIMIT', 'MARKET-MAGNET'], ['NEW', 'FILLED', 'PARTIALLY_FILLED'], $order->position->total_limit_orders);
         $this->checkExcessOrder($order, 'MARKET', ['MARKET'], ['NEW', 'FILLED'], 1);
-        $this->checkExcessOrder($order, 'PROFIT', ['PROFIT'], ['NEW', 'FILLED', 'PARTIALLY_FILLED'], 1);
+        $this->checkExcessOrder($order, 'PROFIT', ['PROFIT'], ['NEW', 'FILLED', 'PARTIALLY_FILLED'], 2); // Just to avoid false positives.
         $this->checkExcessOrder($order, 'MARKET-CANCEL', ['MARKET-CANCEL'], ['NEW', 'FILLED'], 1);
         $this->checkExcessOrder($order, 'STOP-MARKET', ['STOP-MARKET'], ['NEW', 'FILLED'], 1);
     }
@@ -49,6 +48,7 @@ class OrderApiObserver
 
     public function updated(Order $order): void
     {
+        $order->load('position');
         // Skip processing if the position is not active.
         if ($order->position->status != 'active') {
             return;
@@ -63,6 +63,7 @@ class OrderApiObserver
             return;
         }
 
+        /*
         // Skip processing if a PROFIT order transitions from NEW to PARTIALLY_FILLED.
         if ($order->type == 'PROFIT' &&
             $order->getOriginal('status') == 'NEW' &&
@@ -70,6 +71,7 @@ class OrderApiObserver
         ) {
             return;
         }
+        */
 
         // Skip observers while a WAP is being processed.
         if ($order->type == 'PROFIT' && $order->position->wap_triggered) {
@@ -90,25 +92,6 @@ class OrderApiObserver
         $priceChanged = $this->hasChanged($order, 'price');
         $quantityChanged = $this->hasChanged($order, 'quantity');
         $profitOrder = $order->position->profitOrder();
-
-        // If PROFIT order price or quantity was changed, and we are not in a wap_process, resettle order.
-        if ($order->type == 'PROFIT' && $order->status == 'NEW' && ($priceChanged || $quantityChanged)) {
-            CoreJobQueue::create([
-                'class' => ReplaceProfitOrderLifecycleJob::class,
-                'queue' => 'orders',
-                'arguments' => [
-                    'previousOrderId' => $order->id,
-                    'newPrice' => $order->getOriginal('price'),
-                ],
-            ]);
-
-            // Skip the next iteration.
-            $order->withoutEvents(function () use ($order) {
-                $order->update(['skip_observer' => true]);
-            });
-
-            return;
-        }
 
         // If LIMIT order price or quantity changed, trigger a ModifyOrderJob
         if ($order->type == 'LIMIT' && $order->status == 'NEW' && ($priceChanged || $quantityChanged)) {

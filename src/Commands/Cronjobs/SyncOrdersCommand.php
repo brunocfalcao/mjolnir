@@ -6,7 +6,6 @@ use Illuminate\Console\Command;
 use Nidavellir\Mjolnir\Jobs\Apiable\Order\SyncOrderJob;
 use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\Order;
-use Nidavellir\Thor\Models\Position;
 
 class SyncOrdersCommand extends Command
 {
@@ -24,12 +23,16 @@ class SyncOrdersCommand extends Command
             return 0;
         }
 
-        // Fetch all open positions for the account and process them
-        $positions = $this->getOpenPositions();
-
-        foreach ($positions as $position) {
-            $this->syncOrdersForPosition($position);
-        }
+        // Fetch all open active orders from the DB.
+        Order::active()->cursor()->each(function ($order) {
+            CoreJobQueue::create([
+                'class' => SyncOrderJob::class,
+                'queue' => 'orders',
+                'arguments' => [
+                    'orderId' => $order->id,
+                ],
+            ]);
+        });
 
         return 0;
     }
@@ -51,25 +54,5 @@ class SyncOrdersCommand extends Command
                 'orderId' => $order->id,
             ],
         ]);
-    }
-
-    private function syncOrdersForPosition(Position $position)
-    {
-        foreach ($position->orders->whereNotNull('exchange_order_id') as $order) {
-            CoreJobQueue::create([
-                'class' => SyncOrderJob::class,
-                'queue' => 'orders',
-                'arguments' => [
-                    'orderId' => $order->id,
-                ],
-            ]);
-        }
-    }
-
-    private function getOpenPositions()
-    {
-        return Position::opened()
-            ->with('orders')
-            ->get();
     }
 }

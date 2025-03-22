@@ -188,6 +188,7 @@ class PlaceOrderJob extends BaseApiableJob
                     'positionId' => $this->order->position->id,
                 ],
             ]);
+            $this->order->updateToFailed($e);
         } else {
             // Update this order to failed, only. Send pushover message.
             $this->order->updateToFailed($e);

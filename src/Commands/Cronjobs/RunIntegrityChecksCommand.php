@@ -5,7 +5,6 @@ namespace Nidavellir\Mjolnir\Commands\Cronjobs;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Nidavellir\Mjolnir\Jobs\Processes\ClosePosition\ClosePositionLifecycleJob;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
@@ -129,40 +128,6 @@ class RunIntegrityChecksCommand extends Command
                 ->where('positions.status', 'active')
                 ->get();
 
-            /**
-             * INTEGRITY CHECK
-             * Check if we have opened positions on our local DB that don't match
-             * opened positions on the exchange. For instance, if we manually
-             * closed a position on the exchange, and we have a position with
-             * that exchange symbol on an active status (status=active only)
-             * we should trigger the ClosePosition lifecycle.
-             */
-            $dataMapper = new ApiDataMapperProxy($account->apiSystem->canonical);
-
-            foreach ($openedPositions as $openedPosition) {
-                if (! array_key_exists($openedPosition->parsedTradingPair, $positions)) {
-                    /**
-                     * We have an active position on the account that doesn't have
-                     * an active position on the exchange. Close position, just in case.
-                     */
-                    User::admin()->get()->each(function ($user) use ($openedPosition) {
-                        $user->pushover(
-                            message: "Position {$openedPosition->parsedTradingPair} is locally active and it is not on the exchange. Closing it",
-                            title: 'Integrity Check failed - Active local position that is not findable on exchange',
-                            applicationKey: 'nidavellir_warnings'
-                        );
-                    });
-
-                    CoreJobQueue::create([
-                        'class' => ClosePositionLifecycleJob::class,
-                        'queue' => 'positions',
-                        'arguments' => [
-                            'positionId' => $openedPosition->id,
-                        ],
-                    ]);
-                }
-            }
-
             // Check for active positions with a profit order that has an invalid status.
             foreach ($openedPositions as $openedPosition) {
                 if ($openedPosition->orders
@@ -221,12 +186,47 @@ class RunIntegrityChecksCommand extends Command
                             );
                         });
 
-                        Event::withoutEvents(function () {
-                            $this->position->orders()->where('status', 'FILLED')->update(['status' => 'NEW']);
-                        });
+                        $openedPosition->orders->where('status', 'FILLED')->each->updateQuietly(
+                            ['status' => 'NEW',
+                                'skip_observer' => false]
+                        );
 
-                        $this->position->syncOrders();
+                        $openedPosition->syncOrders();
                     }
+                }
+            }
+
+            /**
+             * INTEGRITY CHECK
+             * Check if we have opened positions on our local DB that don't match
+             * opened positions on the exchange. For instance, if we manually
+             * closed a position on the exchange, and we have a position with
+             * that exchange symbol on an active status (status=active only)
+             * we should trigger the ClosePosition lifecycle.
+             */
+            $dataMapper = new ApiDataMapperProxy($account->apiSystem->canonical);
+
+            foreach ($openedPositions as $openedPosition) {
+                if (! array_key_exists($openedPosition->parsedTradingPair, $positions)) {
+                    /**
+                     * We have an active position on the account that doesn't have
+                     * an active position on the exchange. Close position, just in case.
+                     */
+                    User::admin()->get()->each(function ($user) use ($openedPosition) {
+                        $user->pushover(
+                            message: "Position {$openedPosition->parsedTradingPair} is locally active and it is not on the exchange. Closing it",
+                            title: 'Integrity Check failed - Active local position that is not findable on exchange',
+                            applicationKey: 'nidavellir_warnings'
+                        );
+                    });
+
+                    CoreJobQueue::create([
+                        'class' => ClosePositionLifecycleJob::class,
+                        'queue' => 'positions',
+                        'arguments' => [
+                            'positionId' => $openedPosition->id,
+                        ],
+                    ]);
                 }
             }
         }

@@ -32,9 +32,26 @@ class UpdateWAPLifecycleJob extends BaseApiableJob
 
     public function computeApiable()
     {
+        // Verify if there is already a wap triggered. Can be something very fast to happen.
+        if ($this->position->wap_triggered) {
+            return;
+        }
+
         $blockUuid = (string) Str::uuid();
 
         $profitOrder = $this->position->profitOrder();
+
+        if (is_null($profitOrder->exchange_order_id)) {
+            User::admin()->get()->each(function ($user) {
+                $user->pushover(
+                    message: "{$this->position->parsedTradingPair} position doesn't have profit order synced! Please check!",
+                    title: 'Integrity failed - Profit order is not created/synced, there is no exchange_order_id',
+                    applicationKey: 'nidavellir_warnings'
+                );
+            });
+
+            return;
+        }
 
         // info("[UpdateWAPLifecycleJob] - Current Profit Order (to be cancelled) ID: {$profitOrder->id}, price: {$profitOrder->price}");
 
