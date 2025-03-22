@@ -50,15 +50,6 @@ class QueryExchangeSymbolIndicatorJob extends BaseApiableJob
         $indicators = Indicator::active()->apiable()->where('type', 'refresh-data')->get();
 
         $this->exchangeSymbol->load('symbol');
-        info('Obtaining indicators for '.$this->exchangeSymbol->symbol->token.' for timeframe '.$this->timeframe);
-
-        if ($this->exchangeSymbol->symbol->token == 'POL') {
-            info('*** - Specific debug - ***');
-            info("Exchange Symbol: {$this->exchangeSymbol->symbol->token}");
-            info("Indicators count: {$indicators->count()}");
-            info("Timeframe: {$this->timeframe}");
-            info('*** - ***');
-        }
 
         $this->apiProperties = $this->apiDataMapper->prepareGroupedQueryIndicatorsProperties($this->exchangeSymbol, $indicators, $this->timeframe);
         // $this->apiProperties->set('debug', ['core_job_queue_id' => $this->coreJobQueue->id]);

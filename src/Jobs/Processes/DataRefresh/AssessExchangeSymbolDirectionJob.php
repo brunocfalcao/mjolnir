@@ -67,8 +67,6 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
             $result = '';
 
-            info("Checking Indicator {$indicatorClass}");
-
             switch ($indicator->type) {
                 case 'validation':
                     if (! $indicator->isValid()) {
