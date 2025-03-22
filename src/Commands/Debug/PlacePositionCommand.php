@@ -123,11 +123,11 @@ class PlacePositionCommand extends Command
 
     private function cleanDatabase()
     {
-        $this->info('Cleaning database tables...');
         DB::statement('TRUNCATE TABLE core_job_queue');
+        DB::statement('TRUNCATE TABLE application_logs');
+        DB::statement('TRUNCATE TABLE api_requests_log');
         DB::statement('TRUNCATE TABLE positions');
         DB::statement('TRUNCATE TABLE orders');
-        DB::statement('TRUNCATE TABLE api_requests_log');
         $this->info('Database cleanup complete.');
     }
 }

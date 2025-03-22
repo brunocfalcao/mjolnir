@@ -7,8 +7,12 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
+use Nidavellir\Mjolnir\Jobs\Processes\ClosePosition\ClosePositionLifecycleJob;
+use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\Position;
+use Nidavellir\Thor\Models\Symbol;
 use Nidavellir\Thor\Models\User;
 
 class RunIntegrityChecksCommand extends Command
@@ -102,6 +106,11 @@ class RunIntegrityChecksCommand extends Command
             // Retrieve open positions from the exchange.
             $positions = $account->apiQueryPositions()->result;
 
+            // Remove false positions (positionAmt = 0.0)
+            $positions = array_filter($positions, function ($position) {
+                return (float) $position['positionAmt'] != 0.0;
+            });
+
             // Check if the number of positions exceeds the account's maximum allowed concurrent positions.
             if (count($positions) > $account->max_concurrent_trades && $account->max_concurrent_trades > 0) {
                 // Notify admin users if the maximum concurrent positions are exceeded.
@@ -119,6 +128,40 @@ class RunIntegrityChecksCommand extends Command
                 ->with('orders')
                 ->where('positions.status', 'active')
                 ->get();
+
+            /**
+             * INTEGRITY CHECK
+             * Check if we have opened positions on our local DB that don't match
+             * opened positions on the exchange. For instance, if we manually
+             * closed a position on the exchange, and we have a position with
+             * that exchange symbol on an active status (status=active only)
+             * we should trigger the ClosePosition lifecycle.
+             */
+            $dataMapper = new ApiDataMapperProxy($account->apiSystem->canonical);
+
+            foreach ($openedPositions as $openedPosition) {
+                if (! array_key_exists($openedPosition->parsedTradingPair, $positions)) {
+                    /**
+                     * We have an active position on the account that doesn't have
+                     * an active position on the exchange. Close position, just in case.
+                     */
+                    User::admin()->get()->each(function ($user) use ($openedPosition) {
+                        $user->pushover(
+                            message: "Position {$openedPosition->parsedTradingPair} is locally active and it is not on the exchange. Closing it",
+                            title: 'Integrity Check failed - Active local position that is not findable on exchange',
+                            applicationKey: 'nidavellir_warnings'
+                        );
+                    });
+
+                    CoreJobQueue::create([
+                        'class' => ClosePositionLifecycleJob::class,
+                        'queue' => 'positions',
+                        'arguments' => [
+                            'positionId' => $openedPosition->id,
+                        ],
+                    ]);
+                }
+            }
 
             // Check for active positions with a profit order that has an invalid status.
             foreach ($openedPositions as $openedPosition) {
@@ -148,11 +191,11 @@ class RunIntegrityChecksCommand extends Command
                     ->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
                     ->where('status', 'FILLED')
                     ->exists() &&
-                    $openedPosition->orders()
-                        ->where('type', 'PROFIT')
-                        ->whereIn('status', ['NEW', 'PARTIALLY_FILLED'])
-                        ->exists() &&
-                    $openedPosition->wap_triggered == false
+                $openedPosition->orders()
+                    ->where('type', 'PROFIT')
+                    ->whereIn('status', ['NEW', 'PARTIALLY_FILLED'])
+                    ->exists() &&
+                $openedPosition->wap_triggered == false
                 ) {
                     // Calculate the Weighted Average Price (WAP) for the position.
                     $wap = $openedPosition->calculateWAP();
@@ -173,7 +216,7 @@ class RunIntegrityChecksCommand extends Command
                         User::admin()->get()->each(function ($user) use ($openedPosition) {
                             $user->pushover(
                                 message: "Active Position {$openedPosition->parsedTradingPair} ID {$openedPosition->id} with wrong WAP calculated. Reseting position FILLED orders to NEW, for resyncing + WAP calculation",
-                                title: 'Integrity Check failed - Active position with wrong WAP calculated',
+                                title: 'Integrity Check failed - Active position with wrong WAP calculated. Resyncing orders.',
                                 applicationKey: 'nidavellir_warnings'
                             );
                         });

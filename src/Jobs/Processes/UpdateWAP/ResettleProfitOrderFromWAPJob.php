@@ -13,7 +13,7 @@ use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\User;
 
-class ResettleProfitOrderJob extends BaseApiableJob
+class ResettleProfitOrderFromWAPJob extends BaseApiableJob
 {
     public Account $account;
 

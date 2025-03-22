@@ -81,7 +81,7 @@ class UpdateWAPLifecycleJob extends BaseApiableJob
 
         // Complete WAP process (place new order with new weighted average price).
         CoreJobQueue::create([
-            'class' => ResettleProfitOrderJob::class,
+            'class' => ResettleProfitOrderFromWAPJob::class,
             'queue' => 'orders',
             'arguments' => [
                 'positionId' => $this->position->id,
