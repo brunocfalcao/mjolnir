@@ -148,7 +148,6 @@ class RunIntegrityChecksCommand extends Command
                 }
             }
 
-            /*
             // Verify the correctness of the WAP calculation for each active position.
             foreach ($openedPositions as $openedPosition) {
                 // Check if the position has at least one FILLED order of type LIMIT or MARKET-MAGNET,
@@ -179,6 +178,7 @@ class RunIntegrityChecksCommand extends Command
                         $wapQuantity = api_format_quantity($wap['quantity'], $openedPosition->exchangeSymbol);
                         $tradingPair = $openedPosition->parsedTradingPair;
 
+                        /*
                         User::admin()->get()->each(function ($user) use ($openedPosition) {
                             $user->pushover(
                                 message: "Active Position {$openedPosition->parsedTradingPair} ID {$openedPosition->id} with wrong WAP calculated. Reseting position FILLED orders to NEW, for resyncing + WAP calculation",
@@ -186,17 +186,26 @@ class RunIntegrityChecksCommand extends Command
                                 applicationKey: 'nidavellir_warnings'
                             );
                         });
+                        */
+                        User::admin()->get()->each(function ($user) use ($openedPosition, $orderPrice, $wapPrice) {
+                            $user->pushover(
+                                message: "Active Position {$openedPosition->parsedTradingPair} ID {$openedPosition->id} with wrong WAP calculated. Current: {$orderPrice}, should be: {$wapPrice}",
+                                title: 'Integrity Check failed - Active position with wrong WAP calculated.',
+                                applicationKey: 'nidavellir_warnings'
+                            );
+                        });
 
+                        /*
                         $openedPosition->orders->where('status', 'FILLED')->each->updateQuietly(
                             ['status' => 'NEW',
                                 'skip_observer' => false]
                         );
 
                         $openedPosition->syncOrders();
+                        */
                     }
                 }
             }
-            */
 
             /**
              * INTEGRITY CHECK
