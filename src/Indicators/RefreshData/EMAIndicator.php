@@ -1,6 +1,6 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Indicators;
+namespace Nidavellir\Mjolnir\Indicators\RefreshData;
 
 use Nidavellir\Mjolnir\Abstracts\BaseIndicator;
 

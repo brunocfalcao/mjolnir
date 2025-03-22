@@ -1,14 +1,14 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Indicators;
+namespace Nidavellir\Mjolnir\Indicators\RefreshData;
 
 use Nidavellir\Mjolnir\Abstracts\BaseIndicator;
 
-class ADXIndicator extends BaseIndicator
+class MFIIndicator extends BaseIndicator
 {
-    public string $endpoint = 'adx';
+    public string $endpoint = 'mfi';
 
-    public string $type = 'validation';
+    public string $type = 'value';
 
     public function isValid(): bool
     {
