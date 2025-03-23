@@ -14,9 +14,10 @@ class BinanceExceptionHandler extends BaseExceptionHandler
      * -4046: No need to change the margin type.
      * -2013: Order doesn't exist.
      * -5027: No need to modify the order.
+     * -2011: Unknown order sent.
      */
     public $httpIgnorableStatusCodes = [
-        400 => [-4046, -2013, -5027],
+        400 => [-4046, -2013, -5027, -2011],
     ];
 
     /**
