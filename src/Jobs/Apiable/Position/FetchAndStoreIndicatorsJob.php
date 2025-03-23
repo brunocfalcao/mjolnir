@@ -1,6 +1,6 @@
 <?php
 
-namespace Nidavellir\Mjolnir\Jobs\Apiable\ExchangeSymbol;
+namespace Nidavellir\Mjolnir\Jobs\Apiable\Position;
 
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
