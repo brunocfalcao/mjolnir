@@ -8,5 +8,9 @@ class ADXIndicator extends BaseIndicator
 {
     public string $endpoint = 'adx';
 
-    public function isValid() {}
+    public function result()
+    {
+        $this->compute();
+        dd($this->data);
+    }
 }
