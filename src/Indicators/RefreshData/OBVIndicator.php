@@ -10,6 +10,11 @@ class OBVIndicator extends BaseIndicator
 
     public string $type = 'direction';
 
+    public function conclusion()
+    {
+        return $this->direction();
+    }
+
     public function direction(): ?string
     {
         $obvValues = $this->data['value'] ?? null;

@@ -10,6 +10,11 @@ class EMAsConvergence extends BaseIndicator
 
     public string $type = 'direction';
 
+    public function conclusion()
+    {
+        return $this->direction();
+    }
+
     /**
      * Picks all the EMAs that exist on the total indicators array, and
      * verifies if they follow the same trend, by the same order (ema with

@@ -13,6 +13,7 @@ use Nidavellir\Mjolnir\Commands\Cronjobs\OptimizeCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\PurgeDataCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\RefreshDataCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\RunIntegrityChecksCommand;
+use Nidavellir\Mjolnir\Commands\Cronjobs\StorePositionIndicatorsCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\SyncOrdersCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\UpdateAccountsBalancesCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\UpdateRecvwindowSafetyDurationCommand;
@@ -64,6 +65,7 @@ class MjolnirServiceProvider extends ServiceProvider
                 RunIntegrityChecksCommand::class,
                 PurgeDataCommand::class,
                 UpdateAccountsBalancesCommand::class,
+                StorePositionIndicatorsCommand::class,
 
                 // Debug.
                 IndicatorCommand::class,

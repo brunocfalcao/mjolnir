@@ -10,6 +10,11 @@ class EMAsSameDirection extends BaseIndicator
 
     public string $type = 'direction';
 
+    public function conclusion()
+    {
+        return $this->direction();
+    }
+
     /**
      * Confirms if all EMAs are either going up or going down.
      * Concludes LONG if all are going up, SHORT if all are going down.

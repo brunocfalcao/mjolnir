@@ -10,6 +10,11 @@ class EMAIndicator extends BaseIndicator
 
     public string $type = 'direction';
 
+    public function conclusion()
+    {
+        return $this->direction();
+    }
+
     public function direction(): ?string
     {
         $emaValues = $this->data['value'] ?? null;

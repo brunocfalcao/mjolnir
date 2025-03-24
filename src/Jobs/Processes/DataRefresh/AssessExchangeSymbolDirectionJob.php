@@ -67,24 +67,30 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
             $result = '';
 
-            switch ($indicator->type) {
-                case 'validation':
-                    if (! $indicator->isValid()) {
-                        $result = 'Indicator isValid() returned false';
-                        $continue = false;
-                    }
-                    break;
+            $conclusion = $indicator->conclusion();
 
-                case 'direction':
-                    $direction = $indicator->direction();
+            // Indicator valid as TRUE or FALSE.
+            if (is_bool($conclusion) && $conclusion == false) {
+                $result = 'Indicator conclusion returned false';
+                $continue = false;
+            }
 
-                    if ($direction) {
-                        $directions[] = $indicator->direction();
-                    } else {
-                        $result = 'Indicator direction returned NULL';
-                        $continue = false;
+            // Indicator valid as LONG or SHORT.
+            if (is_string($conclusion)) {
+                if ($conclusion == 'LONG' || $conclusion == 'SHORT') {
+                    if ($conclusion) {
+                        $directions[] = $conclusion;
                     }
-                    break;
+                } else {
+                    $continue = false;
+                    $result = 'Indicator conclusion not LONG neither SHORT';
+                }
+            }
+
+            // Indicator didnt conclude, or returned void.
+            if ($conclusion == null || ! isset($conclusion)) {
+                $result = 'Indicator conclusion is NULl or not set';
+                $continue = false;
             }
 
             if (! $continue) {

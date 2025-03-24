@@ -10,6 +10,11 @@ class ADXIndicator extends BaseIndicator
 
     public string $type = 'validation';
 
+    public function conclusion()
+    {
+        return $this->isValid();
+    }
+
     public function isValid(): bool
     {
         if (! array_key_exists(0, $this->data['value'])) {

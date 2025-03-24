@@ -10,6 +10,11 @@ class MACDIndicator extends BaseIndicator
 
     public string $type = 'direction';
 
+    public function conclusion()
+    {
+        return $this->direction();
+    }
+
     public function direction(): ?string
     {
         $macd = $this->data['valueMACD'] ?? null;

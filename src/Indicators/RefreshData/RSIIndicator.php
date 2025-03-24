@@ -10,6 +10,11 @@ class RSIIndicator extends BaseIndicator
 
     public string $type = 'direction';
 
+    public function conclusion()
+    {
+        return $this->direction();
+    }
+
     public function direction(): ?string
     {
         $rsiValues = $this->data['value'] ?? null;

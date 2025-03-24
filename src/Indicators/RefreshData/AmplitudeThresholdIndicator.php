@@ -17,6 +17,11 @@ class AmplitudeThresholdIndicator extends BaseIndicator
 
     protected float $amplitude = 20; // 20% default threshold
 
+    public function conclusion()
+    {
+        return $this->isValid();
+    }
+
     public function isValid(): bool
     {
         if (empty($this->data['low']) ||

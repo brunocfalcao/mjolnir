@@ -54,13 +54,7 @@ abstract class BaseIndicator
         }
     }
 
-    /**
-     * Default overridable method by the child class, should return:
-     *
-     * a value e.g.: 67
-     * a direction e.g.: LONG, SHORT
-     * a boolean e.g.: true, false
-     */
+    // Returns the data that was fetched from the taapi api.
     public function data()
     {
         return $this->data;
@@ -114,5 +108,25 @@ abstract class BaseIndicator
     public function load(array $data)
     {
         $this->data = $data;
+    }
+
+    /**
+     * Should return:
+     * -> A number, e.g.: 68
+     * -> A boolean: true, false
+     * -> A direction: LONG, SHORT
+     * -> null
+     */
+    abstract public function conclusion();
+
+    protected function addTimestampForHumans()
+    {
+        if (is_array($this->data['timestamp'])) {
+            $this->data['timestamp_for_humans'] = array_map(function ($ts) {
+                return date('Y-m-d H:i:s', (int) $ts);
+            }, $this->data['timestamp']);
+        } else {
+            $this->data['timestamp_for_humans'] = date('Y-m-d H:i:s', (int) $this->data['timestamp']);
+        }
     }
 }
