@@ -33,7 +33,9 @@ class SyncOrderJob extends BaseApiableJob
 
     public function computeApiable()
     {
-        $apiResponse = $this->order->apiSync();
+        if (!is_null($this->order->exchange_order_id)) {
+            $apiResponse = $this->order->apiSync();
+        }
     }
 
     public function resolveException(\Throwable $e)
