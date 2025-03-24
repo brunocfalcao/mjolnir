@@ -42,7 +42,7 @@ class SyncOrderJob extends BaseApiableJob
          * A sync order job is not a big issue. Something went wrong but it's
          * repeated each minute(s).
          */
-        User::admin()->get()->each(function ($user) {
+        User::admin()->get()->each(function ($user) use ($e) {
             $user->pushover(
                 message: "There was an error trying to sync {$this->position->parsedTradingPair}, order ID {$this->order->id}, it will be retried later. Error: {$e->getMessage()}",
                 title: "Error syncing an order from {$this->position->parsedTradingPair}",
