@@ -188,7 +188,8 @@ class RunIntegrityChecksCommand extends Command
                         });
                         */
 
-                        if ($this->hasDifferenceHigherThanThreshold($wapPrice, $orderPrice)) {
+                        // Sometimes there are slight adjustments on the exchange, so lets give a tolerance.
+                        if ($this->hasDifferenceHigherThanThreshold($wapPrice, $orderPrice, 0.05)) {
                             User::admin()->get()->each(function ($user) use ($openedPosition, $orderPrice, $wapPrice) {
                                 $user->pushover(
                                     message: "Active Position {$openedPosition->parsedTradingPair} ID {$openedPosition->id} with wrong WAP calculated. Current: {$orderPrice}, should be: {$wapPrice}",
@@ -197,7 +198,6 @@ class RunIntegrityChecksCommand extends Command
                                 );
                             });
                         }
-
 
                         /*
                         $openedPosition->orders->where('status', 'FILLED')->each->updateQuietly(
