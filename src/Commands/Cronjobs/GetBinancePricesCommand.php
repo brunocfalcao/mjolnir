@@ -18,7 +18,7 @@ class GetBinancePricesCommand extends Command
 {
     protected $signature = 'mjolnir:get-binance-prices';
 
-    protected $description = "Fetches the exchange symbols prices each second";
+    protected $description = 'Fetches the exchange symbols prices each second';
 
     public ApiDataMapperProxy $dataMapper;
 

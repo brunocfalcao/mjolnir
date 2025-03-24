@@ -7,7 +7,6 @@ use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
-use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\User;
 

@@ -3,9 +3,8 @@
 namespace Nidavellir\Mjolnir\Commands;
 
 use Illuminate\Console\Command;
-use Nidavellir\Thor\Models\CoreJobQueue;
-use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Mjolnir\Jobs\Apiable\Position\CancelOpenOrdersJob;
+use Nidavellir\Thor\Models\CoreJobQueue;
 
 class TestCommand extends Command
 {
