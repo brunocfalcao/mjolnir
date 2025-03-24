@@ -136,7 +136,7 @@ class RunIntegrityChecksCommand extends Command
                     ->isNotEmpty()
                 ) {
                     // Retrieve the first profit order for the position.
-                    $openedProfitOrder = $openedPosition->orders->firstWhere('type', 'PROFIT');
+                    $openedProfitOrder = $openedPosition->profitOrder();
                     // Notify admin users about the invalid profit order status.
                     User::admin()->get()->each(function ($user) use ($openedPosition, $openedProfitOrder) {
                         $user->pushover(
