@@ -165,7 +165,7 @@ class RunIntegrityChecksCommand extends Command
                     // Calculate the Weighted Average Price (WAP) for the position.
                     $wap = $openedPosition->calculateWAP();
                     // Retrieve the profit order for comparison.
-                    $openedProfitOrder = $openedPosition->orders->firstWhere('type', 'PROFIT');
+                    $openedProfitOrder = $openedPosition->profitOrder(); //$openedPosition->orders->firstWhere('type', 'PROFIT');
                     // Check if the calculated WAP differs from the profit order's price and quantity.
                     if ($wap['price'] != $openedProfitOrder->price) {
                         // Ensure the exchange symbol relationship is loaded.
