@@ -187,13 +187,17 @@ class RunIntegrityChecksCommand extends Command
                             );
                         });
                         */
-                        User::admin()->get()->each(function ($user) use ($openedPosition, $orderPrice, $wapPrice) {
-                            $user->pushover(
-                                message: "Active Position {$openedPosition->parsedTradingPair} ID {$openedPosition->id} with wrong WAP calculated. Current: {$orderPrice}, should be: {$wapPrice}",
-                                title: 'Integrity Check failed - Active position with wrong WAP calculated.',
-                                applicationKey: 'nidavellir_warnings'
-                            );
-                        });
+
+                        if ($this->hasDifferenceHigherThanThreshold($wapPrice, $orderPrice)) {
+                            User::admin()->get()->each(function ($user) use ($openedPosition, $orderPrice, $wapPrice) {
+                                $user->pushover(
+                                    message: "Active Position {$openedPosition->parsedTradingPair} ID {$openedPosition->id} with wrong WAP calculated. Current: {$orderPrice}, should be: {$wapPrice}",
+                                    title: 'Integrity Check failed - Active position with wrong WAP calculated.',
+                                    applicationKey: 'nidavellir_warnings'
+                                );
+                            });
+                        }
+
 
                         /*
                         $openedPosition->orders->where('status', 'FILLED')->each->updateQuietly(
@@ -253,5 +257,15 @@ class RunIntegrityChecksCommand extends Command
         return $orders->filter(function ($order) {
             return in_array($order['status'], ['NEW', 'PARTIALLY_FILLED']);
         })->values();
+    }
+
+    protected function hasDifferenceHigherThanThreshold(float $a, float $b, float $percentThreshold = 1.0): bool
+    {
+        if ($b == 0) {
+            return false;
+        }
+
+        $difference = abs($a - $b) / $b;
+        return $difference > ($percentThreshold / 100);
     }
 }
