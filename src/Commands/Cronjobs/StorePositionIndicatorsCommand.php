@@ -37,15 +37,6 @@ class StorePositionIndicatorsCommand extends Command
             return Command::FAILURE;
         }
 
-        Position::create([
-            'account_id' => 1,
-            'exchange_symbol_id' => 2,
-            'status' => 'active',
-            'direction' => 'LONG',
-            'started_at' => now(),
-            'total_limit_orders' => 4,
-        ]);
-
         foreach (Position::active()->get() as $position) {
             Indicator::active()->apiable()->where('type', $type)->chunk(3, function ($indicators) use ($position, $timeframe) {
 
