@@ -47,13 +47,9 @@ class StorePositionIndicatorsCommand extends Command
         ]);
 
         foreach (Position::active()->get() as $position) {
-            $this->info('Position id '.$position->id);
-
             Indicator::active()->apiable()->where('type', $type)->chunk(3, function ($indicators) use ($position, $timeframe) {
 
                 $indicatorIds = implode(',', $indicators->pluck('id')->toArray());
-
-                $this->info('Indicators selected: '.$indicatorIds);
 
                 CoreJobQueue::create([
                     'class' => StorePositionIndicatorsLifecycleJob::class,
@@ -76,6 +72,5 @@ class StorePositionIndicatorsCommand extends Command
         DB::statement('TRUNCATE TABLE api_requests_log');
         DB::statement('TRUNCATE TABLE positions');
         DB::statement('TRUNCATE TABLE orders');
-        $this->info('Database cleanup complete.');
     }
 }
