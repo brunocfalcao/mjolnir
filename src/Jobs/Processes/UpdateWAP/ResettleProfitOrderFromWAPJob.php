@@ -5,10 +5,12 @@ namespace Nidavellir\Mjolnir\Jobs\Processes\UpdateWAP;
 use Nidavellir\Mjolnir\Abstracts\BaseApiableJob;
 use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Jobs\Apiable\Position\PlaceStopMarketOrderJob;
+use Nidavellir\Mjolnir\Jobs\Processes\StorePositionIndicators\StorePositionIndicatorsLifecycleJob;
 use Nidavellir\Mjolnir\Support\Proxies\RateLimitProxy;
 use Nidavellir\Thor\Models\Account;
 use Nidavellir\Thor\Models\ApiSystem;
 use Nidavellir\Thor\Models\CoreJobQueue;
+use Nidavellir\Thor\Models\Indicator;
 use Nidavellir\Thor\Models\Order;
 use Nidavellir\Thor\Models\Position;
 use Nidavellir\Thor\Models\User;
@@ -99,6 +101,7 @@ class ResettleProfitOrderFromWAPJob extends BaseApiableJob
         if ($this->position->hasAllLimitOrdersFilled()) {
             $dispatchAt = now()->addMinutes((int) $this->account->stop_order_trigger_duration_minutes);
 
+            // Prepare to place the stop loss market order.
             CoreJobQueue::create([
                 'class' => PlaceStopMarketOrderJob::class,
                 'queue' => 'orders',
@@ -114,6 +117,22 @@ class ResettleProfitOrderFromWAPJob extends BaseApiableJob
                     title: "Stop Market Order Scheduled - {$this->position->parsedTradingPair}",
                     applicationKey: 'nidavellir_warnings'
                 );
+            });
+
+            // Start grabbing indicators data.
+            Indicator::active()->apiable()->where('type', 'stop-loss')->chunk(3, function ($indicators) {
+
+                $indicatorIds = implode(',', $indicators->pluck('id')->toArray());
+
+                CoreJobQueue::create([
+                    'class' => StorePositionIndicatorsLifecycleJob::class,
+                    'queue' => 'cronjobs',
+                    'arguments' => [
+                        'positionId' => $this->position->id,
+                        'indicatorIds' => $indicatorIds,
+                        'timeframe' => '1h',
+                    ],
+                ]);
             });
         }
     }

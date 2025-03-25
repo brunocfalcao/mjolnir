@@ -38,20 +38,22 @@ class StorePositionIndicatorsCommand extends Command
         }
 
         foreach (Position::active()->get() as $position) {
-            Indicator::active()->apiable()->where('type', $type)->chunk(3, function ($indicators) use ($position, $timeframe) {
+            if ($position->hasAllLimitOrdersFilled()) {
+                Indicator::active()->apiable()->where('type', $type)->chunk(3, function ($indicators) use ($position, $timeframe) {
 
-                $indicatorIds = implode(',', $indicators->pluck('id')->toArray());
+                    $indicatorIds = implode(',', $indicators->pluck('id')->toArray());
 
-                CoreJobQueue::create([
-                    'class' => StorePositionIndicatorsLifecycleJob::class,
-                    'queue' => 'cronjobs',
-                    'arguments' => [
-                        'positionId' => $position->id,
-                        'indicatorIds' => $indicatorIds,
-                        'timeframe' => $timeframe,
-                    ],
-                ]);
-            });
+                    CoreJobQueue::create([
+                        'class' => StorePositionIndicatorsLifecycleJob::class,
+                        'queue' => 'cronjobs',
+                        'arguments' => [
+                            'positionId' => $position->id,
+                            'indicatorIds' => $indicatorIds,
+                            'timeframe' => $timeframe,
+                        ],
+                    ]);
+                });
+            }
         }
     }
 
