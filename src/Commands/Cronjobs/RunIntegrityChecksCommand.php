@@ -130,13 +130,8 @@ class RunIntegrityChecksCommand extends Command
 
             // Check for active positions with a profit order that has an invalid status.
             foreach ($openedPositions as $openedPosition) {
-                if ($openedPosition->orders
-                    ->where('type', 'PROFIT')
-                    ->whereNotIn('status', ['NEW', 'PARTIALLY_FILLED'])
-                    ->isNotEmpty()
-                ) {
-                    // Retrieve the first profit order for the position.
-                    $openedProfitOrder = $openedPosition->profitOrder();
+                $profitOrder = $openedPosition->profitOrder();
+                if (! $profitOrder) {
                     // Notify admin users about the invalid profit order status.
                     User::admin()->get()->each(function ($user) use ($openedPosition, $openedProfitOrder) {
                         $user->pushover(

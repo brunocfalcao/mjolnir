@@ -11,48 +11,68 @@ class DailyReportCommand extends Command
 {
     protected $signature = 'mjolnir:daily-report';
 
-    protected $description = 'Reports the daily profit statistics based on wallet balance difference.';
+    protected $description = 'Reports profit statistics based on wallet balance difference from last report.';
 
     public function handle()
     {
-        // Cache today's start time to avoid redundant function calls.
-        $startOfDay = now()->startOfDay();
-
-        // Retrieve all active trader accounts that are eligible to trade.
         $accounts = Account::whereHas('user', fn ($query) => $query->where('is_trader', true))
             ->with(['user', 'quote'])
             ->canTrade()
             ->get();
 
         foreach ($accounts as $account) {
-            // Fetch the earliest balance snapshot recorded today.
-            $startOfDaySnapshot = AccountBalanceHistory::where('account_id', $account->id)
-                ->where('created_at', '>=', $startOfDay)
-                ->oldest('created_at')
-                ->first();
+            $query = AccountBalanceHistory::where('account_id', $account->id);
 
-            // Fetch the most recent balance snapshot available.
-            $currentSnapshot = AccountBalanceHistory::where('account_id', $account->id)
-                ->latest('created_at')
-                ->first();
+            // Find starting snapshot
+            if ($account->last_report_id) {
+                $startSnapshot = (clone $query)
+                    ->where('id', '>', $account->last_report_id)
+                    ->oldest('id')
+                    ->first();
+            } else {
+                $startSnapshot = (clone $query)->oldest('id')->first();
+            }
 
-            $totalWalletBalance = round($currentSnapshot?->total_wallet_balance ?? 0, 2);
-            $startOfDayBalance = round($startOfDaySnapshot?->total_wallet_balance ?? 0, 2);
-            $currentDayProfit = round($totalWalletBalance - $startOfDayBalance, 2);
-            $uPnL = round($currentSnapshot->total_unrealized_profit, 2);
+            if (! $startSnapshot) {
+                continue; // Skip if no data
+            }
 
-            // Count the number of trades closed since the start of the day.
-            $totalTradesToday = Position::where('account_id', $account->id)
+            // Find latest snapshot
+            $endSnapshot = (clone $query)->latest('id')->first();
+
+            if (! $endSnapshot || $startSnapshot->id == $endSnapshot->id) {
+                continue; // Skip if only one snapshot exists or no progress
+            }
+
+            // Compute stats
+            $startBalance = round($startSnapshot->total_wallet_balance ?? 0, 2);
+            $endBalance = round($endSnapshot->total_wallet_balance ?? 0, 2);
+            $profit = round($endBalance - $startBalance, 2);
+            $uPnL = round($endSnapshot->total_unrealized_profit ?? 0, 2);
+
+            // Trades closed in range
+            $tradesCount = Position::where('account_id', $account->id)
                 ->where('status', 'closed')
-                ->where('updated_at', '>=', $startOfDay)
+                ->whereBetween('updated_at', [$startSnapshot->created_at, $endSnapshot->created_at])
                 ->count();
 
-            // Send a summary report notification to the account owner.
+            // Format time range for message
+            $from = $startSnapshot->created_at->toDateTimeString();
+            $to = $endSnapshot->created_at->toDateTimeString();
+            $startId = $startSnapshot->id;
+            $endId = $endSnapshot->id;
+
+            // Send pushover
             $account->user->pushover(
-                message: "Daily Profit: {$currentDayProfit}\nuPnL: {$uPnL}\nWallet Balance: {$totalWalletBalance}\nTrades: {$totalTradesToday}.",
+                message: "From: {$from} (ID: {$startId})\nTo: {$to} (ID: {$endId})\nProfit: {$profit}\nuPnL: {$uPnL}\nWallet: {$endBalance}\nTrades: {$tradesCount}",
                 title: "Account report for {$account->user->name}, ID: {$account->id}.",
                 applicationKey: 'nidavellir_cronjobs'
             );
+
+            // Update last_report_id
+            $account->update([
+                'last_report_id' => $endSnapshot->id,
+            ]);
         }
 
         return Command::SUCCESS;
