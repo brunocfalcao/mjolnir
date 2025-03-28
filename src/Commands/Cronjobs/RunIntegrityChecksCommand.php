@@ -207,6 +207,21 @@ class RunIntegrityChecksCommand extends Command
             }
 
             /**
+             * INTEGRITY CHECK - More than one profit order active.
+             */
+            foreach ($openedPositions as $openedPosition) {
+                if ($openedPosition->orders->where('type', 'PROFIT')->whereIn('status', ['NEW', 'PARTIALLY_FILLED'])->count() > 1) {
+                    User::admin()->get()->each(function ($user) use ($openedPosition) {
+                        $user->pushover(
+                            message: "Position {$openedPosition->parsedTradingPair} ID {$openedPosition->id} has more than 1 profit order active! Please check!",
+                            title: 'Integrity Check failed - More than 1 active profit order',
+                            applicationKey: 'nidavellir_warnings'
+                        );
+                    });
+                }
+            }
+
+            /**
              * INTEGRITY CHECK
              * Check if we have opened positions on our local DB that don't match
              * opened positions on the exchange. For instance, if we manually
@@ -222,7 +237,6 @@ class RunIntegrityChecksCommand extends Command
                      * We have an active position on the account that doesn't have
                      * an active position on the exchange. Close position, just in case.
                      */
-                    /*
                     User::admin()->get()->each(function ($user) use ($openedPosition) {
                         $user->pushover(
                             message: "Position {$openedPosition->parsedTradingPair} is locally active and it is not on the exchange. Closing it",
@@ -230,7 +244,6 @@ class RunIntegrityChecksCommand extends Command
                             applicationKey: 'nidavellir_warnings'
                         );
                     });
-                    */
 
                     CoreJobQueue::create([
                         'class' => ClosePositionLifecycleJob::class,

@@ -20,7 +20,7 @@ class OrderApiObserver
 
         $this->checkExcessOrder($order, 'LIMIT', ['LIMIT', 'MARKET-MAGNET'], ['NEW', 'FILLED', 'PARTIALLY_FILLED'], $order->position->total_limit_orders);
         $this->checkExcessOrder($order, 'MARKET', ['MARKET'], ['NEW', 'FILLED'], 1);
-        $this->checkExcessOrder($order, 'PROFIT', ['PROFIT'], ['NEW', 'FILLED', 'PARTIALLY_FILLED'], 2); // Just to avoid false positives.
+        $this->checkExcessOrder($order, 'PROFIT', ['PROFIT'], ['NEW', 'FILLED', 'PARTIALLY_FILLED'], 1);
         $this->checkExcessOrder($order, 'MARKET-CANCEL', ['MARKET-CANCEL'], ['NEW', 'FILLED'], 1);
         $this->checkExcessOrder($order, 'STOP-MARKET', ['STOP-MARKET'], ['NEW', 'FILLED'], 1);
     }
