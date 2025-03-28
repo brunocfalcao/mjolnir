@@ -149,7 +149,11 @@ class OrderApiObserver
             $order->getOriginal('status') != 'FILLED' &&
             in_array($order->type, ['LIMIT', 'MARKET-MAGNET'])
         ) {
-            // info("[ApiObserver] - WAP Core Job queued for position {$order->position->id}");
+            $order->logs()->create([
+                'action_canonical' => 'wap-api-observer-triggered',
+                'parameters_array' => ['price-original' => $order->getOriginal('price')],
+                'description' => "Api Observer triggered, on Order ID {$order->id} triggered a WAP calculation. Starting UpdateWAPLifecycleJob::class",
+            ]);
 
             CoreJobQueue::create([
                 'class' => UpdateWAPLifecycleJob::class,

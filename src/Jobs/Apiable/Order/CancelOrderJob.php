@@ -42,9 +42,20 @@ class CancelOrderJob extends BaseApiableJob
 
         // Skip observer so the order is not recreated again.
         if ($this->order->status == 'NEW') {
-            // info("[CancelOrderJob] - Cancelling order ID {$this->order->id} ({$this->order->type})");
             $this->order->apiCancel();
             $this->order->apiSync();
+            $this->order->logs()->create([
+                'action_canonical' => 'order-cancel',
+                'description' => 'Order was cancelled',
+            ]);
+        } else {
+            User::admin()->get()->each(function ($user) {
+                $user->pushover(
+                    message: "{$this->order->type} order ID {$this->order->id} was not cancelled because its status is {$this->order->status}. Please check!",
+                    title: 'Error canceling order',
+                    applicationKey: 'nidavellir_warnings'
+                );
+            });
         }
     }
 

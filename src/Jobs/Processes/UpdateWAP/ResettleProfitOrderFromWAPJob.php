@@ -57,13 +57,12 @@ class ResettleProfitOrderFromWAPJob extends BaseApiableJob
             'price' => $this->newPrice,
         ]);
 
-        // info("[ResettleProfitOrderJob] - New Profit Order created ID {$newProfitOrder->id} with price {$newProfitOrder->price}");
-
-        // Now place the new profit order.
-        // info('[ResettleProfitOrderJob] - Placing new Profit Order ...');
         $newProfitOrder->apiPlace();
 
-        // info("[ResettleProfitOrderJob] - Profit Order exchange ID: {$newProfitOrder->exchange_order_id}");
+        $newProfitOrder->logs()->create([
+            'action_canonical' => 'profit-order-resettlement',
+            'description' => 'Order was placed',
+        ]);
 
         // Update all orders to magnet_status = activated, to 'cancelled'.
         $this->position

@@ -53,12 +53,14 @@ class UpdateWAPLifecycleJob extends BaseApiableJob
             return;
         }
 
-        // info("[UpdateWAPLifecycleJob] - Current Profit Order (to be cancelled) ID: {$profitOrder->id}, price: {$profitOrder->price}");
-
         // Calculate new WAP.
         $wap = $this->position->calculateWAP();
 
-        // info('[UpdateWAPLifecycleJob] - New WAP calculated: '.json_encode($wap));
+        $profitOrder->logs()->create([
+            'action_canonical' => 'wap-calculation-completed',
+            'parameters_array' => ['wap-price' => $wap['price']],
+            'description' => 'The new WAP price was calculated on the UpdateLifecycleJob::class',
+        ]);
 
         if (array_key_exists('resync', $wap) && $wap['resync'] == true) {
             // Something happened and we need to resync the orders. Then we can try again the core job.
@@ -79,8 +81,6 @@ class UpdateWAPLifecycleJob extends BaseApiableJob
 
             return;
         }
-
-        // info('[UpdateWAPLifecycleJob] - Starting resettlement lifecycle (cancel + resettle)');
 
         // Inform the order observer not to put the PROFIT order back on its original values.
         $this->position->update(['wap_triggered' => true]);
