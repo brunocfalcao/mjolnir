@@ -41,22 +41,22 @@ class RunIntegrityChecksCommand extends Command
             });
         }
 
-        // Verify if there is a laravel.log file, and if it was created less than 15 mins ago.
+        // Verify if there is a laravel.log file, and if it was modified less than 15 mins ago.
         $logPath = storage_path('logs/laravel.log');
 
-        // Get the file's last modified time.
-        $lastModified = File::lastModified($logPath);
-        $fileTime = Carbon::createFromTimestamp($lastModified);
+        if (file_exists($logPath)) {
+            $lastModified = File::lastModified($logPath);
+            $fileTime = Carbon::createFromTimestamp($lastModified);
 
-        // Compare with the current time.
-        if ($fileTime->diffInMinutes(Carbon::now()) < 15) {
-            User::admin()->get()->each(function ($user) {
-                $user->pushover(
-                    message: 'A laravel.log file was created earlier today',
-                    title: 'Integrity Check failed - A laravel.log file was created',
-                    applicationKey: 'nidavellir_warnings'
-                );
-            });
+            if ($fileTime->diffInMinutes(now()) < 15) {
+                User::admin()->get()->each(function ($user) {
+                    $user->pushover(
+                        message: 'A laravel.log file was modified recently',
+                        title: 'Integrity Check failed - A laravel.log file was updated',
+                        applicationKey: 'nidavellir_warnings'
+                    );
+                });
+            }
         }
 
         // Retrieve accounts where the user is a trader and is eligible for trading.
