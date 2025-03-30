@@ -44,13 +44,6 @@ class RunIntegrityChecksCommand extends Command
         // Verify if there is a laravel.log file, and if it was created less than 15 mins ago.
         $logPath = storage_path('logs/laravel.log');
 
-        // Check if the file exists.
-        if (! File::exists($logPath)) {
-            $this->error('Log file does not exist.');
-
-            return 1;
-        }
-
         // Get the file's last modified time.
         $lastModified = File::lastModified($logPath);
         $fileTime = Carbon::createFromTimestamp($lastModified);
