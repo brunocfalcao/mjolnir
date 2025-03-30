@@ -105,6 +105,14 @@ class AssignTokensToPositionsJob extends BaseQueuableJob
 
                     $position->update($data);
 
+                    $selectedExchangeSymbol->load('symbol');
+
+                    $position->logs()->create([
+                        'action_canonical' => 'position-token-assignment',
+                        'parameters_array' => $data,
+                        'description' => "Token {$selectedExchangeSymbol->symbol->token} assigned to position ID {$position->id}",
+                    ]);
+
                     // Start the position creation lifecycle.
                     CoreJobQueue::create([
                         'class' => CreatePositionLifecycleJob::class,

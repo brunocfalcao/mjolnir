@@ -19,7 +19,7 @@ class CreateNewPositionsJob extends BaseQueuableJob
 
     public function __construct(int $accountId, int $numPositions, array $extraData = [])
     {
-        $this->account = Account::findOrFail($accountId);
+        $this->account = Account::with(['user'])->findOrFail($accountId);
         $this->exceptionHandler = BaseExceptionHandler::make($this->account->apiSystem->canonical);
         $this->extraData = $extraData;
         $this->numPositions = $numPositions;
@@ -37,6 +37,13 @@ class CreateNewPositionsJob extends BaseQueuableJob
 
         for ($i = 0; $i < $this->numPositions; $i++) {
             $position = Position::create($data);
+
+            $position->logs()->create([
+                'action_canonical' => 'position-creation',
+                'parameters_array' => $data,
+                'description' => "Position born (might not be activated) for account ID {$this->account->id}, User name {$this->account->user->name}",
+            ]);
+
             $positionIds[] = $position->id;
         }
 

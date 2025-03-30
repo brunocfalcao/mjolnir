@@ -44,9 +44,12 @@ class CancelOrderJob extends BaseApiableJob
         if ($this->order->status == 'NEW') {
             $this->order->apiCancel();
             $this->order->apiSync();
-            $this->order->logs()->create([
+
+            $this->order->load('position');
+
+            $this->order->position->logs()->create([
                 'action_canonical' => 'order-cancel',
-                'description' => 'Order was cancelled',
+                'description' => "Order ID {$this->order->id}, from position {$this->order->position->parsedTradingPair}, ID {$this->order->position->id}, was cancelled",
             ]);
         } else {
             User::admin()->get()->each(function ($user) {

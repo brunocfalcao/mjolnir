@@ -144,15 +144,15 @@ class OrderApiObserver
             return;
         }
 
-        // If order status changed to FILLED for LIMIT or MARKET-MAGNET, trigger WAP calculation
+        // If order status changed to FILLED for LIMIT or MARKET-MAGNET, trigger WAP calculation.
         if ($order->status == 'FILLED' &&
             $order->getOriginal('status') != 'FILLED' &&
             in_array($order->type, ['LIMIT', 'MARKET-MAGNET'])
         ) {
-            $order->logs()->create([
+            $order->position->logs()->create([
                 'action_canonical' => 'wap-api-observer-triggered',
                 'parameters_array' => ['price-original' => $order->getOriginal('price')],
-                'description' => "Api Observer triggered, on Order ID {$order->id} triggered a WAP calculation. Starting UpdateWAPLifecycleJob::class",
+                'description' => "Order observer filled triggered, Order type {$order->type}, ID {$order->id}, Position {$order->position->parsedTradingPair}, ID {$order->position->id}, triggered a WAP calculation. Starting UpdateWAPLifecycleJob::class",
             ]);
 
             CoreJobQueue::create([

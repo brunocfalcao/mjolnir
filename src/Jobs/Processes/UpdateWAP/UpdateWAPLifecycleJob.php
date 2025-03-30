@@ -56,10 +56,10 @@ class UpdateWAPLifecycleJob extends BaseApiableJob
         // Calculate new WAP.
         $wap = $this->position->calculateWAP();
 
-        $profitOrder->logs()->create([
+        $this->position->logs()->create([
             'action_canonical' => 'wap-calculation-completed',
             'parameters_array' => ['wap-price' => $wap['price']],
-            'description' => 'The new WAP price was calculated on the UpdateLifecycleJob::class',
+            'description' => "Order type {$profitOrder->type}, ID {$profitOrder->id}, for Position {$this->position->parsedTradingPair}, ID {$this->position->id}, WAP price was calculated on the UpdateWAPLifecycleJob::class",
         ]);
 
         if (array_key_exists('resync', $wap) && $wap['resync'] == true) {
