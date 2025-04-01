@@ -62,7 +62,7 @@ class DailyReportCommand extends Command
             $startId = $startSnapshot->id;
             $endId = $endSnapshot->id;
 
-            // Send pushover
+            // Send pushover message about finantial report.
             $account->user->pushover(
                 message: "From: {$from} (ID: {$startId})\nTo: {$to} (ID: {$endId})\nProfit: {$profit}\nuPnL: {$uPnL}\nWallet: {$endBalance}\nTrades: {$tradesCount}",
                 title: "Account report for {$account->user->name}, ID: {$account->id}.",
