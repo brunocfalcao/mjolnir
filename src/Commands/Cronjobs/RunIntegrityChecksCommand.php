@@ -126,9 +126,9 @@ class RunIntegrityChecksCommand extends Command
                 $profitOrder = $openedPosition->profitOrder();
                 if (! $profitOrder) {
                     // Notify admin users about the invalid profit order status.
-                    User::admin()->get()->each(function ($user) use ($openedPosition, $profitOrder) {
+                    User::admin()->get()->each(function ($user) use ($openedPosition) {
                         $user->pushover(
-                            message: "Active Position {$openedPosition->parsedTradingPair} ID {$openedPosition->id} with PROFIT order ID {$profitOrder->id}, with status {$profitOrder->status}. Please check!",
+                            message: "Active Position {$openedPosition->parsedTradingPair} ID {$openedPosition->id} with PROFIT order invalid. Please check!",
                             title: 'Integrity Check failed - Opened position with invalid profit order status',
                             applicationKey: 'nidavellir_warnings'
                         );
