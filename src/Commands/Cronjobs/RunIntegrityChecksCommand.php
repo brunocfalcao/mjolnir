@@ -230,6 +230,8 @@ class RunIntegrityChecksCommand extends Command
                      * We have an active position on the account that doesn't have
                      * an active position on the exchange. Close position, just in case.
                      */
+
+                    /*
                     User::admin()->get()->each(function ($user) use ($openedPosition) {
                         $user->pushover(
                             message: "Position {$openedPosition->parsedTradingPair} is locally active and it is not on the exchange. Closing it",
@@ -237,6 +239,7 @@ class RunIntegrityChecksCommand extends Command
                             applicationKey: 'nidavellir_warnings'
                         );
                     });
+                    */
 
                     CoreJobQueue::create([
                         'class' => ClosePositionLifecycleJob::class,
