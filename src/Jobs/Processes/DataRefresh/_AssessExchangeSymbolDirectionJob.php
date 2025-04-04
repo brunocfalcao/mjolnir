@@ -11,7 +11,7 @@ use Nidavellir\Thor\Models\CoreJobQueue;
 use Nidavellir\Thor\Models\ExchangeSymbol;
 use Nidavellir\Thor\Models\Indicator;
 
-class AssessExchangeSymbolDirectionJob extends BaseApiableJob
+class _AssessExchangeSymbolDirectionJob extends BaseApiableJob
 {
     public ExchangeSymbol $exchangeSymbol;
 
@@ -69,8 +69,6 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
             $conclusion = $indicator->conclusion();
 
-            // info("Indicator {$indicatorModel->canonical} on timeframe {$this->timeFrame} for symbol {$indicator->symbol} conclusion was " . $conclusion);
-
             // Indicator valid as TRUE or FALSE.
             if (is_bool($conclusion) && $conclusion == false) {
                 $result = 'Indicator conclusion returned false';
@@ -91,7 +89,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
             // Indicator didnt conclude, or returned void.
             if ($conclusion == null || ! isset($conclusion)) {
-                $result = 'Indicator conclusion is NULL or not set';
+                $result = 'Indicator conclusion is NULl or not set';
                 $continue = false;
             }
 
@@ -103,52 +101,38 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
             }
         }
 
-        // info('Conclusion directions:' . json_encode($directions));
-
         if (count(array_unique($directions)) == 1) {
             $newSide = $directions[0];
 
             // Update the indicators only if the exchange symbol is upsertable.
-            /**
-             * If the direction is contrary to the current direction, it can
-             * only change if the timeframe is higher than the index on the
-             * timeframes array. This will cancel timeframes that are too
-             * short to change the direction of the token, avoiding false
-             * reversals.
-             */
+            if ($this->exchangeSymbol->isUpsertable()) {
 
-            // No current side?
-            if ($this->exchangeSymbol->direction == null) {
-                // Update exchange symbol with the new direction.
-                $this->coreJobQueue->update(['response' => "Exchange Symbol {$this->exchangeSymbol->symbol->token} indicator VALIDATED"]);
-
-                info("Exchange Symbol {$this->exchangeSymbol->symbol->token}{$this->exchangeSymbol->quote->canonical} set to {$newSide}/{$this->timeFrame} (indicator direction was null)");
-
-                // $this->updateSideAndNotify($newSide);
-
-                $this->exchangeSymbol->update([
-                    'direction' => $newSide,
-                    'indicator_timeframe' => $this->timeFrame,
-                    'is_tradeable' => true,
-                    'indicators' => $indicatorData,
-                    'indicators_last_synced_at' => now(),
-                ]);
-
-                return;
-            }
-
-            // New side different from the current side?
-            if ($this->exchangeSymbol->direction != $newSide) {
-                // We have a direction. Are we trying to change the direction?
-                if ($this->exchangeSymbol->direction != $newSide && $this->exchangeSymbol->direction != null) {
-                    info("{$indicator->symbol} current direction is {$this->exchangeSymbol->direction} on timeframe {$this->exchangeSymbol->indicator_timeframe} and should change to {$newSide} on timeframe {$this->timeFrame}");
-
-                    // Check if we can change the direction.
+                /**
+                 * If the direction is contrary to the current direction, it can
+                 * only change if the timeframe is higher than the index on the
+                 * timeframes array. This will cancel timeframes that are too
+                 * short to change the direction of the token, avoiding false
+                 * reversals.
+                 */
+                if ($newSide != $this->exchangeSymbol->direction && $this->exchangeSymbol->direction != null) {
                     $timeframes = $this->exchangeSymbol->tradeConfiguration->indicator_timeframes;
                     $leastTimeFrameIndex = $this->exchangeSymbol->tradeConfiguration->least_changing_timeframe_index;
                     $currentTimeFrameIndex = array_search($this->timeFrame, $timeframes);
 
                     if ($leastTimeFrameIndex > $currentTimeFrameIndex) {
+                        /*
+                        $str = $this->exchangeSymbol->symbol->token.' '.
+                           $this->exchangeSymbol->direction.' to '.$newSide.' : '.
+                           'Least timeframe: '.$timeframes[$leastTimeFrameIndex].' and got '.
+                           $timeframes[$currentTimeFrameIndex];
+
+                        $this->exchangeSymbol->logs()->create([
+                            'action_canonical' => 'indicator.direction.not-approved',
+                            'description' => 'A direction change was not approved',
+                            'return_data_text' => $str,
+                        ]);
+                        */
+
                         /**
                          * No deal. We cannot change the indicator since the timeframe is not high enough to
                          * conclude the direction.
@@ -161,8 +145,6 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
                         $this->coreJobQueue->update(['response' => 'Indicator CONCLUDED but not on the minimum timeframe to change. Lets continue...']);
 
-                        info("Symbol {$indicator->symbol} didnt change direction because needed a timeframe of {$timeframes[$leastTimeFrameIndex]} and it got a timeframe of {$this->timeFrame}");
-
                         // We need to try to process the next timeframe, but we don't clean the exchange symbol.
                         $this->processNextTimeFrameOrConclude();
 
@@ -170,22 +152,14 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
                     }
                 }
 
-                // Update exchange symbol with the new direction.
                 $this->coreJobQueue->update(['response' => "Exchange Symbol {$this->exchangeSymbol->symbol->token} indicator VALIDATED"]);
 
-                info("Exchange Symbol {$this->exchangeSymbol->symbol->token} indicator updated to {$newSide} on timeframe {$this->timeFrame}");
-
-                // $this->updateSideAndNotify($newSide);
+                $this->updateSideAndNotify($newSide);
 
                 $this->exchangeSymbol->update([
-                    'direction' => $newSide,
-                    'indicator_timeframe' => $this->timeFrame,
-                    'is_tradeable' => true,
                     'indicators' => $indicatorData,
                     'indicators_last_synced_at' => now(),
                 ]);
-
-                return;
             }
         } else {
             // Directions inconclusive. Proceed to next timeframe.
@@ -227,14 +201,13 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
                 'block_uuid' => $blockUuid,
             ]);
         } else {
-            if ($this->shouldCleanIndicatorData && $this->exchangeSymbol->direction != null) {
+            if ($this->shouldCleanIndicatorData) {
                 // No conclusion reached: Disable exchange symbol.
                 $this->coreJobQueue->update(['response' => 'Exchange Symbol WITHOUT CONCLUSION. Stopped']);
 
-                info("Symbol {$this->exchangeSymbol->symbol->token}/{$this->exchangeSymbol->quote->canonical} didnt get any direction conclusion, so we are cleaning its indicator data");
-
                 $this->exchangeSymbol->update([
                     'direction' => null,
+                    'is_tradeable' => false,
                     'indicators' => null,
                     'indicator_timeframe' => null,
                     'indicators_last_synced_at' => null,
@@ -250,10 +223,13 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
         // Only proceed if there is a change in direction or timeframe
         if ($currentDirection != $newSide || $currentTimeFrame != $this->timeFrame) {
-            $this->exchangeSymbol->update([
-                'direction' => $newSide,
-                'indicator_timeframe' => $this->timeFrame,
-            ]);
+            if ($this->exchangeSymbol->isUpsertable()) {
+                $this->exchangeSymbol->update([
+                    'direction' => $newSide,
+                    'indicator_timeframe' => $this->timeFrame,
+                    'is_tradeable' => true,
+                ]);
+            }
         }
     }
 

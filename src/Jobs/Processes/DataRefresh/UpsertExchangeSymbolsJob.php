@@ -3,6 +3,7 @@
 namespace Nidavellir\Mjolnir\Jobs\Processes\DataRefresh;
 
 use Illuminate\Support\Str;
+use Nidavellir\Mjolnir\Abstracts\BaseExceptionHandler;
 use Nidavellir\Mjolnir\Abstracts\BaseQueuableJob;
 use Nidavellir\Mjolnir\Support\Proxies\ApiDataMapperProxy;
 use Nidavellir\Thor\Models\ApiSystem;
@@ -23,10 +24,9 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
     public function __construct(int $apiSystemId)
     {
         $this->apiSystemId = $apiSystemId;
-
         $this->apiSystem = ApiSystem::findOrFail($apiSystemId);
-
         $this->dataMapper = new ApiDataMapperProxy($this->apiSystem->canonical);
+        $this->exceptionHandler = BaseExceptionHandler::make($this->apiSystem->canonical);
     }
 
     public function compute()
@@ -76,34 +76,43 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
                         'leverage_brackets' => $leverageData[$parsedTradingPair],
                     ]
                 );
-
-                // Add CoreJobQueue to update indicator data, and to decide trade direction.
-                $blockUuid = (string) Str::uuid();
-
-                // Only upsertable symbols will receive indicators conclusions.
-                CoreJobQueue::create([
-                    'class' => QueryExchangeSymbolIndicatorJob::class,
-                    'queue' => 'indicators',
-
-                    'arguments' => [
-                        'exchangeSymbolId' => $exchangeSymbol->id,
-                        'timeframe' => $exchangeSymbol->tradeConfiguration->indicator_timeframes[0],
-                    ],
-                    'index' => 1,
-                    'block_uuid' => $blockUuid,
-                ]);
-
-                CoreJobQueue::create([
-                    'class' => AssessExchangeSymbolDirectionJob::class,
-                    'queue' => 'indicators',
-
-                    'arguments' => [
-                        'exchangeSymbolId' => $exchangeSymbol->id,
-                    ],
-                    'index' => 2,
-                    'block_uuid' => $blockUuid,
-                ]);
             }
+        }
+
+        // Time to trigger the indicator updates for each exchange symbol, active and upsertable.
+        foreach (ExchangeSymbol::query()->where('is_upsertable', true)->where('is_active', true)->get() as $exchangeSymbol) {
+            $exchangeSymbol->load('tradeConfiguration');
+
+            // Add CoreJobQueue to update indicator data, and to decide trade direction.
+            $blockUuid = (string) Str::uuid();
+
+            $exchangeSymbol->load(['symbol', 'quote']);
+
+            info("Triggering CoreJobQueue for {$exchangeSymbol->symbol->token}{$exchangeSymbol->quote->canonical}");
+
+            // Only upsertable symbols will receive indicators conclusions.
+            CoreJobQueue::create([
+                'class' => QueryExchangeSymbolIndicatorJob::class,
+                'queue' => 'indicators',
+
+                'arguments' => [
+                    'exchangeSymbolId' => $exchangeSymbol->id,
+                    'timeframe' => $exchangeSymbol->tradeConfiguration->indicator_timeframes[0],
+                ],
+                'index' => 1,
+                'block_uuid' => $blockUuid,
+            ]);
+
+            CoreJobQueue::create([
+                'class' => AssessExchangeSymbolDirectionJob::class,
+                'queue' => 'indicators',
+
+                'arguments' => [
+                    'exchangeSymbolId' => $exchangeSymbol->id,
+                ],
+                'index' => 2,
+                'block_uuid' => $blockUuid,
+            ]);
         }
     }
 }
