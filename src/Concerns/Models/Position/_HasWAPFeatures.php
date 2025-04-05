@@ -4,7 +4,7 @@ namespace Nidavellir\Mjolnir\Concerns\Models\Position;
 
 use Nidavellir\Thor\Models\User;
 
-trait HasWAPFeatures
+trait _HasWAPFeatures
 {
     public function calculateWAP()
     {
@@ -23,7 +23,7 @@ trait HasWAPFeatures
             return [
                 'quantity' => null,
                 'price' => null,
-            ];
+            ]; // Return null for both quantity and price if no relevant orders
         }
 
         // Calculate WAP using the formula
@@ -36,26 +36,50 @@ trait HasWAPFeatures
         }
 
         /**
-         * Verify if the total quantity matches the amount on the exchange.
+         * Lets verify if the total quantity matches the total amount from
+         * the position on the exchange. If not, we take priority from
+         * the total position amount from the exchange.
          */
         $this->load('account');
+
+        // Get position amount, and use that on the quantity.
         $apiResponse = $this->account->apiQueryPositions();
+
+        // Get sanitized positions, key = pair.
         $positions = $apiResponse->result;
+
         $positionFromExchange = null;
 
         if (array_key_exists($this->parsedTradingPair, $positions)) {
+            // We have a position. Lets place a contrary order to close it.
             $positionFromExchange = $positions[$this->parsedTradingPair];
+            // Obtain position amount.
             $positionQuantity = abs($positionFromExchange['positionAmt']);
 
+            // Is there a difference between both? -- Cast to strings.
             if ((string) $positionQuantity != (string) $totalQuantity) {
+                /*
+                User::admin()->get()->each(function ($user) use ($positionQuantity, $totalQuantity) {
+                    $user->pushover(
+                        message: "WAP difference ({$this->parsedTradingPair} ID: {$this->id}) - Exchange: {$positionQuantity}, DB (M+L): {$totalQuantity}",
+                        title: 'WAP quantity difference alert',
+                        applicationKey: 'nidavellir_warnings'
+                    );
+                });
+                */
+
                 $difference = abs($positionQuantity - $totalQuantity);
+
+                // Max gap threshold: 15%.
                 $threshold = abs($positionQuantity) * 0.15;
 
                 if ($difference > $threshold) {
+                    // Something happened, we need to request a resync.
                     $resync = true;
                     $error = 'The difference percentage between totalQuantity and positionQuantity exceeds threshold';
                 }
 
+                // Give priority to position quantity from the exchange.
                 $totalQuantity = $positionQuantity;
             }
         }
@@ -68,47 +92,36 @@ trait HasWAPFeatures
             ];
         }
 
-        // Base WAP calculation
+        // Calculate WAP price.
         $wapPrice = $totalWeightedPrice / $totalQuantity;
+
+        // Get profit percentage. E.g: 0.330
         $profitPercentage = $this->profit_percentage;
 
         /**
-         * If all LIMIT orders were filled, use adjusted breakEvenPrice.
+         * If we have all limit orders filled, then we will need to get the
+         * breakeven price for the current position. The objective is to
+         * close the position without earning anything.
          */
         if ($this->hasAllLimitOrdersFilled() && $positionFromExchange != null) {
-            $breakEven = $positionFromExchange['breakEvenPrice'];
-            $wapPrice = $this->adjustForSlippage($breakEven, $this->direction, slippagePercent: 0.03);
+            $wapPrice = $positionFromExchange['breakEvenPrice'];
         } else {
+            // Add the Profit % on top of it.
             if ($this->direction == 'LONG') {
+                // Add profit for LONG positions
                 $wapPrice = $wapPrice * (1 + $profitPercentage / 100);
             } elseif ($this->direction == 'SHORT') {
+                // Subtract profit for SHORT positions
                 $wapPrice = $wapPrice * (1 - $profitPercentage / 100);
             }
         }
 
+        // Return total quantity and WAP price as an array, and format both numbers.
         return [
             'resync' => $resync,
             'error' => $error,
             'quantity' => api_format_quantity($totalQuantity, $this->exchangeSymbol),
             'price' => api_format_price($wapPrice, $this->exchangeSymbol),
         ];
-    }
-
-    /**
-     * Adjust break-even price with a small slippage margin to avoid red PnL.
-     */
-    public function adjustForSlippage($price, $direction, $slippagePercent = 0.03)
-    {
-        if ($slippagePercent == 0) {
-            return $price;
-        }
-
-        $adjustment = $price * ($slippagePercent / 100);
-
-        return match (strtoupper($direction)) {
-            'LONG' => $price + $adjustment,
-            'SHORT' => $price - $adjustment,
-            default => $price,
-        };
     }
 }

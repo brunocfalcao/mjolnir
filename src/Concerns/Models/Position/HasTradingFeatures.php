@@ -9,9 +9,19 @@ trait HasTradingFeatures
     {
         $this->load('orders');
 
-        return $this->orders->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
-            ->where('status', 'FILLED')
-            ->count() == $this->total_limit_orders;
+        // Count filled LIMIT and MARKET-MAGNET orders
+        $filledLimitCount = $this->orders
+        ->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
+        ->where('status', 'FILLED')
+        ->count();
+
+        // Check if any MARKET order is FILLED → in that case, we can’t say "all LIMITs filled"
+        $hasFilledMarketOrder = $this->orders
+        ->where('type', 'MARKET')
+        ->where('status', 'FILLED')
+        ->isNotEmpty();
+
+        return !$hasFilledMarketOrder && $filledLimitCount == $this->total_limit_orders;
     }
 
     public function syncOrders()
