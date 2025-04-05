@@ -3,7 +3,7 @@
 namespace Nidavellir\Mjolnir\Commands;
 
 use Illuminate\Console\Command;
-use Nidavellir\Thor\Models\ExchangeSymbol;
+use Nidavellir\Thor\Models\Position;
 
 class TestCommand extends Command
 {
@@ -13,10 +13,9 @@ class TestCommand extends Command
 
     public function handle()
     {
-        ExchangeSymbol::find(1)->logs()->create([
-            'action_canonical' => 'wap-triggered',
-            'parameters_array' => ['key' => 1, 'value' => 'order'],
-        ]);
+        $position = Position::findOrFail(3306);
+
+        dd($position->calculateWAP());
 
         return 0;
     }

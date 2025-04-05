@@ -88,7 +88,7 @@ class UpsertExchangeSymbolsJob extends BaseQueuableJob
 
             $exchangeSymbol->load(['symbol', 'quote']);
 
-            //info("Triggering CoreJobQueue for {$exchangeSymbol->symbol->token}{$exchangeSymbol->quote->canonical}");
+            // info("Triggering CoreJobQueue for {$exchangeSymbol->symbol->token}{$exchangeSymbol->quote->canonical}");
 
             // Only upsertable symbols will receive indicators conclusions.
             CoreJobQueue::create([

@@ -61,7 +61,7 @@ class ResettleProfitOrderFromWAPJob extends BaseApiableJob
 
         $this->position->logs()->create([
             'action_canonical' => 'profit-order-resettlement',
-            'description' => "Order type {$newProfitOrder->type}, ID {$newProfitOrder->id}, from Position {$this->position->parsedTradingPair}, ID {$this->position->id}, was placed under an order resettlement (WAP)",
+            'description' => "Order type {$newProfitOrder->type}, ID {$newProfitOrder->id}, from Position {$this->position->parsedTradingPair}, ID {$this->position->id}, was placed under an order resettlement (WAP) with price {$this->newPrice}",
         ]);
 
         // Update all orders to magnet_status = activated, to 'cancelled'.

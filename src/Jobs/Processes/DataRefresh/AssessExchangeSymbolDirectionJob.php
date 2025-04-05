@@ -122,7 +122,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
                 // Update exchange symbol with the new direction.
                 $this->coreJobQueue->update(['response' => "Exchange Symbol {$this->exchangeSymbol->symbol->token} indicator VALIDATED"]);
 
-                //info("Exchange Symbol {$this->exchangeSymbol->symbol->token}{$this->exchangeSymbol->quote->canonical} set to {$newSide}/{$this->timeFrame} (indicator direction was null)");
+                // info("Exchange Symbol {$this->exchangeSymbol->symbol->token}{$this->exchangeSymbol->quote->canonical} set to {$newSide}/{$this->timeFrame} (indicator direction was null)");
 
                 // $this->updateSideAndNotify($newSide);
 
@@ -141,7 +141,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
             if ($this->exchangeSymbol->direction != $newSide) {
                 // We have a direction. Are we trying to change the direction?
                 if ($this->exchangeSymbol->direction != $newSide && $this->exchangeSymbol->direction != null) {
-                    //info("{$indicator->symbol} current direction is {$this->exchangeSymbol->direction} on timeframe {$this->exchangeSymbol->indicator_timeframe} and should change to {$newSide} on timeframe {$this->timeFrame}");
+                    // info("{$indicator->symbol} current direction is {$this->exchangeSymbol->direction} on timeframe {$this->exchangeSymbol->indicator_timeframe} and should change to {$newSide} on timeframe {$this->timeFrame}");
 
                     // Check if we can change the direction.
                     $timeframes = $this->exchangeSymbol->tradeConfiguration->indicator_timeframes;
@@ -161,7 +161,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
 
                         $this->coreJobQueue->update(['response' => 'Indicator CONCLUDED but not on the minimum timeframe to change. Lets continue...']);
 
-                        //info("Symbol {$indicator->symbol} didnt change direction because needed a timeframe of {$timeframes[$leastTimeFrameIndex]} and it got a timeframe of {$this->timeFrame}");
+                        // info("Symbol {$indicator->symbol} didnt change direction because needed a timeframe of {$timeframes[$leastTimeFrameIndex]} and it got a timeframe of {$this->timeFrame}");
 
                         // We need to try to process the next timeframe, but we don't clean the exchange symbol.
                         $this->processNextTimeFrameOrConclude();
@@ -173,7 +173,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
                 // Update exchange symbol with the new direction.
                 $this->coreJobQueue->update(['response' => "Exchange Symbol {$this->exchangeSymbol->symbol->token} indicator VALIDATED"]);
 
-                //info("Exchange Symbol {$this->exchangeSymbol->symbol->token} indicator updated to {$newSide} on timeframe {$this->timeFrame}");
+                // info("Exchange Symbol {$this->exchangeSymbol->symbol->token} indicator updated to {$newSide} on timeframe {$this->timeFrame}");
 
                 // $this->updateSideAndNotify($newSide);
 
@@ -231,7 +231,7 @@ class AssessExchangeSymbolDirectionJob extends BaseApiableJob
                 // No conclusion reached: Disable exchange symbol.
                 $this->coreJobQueue->update(['response' => 'Exchange Symbol WITHOUT CONCLUSION. Stopped']);
 
-                //info("Symbol {$this->exchangeSymbol->symbol->token}/{$this->exchangeSymbol->quote->canonical} didnt get any direction conclusion, so we are cleaning its indicator data");
+                // info("Symbol {$this->exchangeSymbol->symbol->token}/{$this->exchangeSymbol->quote->canonical} didnt get any direction conclusion, so we are cleaning its indicator data");
 
                 $this->exchangeSymbol->update([
                     'direction' => null,
