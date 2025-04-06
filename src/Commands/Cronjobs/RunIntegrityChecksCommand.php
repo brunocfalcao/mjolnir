@@ -157,7 +157,6 @@ class RunIntegrityChecksCommand extends Command
                         $wapQuantity = api_format_quantity($wap['quantity'], $openedPosition->exchangeSymbol);
                         $tradingPair = $openedPosition->parsedTradingPair;
 
-                        /*
                         User::admin()->get()->each(function ($user) use ($openedPosition) {
                             $user->pushover(
                                 message: "Active Position {$openedPosition->parsedTradingPair} ID {$openedPosition->id} with wrong WAP calculated. Reseting position FILLED orders to NEW, for resyncing + WAP calculation",
@@ -165,29 +164,24 @@ class RunIntegrityChecksCommand extends Command
                                 applicationKey: 'nidavellir_warnings'
                             );
                         });
-                        */
 
-                        info("$openedPosition->parsedTradingPair: Order Price: {$orderPrice}, WAP calculation: {$wapPrice}");
+                        $openedPosition->load('orders');
 
-                        // Sometimes there are slight adjustments on the exchange, so lets give a tolerance.
-                        if ($this->hasDifferenceHigherThanThreshold($wapPrice, $orderPrice, 0.05)) {
-                            User::admin()->get()->each(function ($user) use ($openedPosition, $orderPrice, $wapPrice) {
-                                $user->pushover(
-                                    message: "Active Position {$openedPosition->parsedTradingPair} ID {$openedPosition->id} with wrong WAP calculated. Current: {$orderPrice}, should be: {$wapPrice}",
-                                    title: 'Integrity Check failed - Active position with wrong WAP calculated, outside tolerance threshold.',
-                                    applicationKey: 'nidavellir_warnings'
-                                );
-                            });
+                        $filledOrder = $openPosition->orders
+                                                    ->where('status', 'FILLED')
+                                                    ->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
+                                                    ->first();
+
+                        if ($filledOrder) {
+                            $filledOrder->updateQuietly([
+                                'status' => 'NEW',
+                                'skip_observer' => false
+                            ]);
+
+                            $openPosition->updateQuietly(['wap_triggered' => false]);
+
+                            $filledOrder->apiSync(); // This will trigger a WAP.
                         }
-
-                        /*
-                        $openedPosition->orders->where('status', 'FILLED')->each->updateQuietly(
-                            ['status' => 'NEW',
-                                'skip_observer' => false]
-                        );
-
-                        $openedPosition->syncOrders();
-                        */
                     }
                 }
             }
