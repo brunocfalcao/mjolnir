@@ -140,20 +140,11 @@ class RunIntegrityChecksCommand extends Command
             foreach ($openedPositions as $openedPosition) {
                 // Check if the position has at least one FILLED order of type LIMIT or MARKET-MAGNET,
                 // at least one PROFIT order with status NEW or PARTIALLY_FILLED, and WAP recalculation has not been triggered.
-                if ($openedPosition->orders()
-                    ->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
-                    ->where('status', 'FILLED')
-                    ->exists() &&
-                $openedPosition->orders()
-                    ->where('type', 'PROFIT')
-                    ->whereIn('status', ['NEW', 'PARTIALLY_FILLED'])
-                    ->exists() &&
-                $openedPosition->wap_triggered == false
-                ) {
+                if ($openedPosition->atLeastOneLimitOrderFilled() && $openedPosition->wap_triggered == false) {
                     // Calculate the Weighted Average Price (WAP) for the position.
                     $wap = $openedPosition->calculateWAP();
                     // Retrieve the profit order for comparison.
-                    $openedProfitOrder = $openedPosition->profitOrder(); // $openedPosition->orders->firstWhere('type', 'PROFIT');
+                    $openedProfitOrder = $openedPosition->profitOrder();
                     // Check if the calculated WAP differs from the profit order's price and quantity.
                     if ($wap['price'] != $openedProfitOrder->price) {
                         // Ensure the exchange symbol relationship is loaded.
@@ -181,7 +172,7 @@ class RunIntegrityChecksCommand extends Command
                             User::admin()->get()->each(function ($user) use ($openedPosition, $orderPrice, $wapPrice) {
                                 $user->pushover(
                                     message: "Active Position {$openedPosition->parsedTradingPair} ID {$openedPosition->id} with wrong WAP calculated. Current: {$orderPrice}, should be: {$wapPrice}",
-                                    title: 'Integrity Check failed - Active position with wrong WAP calculated.',
+                                    title: 'Integrity Check failed - Active position with wrong WAP calculated, outside tolerance threshold.',
                                     applicationKey: 'nidavellir_warnings'
                                 );
                             });
