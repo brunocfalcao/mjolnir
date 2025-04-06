@@ -9,9 +9,9 @@ trait HasTradingFeatures
         $this->load('orders');
 
         return $this->orders
-                    ->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
-                    ->where('status', 'FILLED')
-                    ->count() >= 1;
+            ->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
+            ->where('status', 'FILLED')
+            ->count() >= 1;
     }
 
     // Does this position have all limit orders filled?
@@ -20,9 +20,9 @@ trait HasTradingFeatures
         $this->load('orders');
 
         $filledLimitCount = $this->orders
-        ->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
-        ->where('status', 'FILLED')
-        ->count();
+            ->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
+            ->where('status', 'FILLED')
+            ->count();
 
         return $filledLimitCount == $this->total_limit_orders;
     }

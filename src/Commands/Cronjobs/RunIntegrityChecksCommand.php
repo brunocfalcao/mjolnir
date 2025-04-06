@@ -168,14 +168,14 @@ class RunIntegrityChecksCommand extends Command
                         $openedPosition->load('orders');
 
                         $filledOrder = $openedPosition->orders
-                                                    ->where('status', 'FILLED')
-                                                    ->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
-                                                    ->first();
+                            ->where('status', 'FILLED')
+                            ->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
+                            ->first();
 
                         if ($filledOrder) {
                             $filledOrder->updateQuietly([
                                 'status' => 'NEW',
-                                'skip_observer' => false
+                                'skip_observer' => false,
                             ]);
 
                             $openedPosition->updateQuietly(['wap_triggered' => false]);
