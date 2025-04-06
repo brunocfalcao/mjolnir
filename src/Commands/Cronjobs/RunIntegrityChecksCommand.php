@@ -167,6 +167,8 @@ class RunIntegrityChecksCommand extends Command
                         });
                         */
 
+                        info("$openedPosition->parsedTradingPair: Order Price: {$orderPrice}, WAP calculation: {$wapPrice}");
+
                         // Sometimes there are slight adjustments on the exchange, so lets give a tolerance.
                         if ($this->hasDifferenceHigherThanThreshold($wapPrice, $orderPrice, 0.05)) {
                             User::admin()->get()->each(function ($user) use ($openedPosition, $orderPrice, $wapPrice) {
