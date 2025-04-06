@@ -146,15 +146,17 @@ class RunIntegrityChecksCommand extends Command
                     // Retrieve the profit order for comparison.
                     $openedProfitOrder = $openedPosition->profitOrder();
                     // Check if the calculated WAP differs from the profit order's price and quantity.
-                    if ((string) $wap['price'] != (string) $openedProfitOrder->price) {
+
+                    $orderPrice = api_format_price($openedProfitOrder->price, $openedPosition->exchangeSymbol);
+                    $orderQuantity = api_format_quantity($openedProfitOrder->quantity, $openedPosition->exchangeSymbol);
+                    $wapPrice = api_format_price($wap['price'], $openedPosition->exchangeSymbol);
+                    $wapQuantity = api_format_quantity($wap['quantity'], $openedPosition->exchangeSymbol);
+
+                    if ((string) $wapPrice != (string) $orderPrice) {
                         // Ensure the exchange symbol relationship is loaded.
                         $openedPosition->load('exchangeSymbol');
 
                         // Format the profit order and WAP values for clarity.
-                        $orderPrice = api_format_price($openedProfitOrder->price, $openedPosition->exchangeSymbol);
-                        $orderQuantity = api_format_quantity($openedProfitOrder->quantity, $openedPosition->exchangeSymbol);
-                        $wapPrice = api_format_price($wap['price'], $openedPosition->exchangeSymbol);
-                        $wapQuantity = api_format_quantity($wap['quantity'], $openedPosition->exchangeSymbol);
                         $tradingPair = $openedPosition->parsedTradingPair;
 
                         User::admin()->get()->each(function ($user) use ($openedPosition, $orderPrice, $wapPrice) {
