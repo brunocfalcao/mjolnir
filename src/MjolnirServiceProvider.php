@@ -18,6 +18,7 @@ use Nidavellir\Mjolnir\Commands\Cronjobs\SyncOrdersCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\UpdateAccountsBalancesCommand;
 use Nidavellir\Mjolnir\Commands\Cronjobs\UpdateRecvwindowSafetyDurationCommand;
 use Nidavellir\Mjolnir\Commands\Debug\ClosePositionCommand;
+use Nidavellir\Mjolnir\Commands\Debug\ComputeWAPCommand;
 use Nidavellir\Mjolnir\Commands\Debug\GetAccountBalanceCommand;
 use Nidavellir\Mjolnir\Commands\Debug\IndicatorCommand;
 use Nidavellir\Mjolnir\Commands\Debug\NotifyCommand;
@@ -68,6 +69,7 @@ class MjolnirServiceProvider extends ServiceProvider
                 StorePositionIndicatorsCommand::class,
 
                 // Debug.
+                ComputeWAPCommand::class,
                 IndicatorCommand::class,
                 PlacePositionCommand::class,
                 PlaceStopMarketOrderCommand::class,

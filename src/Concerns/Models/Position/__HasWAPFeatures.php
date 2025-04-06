@@ -2,13 +2,11 @@
 
 namespace Nidavellir\Mjolnir\Concerns\Models\Position;
 
-use Nidavellir\Thor\Models\User;
-
 trait __HasWAPFeatures
 {
     public function calculateWAP()
     {
-        info('[WAP] Starting WAP calculation for position ID: ' . $this->id);
+        info('[WAP] Starting WAP calculation for position ID: '.$this->id);
 
         $resync = false;
         $error = '';
@@ -19,7 +17,7 @@ trait __HasWAPFeatures
             ->whereIn('type', ['MARKET', 'LIMIT', 'MARKET-MAGNET'])
             ->get();
 
-        info('[WAP] Fetched FILLED orders: ' . json_encode($orders->map(fn ($o) => [
+        info('[WAP] Fetched FILLED orders: '.json_encode($orders->map(fn ($o) => [
             'id' => $o->id,
             'type' => $o->type,
             'quantity' => $o->quantity,
@@ -28,6 +26,7 @@ trait __HasWAPFeatures
 
         if ($orders->isEmpty()) {
             info('[WAP] No orders found, returning nulls');
+
             return [
                 'quantity' => null,
                 'price' => null,
@@ -38,7 +37,7 @@ trait __HasWAPFeatures
         $totalQuantity = 0;
 
         foreach ($orders as $order) {
-            info("[WAP] Math Numerator - {$order->quantity} x {$order->price} = " . $order->quantity * $order->price);
+            info("[WAP] Math Numerator - {$order->quantity} x {$order->price} = ".$order->quantity * $order->price);
             $totalWeightedPrice += $order->quantity * $order->price;
 
             info("[WAP] Math Denominator (quantity) - {$order->quantity}");
@@ -57,7 +56,7 @@ trait __HasWAPFeatures
             $positionFromExchange = $positions[$this->parsedTradingPair];
             $positionQuantity = abs($positionFromExchange['positionAmt']);
 
-            info("[WAP] Position from exchange: " . json_encode($positionFromExchange));
+            info('[WAP] Position from exchange: '.json_encode($positionFromExchange));
 
             if ((string) $positionQuantity != (string) $totalQuantity) {
                 $difference = abs($positionQuantity - $totalQuantity);
@@ -68,7 +67,7 @@ trait __HasWAPFeatures
                 if ($difference > $threshold) {
                     $resync = true;
                     $error = 'The difference percentage between totalQuantity and positionQuantity exceeds threshold';
-                    info('[WAP] Resync needed — ' . $error);
+                    info('[WAP] Resync needed — '.$error);
                 }
 
                 $totalQuantity = $positionQuantity;
@@ -77,9 +76,10 @@ trait __HasWAPFeatures
 
         if ($totalQuantity == 0) {
             info('[WAP] Total quantity is 0, returning nulls');
+
             return [
-            'quantity' => null,
-            'price' => null,
+                'quantity' => null,
+                'price' => null,
             ];
         }
 

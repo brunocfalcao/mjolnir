@@ -2,8 +2,6 @@
 
 namespace Nidavellir\Mjolnir\Concerns\Models\Position;
 
-use Nidavellir\Thor\Models\User;
-
 trait HasWAPFeatures
 {
     public function calculateWAP()
