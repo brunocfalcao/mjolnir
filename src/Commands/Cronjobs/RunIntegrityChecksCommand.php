@@ -167,7 +167,7 @@ class RunIntegrityChecksCommand extends Command
 
                         $openedPosition->load('orders');
 
-                        $filledOrder = $openPosition->orders
+                        $filledOrder = $openedPosition->orders
                                                     ->where('status', 'FILLED')
                                                     ->whereIn('type', ['LIMIT', 'MARKET-MAGNET'])
                                                     ->first();
@@ -178,7 +178,7 @@ class RunIntegrityChecksCommand extends Command
                                 'skip_observer' => false
                             ]);
 
-                            $openPosition->updateQuietly(['wap_triggered' => false]);
+                            $openedPosition->updateQuietly(['wap_triggered' => false]);
 
                             $filledOrder->apiSync(); // This will trigger a WAP.
                         }
