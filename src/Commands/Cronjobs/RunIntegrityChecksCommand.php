@@ -146,7 +146,7 @@ class RunIntegrityChecksCommand extends Command
                     // Retrieve the profit order for comparison.
                     $openedProfitOrder = $openedPosition->profitOrder();
                     // Check if the calculated WAP differs from the profit order's price and quantity.
-                    if ($wap['price'] != $openedProfitOrder->price) {
+                    if ((string) $wap['price'] != (string) $openedProfitOrder->price) {
                         // Ensure the exchange symbol relationship is loaded.
                         $openedPosition->load('exchangeSymbol');
 
