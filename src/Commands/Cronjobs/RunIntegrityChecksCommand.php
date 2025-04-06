@@ -157,10 +157,10 @@ class RunIntegrityChecksCommand extends Command
                         $wapQuantity = api_format_quantity($wap['quantity'], $openedPosition->exchangeSymbol);
                         $tradingPair = $openedPosition->parsedTradingPair;
 
-                        User::admin()->get()->each(function ($user) use ($openedPosition) {
+                        User::admin()->get()->each(function ($user) use ($openedPosition, $orderPrice, $wapPrice) {
                             $user->pushover(
-                                message: "Active Position {$openedPosition->parsedTradingPair} ID {$openedPosition->id} with wrong WAP calculated. Reseting position FILLED orders to NEW, for resyncing + WAP calculation",
-                                title: 'Integrity Check failed - Active position with wrong WAP calculated. Resyncing orders.',
+                                message: "Position {$openedPosition->parsedTradingPair} ID {$openedPosition->id} with wrong WAP. Current profit price: {$orderPrice}, WAP price: {$wapPrice}. Resyncing orders for WAP recalculation",
+                                title: 'Integrity Check failed - Active position with wrong WAP calculated. Recalculating WAP',
                                 applicationKey: 'nidavellir_warnings'
                             );
                         });
