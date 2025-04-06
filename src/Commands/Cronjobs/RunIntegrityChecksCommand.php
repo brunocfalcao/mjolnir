@@ -44,6 +44,7 @@ class RunIntegrityChecksCommand extends Command
         // Verify if there is a laravel.log file, and if it was modified less than 15 mins ago.
         $logPath = storage_path('logs/laravel.log');
 
+        /*
         if (file_exists($logPath)) {
             $lastModified = File::lastModified($logPath);
             $fileTime = Carbon::createFromTimestamp($lastModified);
@@ -58,6 +59,7 @@ class RunIntegrityChecksCommand extends Command
                 });
             }
         }
+        */
 
         // Retrieve accounts where the user is a trader and is eligible for trading.
         $accounts = Account::whereHas('user', function ($query) {
