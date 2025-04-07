@@ -41,7 +41,7 @@ class UpdateWAPLifecycleJob extends BaseApiableJob
 
         $profitOrder = $this->position->profitOrder();
 
-        if (is_null($profitOrder->exchange_order_id)) {
+        if (!$profitOrder) {
             User::admin()->get()->each(function ($user) {
                 $user->pushover(
                     message: "{$this->position->parsedTradingPair} position doesn't have profit order synced! Please check!",
